@@ -1,0 +1,127 @@
+.gpa-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.stat-card {
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-left: 4px solid;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  background-color: #0f0f0f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.stat-content h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.grades-list {
+  margin-top: 40px;
+}
+
+.grades-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.grade-card {
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-left: 4px solid;
+  border-radius: 12px;
+  padding: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.grade-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.grade-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.grade-card-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.course-name {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.grade-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.grade-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grade-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.grade-info {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.grade-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.grade-points {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 4px;
+}

@@ -1,0 +1,146 @@
+.timetable-container {
+  overflow-x: auto;
+}
+
+.timetable-grid {
+  display: grid;
+  grid-template-columns: 120px repeat(5, 1fr);
+  gap: 12px;
+  min-width: 800px;
+}
+
+.timetable-header {
+  display: contents;
+}
+
+.time-header,
+.day-header {
+  padding: 12px;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.timetable-row {
+  display: contents;
+}
+
+.period-label {
+  padding: 12px;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timetable-cell {
+  min-height: 120px;
+  padding: 8px;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.timetable-cell:hover {
+  background-color: #222222;
+}
+
+.period-card {
+  background-color: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-left: 3px solid;
+  border-radius: 6px;
+  padding: 10px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.period-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.period-card-header h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.period-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.icon-btn-small {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.icon-btn-small:hover {
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
+.course-name-small {
+  font-size: 10px;
+  color: #9ca3af;
+  margin-bottom: 6px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.period-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.period-venue {
+  font-size: 10px;
+  color: #6b7280;
+  margin-top: auto;
+}
+
+.empty-period {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #4b5563;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.empty-period:hover {
+  color: #6b7280;
+}

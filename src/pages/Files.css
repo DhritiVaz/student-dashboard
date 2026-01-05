@@ -1,0 +1,127 @@
+.files-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.files-section {
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.files-section-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background-color: #0f0f0f;
+  border-left: 4px solid;
+}
+
+.files-section-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.files-section-header p {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.file-count {
+  margin-left: auto;
+  padding: 4px 12px;
+  background-color: #2a2a2a;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.file-card {
+  background-color: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.file-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.file-icon {
+  font-size: 32px;
+  text-align: center;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-info h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.file-meta {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid #2a2a2a;
+}
+
+.file-upload-large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  background-color: #0f0f0f;
+  border: 2px dashed #2a2a2a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  text-align: center;
+}
+
+.file-upload-large:hover {
+  border-color: #3b82f6;
+}
+
+.upload-text {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: #6b7280;
+}
