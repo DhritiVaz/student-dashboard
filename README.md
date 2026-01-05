@@ -88,7 +88,3 @@ The application features a modern dark theme with colorful solid accent colors (
 4. **Manage Files**: Upload files and organize them by course
 5. **Calculate GPA**: Add grades for your courses to track your academic progress
 6. **Use Mind Space**: Keep track of todos, notes, and files you want to review later
-
-## License
-
-MIT
