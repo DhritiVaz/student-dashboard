@@ -1,0 +1,402 @@
+/* Dashboard layout */
+.dashboard {
+    padding: 0 var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    height: calc(100vh - var(--topbar-height) - var(--spacing-sm));
+    overflow-y: auto;
+}
+
+/* SECTION 1: Summary Cards */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    /* Explicit spacing 20px */
+    width: 100%;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    /* Consistent padding 24px */
+    box-shadow: var(--shadow-subtle);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 160px;
+    /* Prevent collapse */
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--accent-primary);
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    /* Slight separation */
+}
+
+.stat-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    flex: 1;
+    /* Take up remaining space */
+    display: flex;
+    align-items: center;
+    /* Vertically center the value */
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+    margin: 0;
+}
+
+.stat-meta {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-top: auto;
+    /* Ensure it stays at the bottom */
+}
+
+/* Semantic colors (used only where strictly needed) */
+.text-green {
+    color: #10b981;
+}
+
+.text-orange {
+    color: #f59e0b;
+}
+
+.text-neutral {
+    color: var(--text-muted);
+}
+
+
+/* SECTION 2: Primary Row (Chart + Calendar) */
+.main-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    /* 2:1 Ratio */
+    gap: var(--spacing-md);
+    min-height: 340px;
+    /* Fixed minimum height for row alignment */
+}
+
+.timetable-preview-card,
+.calendar-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-subtle);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    /* Stretch to fill row height */
+}
+
+.card-header {
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+.card-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Timetable Preview Card */
+.timetable-preview-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-subtle);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    /* Stretch to fill row height */
+}
+
+.timetable-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 4px;
+    /* Space for scrollbar if needed */
+}
+
+.timetable-row-preview {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: var(--bg-app);
+    /* Subtle stripe or bg */
+    border: 1px solid transparent;
+    transition: background-color 0.2s;
+}
+
+/* Optional: remove background if you want cleaner look, but bg helps separation */
+
+.time-col-preview {
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+}
+
+.time-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.info-col-preview {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.subject-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.venue-text {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.text-sm {
+    font-size: 12px;
+}
+
+/* Reusing empty states from general styles */
+
+
+.empty-text {
+    font-weight: 400;
+}
+
+
+/* Mini Calendar / Upcoming List */
+.mini-events {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    /* Fill remaining space */
+}
+
+/* SECTION 3 & 4: Secondary Grid */
+.bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    /* 1:2 Ratio */
+    gap: var(--spacing-md);
+    align-items: stretch;
+    /* Ensure equal height */
+}
+
+.info-card,
+.activity-table-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-subtle);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Use min-height to force alignment even if empty */
+.info-card {
+    min-height: 280px;
+}
+
+.activity-table-section {
+    min-height: 280px;
+}
+
+/* Progress List */
+.progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+}
+
+.progress-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.progress-bar-bg {
+    width: 100%;
+    height: 6px;
+    background-color: var(--bg-app);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: var(--accent-primary);
+    border-radius: 4px;
+}
+
+
+/* Table */
+.table-wrapper {
+    overflow-x: auto;
+    flex: 1;
+}
+
+.clean-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.clean-table th {
+    text-align: left;
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.clean-table td {
+    padding: 14px 16px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--bg-app);
+}
+
+/* Empty Table Row */
+.empty-row td {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 32px;
+    font-style: italic;
+    border-bottom: none;
+}
+
+/* Small Icon Button for Cards */
+.icon-btn-sm {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+/* Mini Event Row */
+.mini-event-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: var(--bg-app);
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.mini-event-row:hover {
+    border-color: var(--border-color);
+    background-color: #fff;
+    /* or card bg slightly lighter */
+    box-shadow: var(--shadow-subtle);
+}
+
+.event-date-badge {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 44px;
+    padding: 2px;
+}
+
+.event-date-badge .day {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-primary);
+}
+
+.event-date-badge .month {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--accent-primary);
+}
+
+.event-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.event-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.event-time {
+    font-size: 11px;
+}

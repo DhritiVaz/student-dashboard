@@ -1,0 +1,98 @@
+.topbar {
+  height: var(--topbar-height);
+  padding: 0 var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-card);
+  /* White background */
+  /* Clean look */
+  /* border-bottom: 1px solid var(--border-light); Optional: Removed as per request "No borders; use subtle shadow or separation" - we can use margin separation or just whitespace */
+  box-shadow: var(--shadow-subtle);
+  /* Subtle shadow */
+  margin-bottom: var(--spacing-sm);
+  z-index: 40;
+  /* Ensure on top */
+  position: sticky;
+  top: 0;
+}
+
+.topbar-title {
+  font-size: 20px;
+  /* Reduced slightly from 24px as requested for balance */
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.topbar-search {
+  display: flex;
+  align-items: center;
+  background: var(--bg-app);
+  /* Light gray background for input */
+  border: 1px solid transparent;
+  /* No border initially */
+  border-radius: 8px;
+  padding: 8px 12px;
+  width: 280px;
+  transition: all 0.2s;
+}
+
+.topbar-search:focus-within {
+  background: var(--bg-card);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+.topbar-search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  width: 100%;
+  margin-left: 8px;
+  color: var(--text-primary);
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--accent-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.user-role {
+  font-size: 12px;
+  color: var(--text-secondary);
+}

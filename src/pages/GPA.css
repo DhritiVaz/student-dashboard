@@ -1,0 +1,190 @@
+/* GPA / Grades Page Global */
+.gpa-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid;
+  border-radius: var(--border-radius);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: var(--shadow-subtle);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: var(--bg-app);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+
+.stat-content h3 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 0 0 4px 0;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 4px 0 0 0;
+}
+
+/* --- List View for Grades --- */
+.grades-list {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-subtle);
+}
+
+.section-title {
+  display: none;
+  /* Hide default section title if using card wrapper */
+}
+
+/* List Header */
+.grades-list-header {
+  display: grid;
+  grid-template-columns: 80px 2fr 100px 100px 100px 80px;
+  background-color: var(--bg-app);
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* List Rows */
+.grade-list-row {
+  display: grid;
+  grid-template-columns: 80px 2fr 100px 100px 100px 80px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  align-items: center;
+  transition: background-color 0.1s;
+}
+
+.grade-list-row:last-child {
+  border-bottom: none;
+}
+
+.grade-list-row:hover {
+  background-color: var(--bg-app);
+}
+
+/* Column Styles */
+.col-code {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+  background-color: var(--bg-app);
+  padding: 4px 8px;
+  border-radius: 4px;
+  width: fit-content;
+  font-size: 13px;
+}
+
+.col-course {
+  display: flex;
+  flex-direction: column;
+}
+
+.course-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.no-course {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.col-grade {
+  font-weight: 700;
+}
+
+.grade-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.05);
+  /* Fallback */
+}
+
+.col-credits,
+.col-sem {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.col-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.grade-list-row:hover .col-actions {
+  opacity: 1;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .grades-list-header {
+    display: none;
+  }
+
+  .grade-list-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    position: relative;
+  }
+
+  .col-actions {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+  }
+
+  .grade-pill {
+    margin-top: 8px;
+  }
+}

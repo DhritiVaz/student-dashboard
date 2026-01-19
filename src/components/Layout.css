@@ -1,0 +1,228 @@
+.app {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-app);
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  z-index: 50;
+  border-right: 1px solid var(--border-color);
+  /* Updated border color */
+  padding-bottom: 20px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Smooth transition */
+  overflow: hidden;
+  /* Hide content while collapsing */
+}
+
+.sidebar-collapsed .sidebar {
+  width: var(--sidebar-width-collapsed);
+}
+
+.sidebar-header {
+  height: var(--topbar-height);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Space for logo and toggle */
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  transition: opacity 0.2s;
+}
+
+.sidebar-collapsed .logo-text {
+  opacity: 0;
+  width: 0;
+  display: none;
+}
+
+.sidebar-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+}
+
+.sidebar-collapsed .sidebar-toggle-btn {
+  margin: 0 auto;
+  /* Center toggle when collapsed */
+}
+
+/* User Profile in Sidebar */
+.sidebar-user {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid transparent;
+  margin-bottom: 10px;
+  transition: padding 0.3s;
+  overflow: hidden;
+}
+
+.sidebar-collapsed .sidebar-user {
+  padding: 20px 0;
+  justify-content: center;
+  /* Center avatar */
+}
+
+.sidebar-collapsed .user-details,
+.sidebar-collapsed .user-settings-btn {
+  display: none;
+}
+
+/* Navigation */
+.sidebar-nav {
+  padding: 16px 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* Reduced from 24px */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.nav-section-title {
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.sidebar-collapsed .nav-section-title,
+.sidebar-collapsed .header-label span,
+.sidebar-collapsed .header-label svg {
+  display: none;
+}
+
+/* In collapsed mode, maybe hide section headers entirely or show simple divider? */
+.sidebar-collapsed .nav-section-header {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+/* Nav Items */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar-collapsed .nav-item {
+  justify-content: center;
+  /* Center icon */
+  padding: 10px 0;
+}
+
+.sidebar-collapsed .nav-item span {
+  display: none;
+  /* Hide label */
+}
+
+.nav-item:hover {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+}
+
+.nav-tree-item.active {
+  color: var(--accent-primary);
+  background-color: var(--accent-light);
+  font-weight: 500;
+}
+
+.tree-dot.active {
+  background-color: var(--accent-primary);
+}
+
+.nav-item.active {
+  background-color: var(--accent-light);
+  color: var(--accent-primary);
+  box-shadow: none;
+}
+
+/* Tree View */
+/* Hide tree view in collapsed mode for simplicity or make it popover? 
+   Request says "Show icons ONLY". Collapsible tree items don't strictly have icons in the design from previous turn (just dots).
+   Maybe we hide them or just show main nav? 
+   Let's keep them but hide labels -> just dots. It might look weird. 
+   Better approach: Hide dynamic trees in collapsed mode or just show main icon.
+   Let's hide the tree content in collapsed mode for now to avoid clutter, or assume user expands to see.
+*/
+.sidebar-collapsed .nav-tree {
+  display: none;
+}
+
+.sidebar-collapsed .nav-section-header {
+  pointer-events: none;
+  /* Disable toggling when collapsed */
+  opacity: 0.5;
+}
+
+
+/* Main Area */
+.main {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* background-color: var(--bg-app); -- Already on body, but safe to keep/remove */
+}
+
+.sidebar-collapsed .main {
+  margin-left: var(--sidebar-width-collapsed);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    width: var(--sidebar-width);
+    /* Always full width on mobile when open */
+  }
+
+  .sidebar-expanded .sidebar {
+    transform: translateX(0);
+  }
+
+  .main,
+  .sidebar-collapsed .main {
+    margin-left: 0;
+  }
+}

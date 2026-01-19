@@ -1,0 +1,277 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  /* Soften from default bold (700) */
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  /* Modern tight spacing */
+}
+
+:root {
+  /* Colors - Neutral & Professional */
+  --bg-app: #F4F5F7;
+  --bg-sidebar: #FFFFFF;
+  --bg-card: #FFFFFF;
+
+  --text-primary: #1F2937;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+
+  --accent-primary: #2563EB;
+  --accent-light: #EFF6FF;
+  /* For active backgrounds */
+
+  --border-color: #E5E7EB;
+
+  /* Spacing */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 72px;
+  /* New collapsed width */
+  --topbar-height: 64px;
+  --border-radius: 12px;
+
+  /* Shadows */
+  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.05);
+  /* As requested */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+[data-theme='dark'] {
+  /* Dark Theme Colors - Neutral Grey Palette (Zinc/Neutral) */
+  --bg-app: #121212;
+  /* Pure dark grey, no blue tint */
+  --bg-sidebar: #1E1E1E;
+  /* Standard dark sidebar */
+  --bg-card: #1E1E1E;
+  /* Matching card bg */
+
+  --text-primary: #EDEDED;
+  /* Bright grey text */
+  --text-secondary: #A0A0A0;
+  /* Neutral mid-grey */
+  --text-muted: #6C6C6C;
+  /* Darker grey */
+
+  --accent-primary: #3B82F6;
+  /* Keep blue accent for contrast */
+  --accent-light: rgba(59, 130, 246, 0.15);
+
+  --border-color: #333333;
+  /* Neutral border */
+
+  /* Shadows */
+  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Removed duplicate :root block that was overriding theme variables */
+
+/* ===== GLOBAL MODAL ===== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 560px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 0.2s ease;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.icon-btn:hover {
+  color: var(--text-primary);
+}
+
+/* ===== GLOBAL FORMS ===== */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-size: 14px;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--accent-primary);
+}
+
+/* Form rows */
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+/* ===== GLOBAL BUTTONS ===== */
+
+.btn-primary {
+  background: var(--accent-primary);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: none;
+  border: 1px solid var(--border-color);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-app);
+}
+
+/* ===== MODAL ACTIONS ===== */
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* ===== ANIMATION ===== */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== PAGE HEADER (TITLE + ACTION) ===== */
+
+/* ===== PAGE LAYOUT (Standardized) ===== */
+
+.page-container {
+  padding: 0 var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  height: calc(100vh - var(--topbar-height) - var(--spacing-sm));
+  overflow-y: auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  /* Match Courses Page */
+  margin-bottom: 4px;
+  /* Match Courses Page (gap handled by container) */
+  flex-shrink: 0;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.page-header .subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
