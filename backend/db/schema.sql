@@ -12,14 +12,20 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users (LOWER(email));
 
--- Dashboard data per user (courses, timetable, calendar, notes, files, grades)
+-- Dashboard data per user (courses, timetable, calendar, notes, files, grades, semesters, property_definitions)
 CREATE TABLE IF NOT EXISTS user_dashboard_data (
-  user_id         UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  courses        JSONB NOT NULL DEFAULT '[]',
-  calendar_events JSONB NOT NULL DEFAULT '[]',
-  mind_space_items JSONB NOT NULL DEFAULT '[]',
-  timetable      JSONB NOT NULL DEFAULT '{}',
-  files          JSONB NOT NULL DEFAULT '[]',
-  grades         JSONB NOT NULL DEFAULT '[]',
-  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  user_id              UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  courses              JSONB NOT NULL DEFAULT '[]',
+  calendar_events      JSONB NOT NULL DEFAULT '[]',
+  mind_space_items     JSONB NOT NULL DEFAULT '[]',
+  timetable            JSONB NOT NULL DEFAULT '{}',
+  files                JSONB NOT NULL DEFAULT '[]',
+  grades               JSONB NOT NULL DEFAULT '[]',
+  semesters            JSONB NOT NULL DEFAULT '[]',
+  property_definitions JSONB NOT NULL DEFAULT '{}',
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Add columns for existing databases (no-op if already present)
+ALTER TABLE user_dashboard_data ADD COLUMN IF NOT EXISTS semesters JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE user_dashboard_data ADD COLUMN IF NOT EXISTS property_definitions JSONB NOT NULL DEFAULT '{}';

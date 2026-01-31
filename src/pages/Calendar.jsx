@@ -1,18 +1,28 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
-import { Plus, Edit2, Trash2, X, BookOpen } from 'lucide-react'
+import { useSemester } from '../context/SemesterContext'
+import { Plus, Edit2, Trash2, X, BookOpen, Settings2 } from 'lucide-react'
+import PropertyFormFields from '../components/PropertyFormFields'
+import PropertyManager from '../components/PropertyManager'
 import './Calendar.css'
 
 const Calendar = () => {
-  const { 
-    calendarEvents, 
-    addCalendarEvent, 
-    updateCalendarEvent, 
+  const {
+    calendarEvents,
+    addCalendarEvent,
+    updateCalendarEvent,
     deleteCalendarEvent,
     courses,
-    getCourseById
+    semesters,
+    getCourseById,
+    getCourseDisplayName,
+    getPropertyDefinitions,
+    addPropertyDefinition,
+    deletePropertyDefinition
   } = useData()
+  const { selectedSemesterId, isViewingAll } = useSemester()
   const [showModal, setShowModal] = useState(false)
+  const [showPropertyManager, setShowPropertyManager] = useState(false)
   const [editingEvent, setEditingEvent] = useState(null)
   const [formData, setFormData] = useState({
     title: '',
@@ -20,15 +30,29 @@ const Calendar = () => {
     date: '',
     time: '',
     type: 'assignment',
-    courseId: ''
+    courseId: '',
+    semesterId: '',
+    properties: {}
   })
+
+  const eventsInScope = isViewingAll
+    ? calendarEvents
+    : calendarEvents.filter(
+        (e) =>
+          e.semesterId === selectedSemesterId ||
+          (e.courseId && getCourseById(e.courseId)?.semesterId === selectedSemesterId)
+      )
+
+  const eventDefs = getPropertyDefinitions('calendar_events')
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const { properties, semesterId, ...rest } = formData
+    const payload = { ...rest, properties, semesterId: semesterId || null }
     if (editingEvent) {
-      updateCalendarEvent(editingEvent.id, formData)
+      updateCalendarEvent(editingEvent.id, payload)
     } else {
-      addCalendarEvent(formData)
+      addCalendarEvent(payload)
     }
     resetForm()
     setShowModal(false)
@@ -41,7 +65,9 @@ const Calendar = () => {
       date: '',
       time: '',
       type: 'assignment',
-      courseId: ''
+      courseId: '',
+      semesterId: selectedSemesterId || '',
+      properties: {}
     })
     setEditingEvent(null)
   }
@@ -54,7 +80,9 @@ const Calendar = () => {
       date: event.date || '',
       time: event.time || '',
       type: event.type || 'assignment',
-      courseId: event.courseId || ''
+      courseId: event.courseId || '',
+      semesterId: event.semesterId || '',
+      properties: { ...(event.properties || {}) }
     })
     setShowModal(true)
   }
@@ -65,7 +93,7 @@ const Calendar = () => {
     }
   }
 
-  const sortedEvents = [...calendarEvents].sort((a, b) => {
+  const sortedEvents = [...eventsInScope].sort((a, b) => {
     const dateA = new Date(`${a.date}T${a.time || '00:00'}`)
     const dateB = new Date(`${b.date}T${b.time || '00:00'}`)
     return dateA - dateB
@@ -86,16 +114,22 @@ const Calendar = () => {
           <h1>Calendar</h1>
           <p>Manage your calendar events and assignments</p>
         </div>
-        <button 
-          className="btn-primary"
-          onClick={() => {
-            resetForm()
-            setShowModal(true)
-          }}
-        >
-          <Plus size={18} />
-          Add Event
-        </button>
+        <div className="header-actions">
+          <button type="button" className="btn-secondary" onClick={() => setShowPropertyManager(true)}>
+            <Settings2 size={18} /> Properties
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              resetForm()
+              setShowModal(true)
+            }}
+          >
+            <Plus size={18} />
+            Add Event
+          </button>
+        </div>
       </div>
 
       <div className="calendar-events">
@@ -153,14 +187,14 @@ const Calendar = () => {
               {course && (
                 <div className="event-course">
                   <BookOpen size={14} />
-                  <span>{course.courseCode} - {course.courseName}</span>
+                  <span>{getCourseProperty(course, 'Course Code')} - {getCourseDisplayName(course)}</span>
                 </div>
               )}
             </div>
           )
         })}
 
-        {calendarEvents.length === 0 && (
+        {eventsInScope.length === 0 && (
           <div className="empty-state">
             <p>No calendar events yet. Add your first event to get started!</p>
           </div>
@@ -238,8 +272,20 @@ const Calendar = () => {
                   <option value="">None</option>
                   {courses.map(course => (
                     <option key={course.id} value={course.id}>
-                      {course.courseCode} - {course.courseName}
+                      {getCourseProperty(course, 'Course Code')} - {getCourseDisplayName(course)}
                     </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Semester (Optional)</label>
+                <select
+                  value={formData.semesterId}
+                  onChange={(e) => setFormData({ ...formData, semesterId: e.target.value })}
+                >
+                  <option value="">None</option>
+                  {semesters.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
               </div>
@@ -252,6 +298,12 @@ const Calendar = () => {
                   rows={3}
                 />
               </div>
+              <PropertyFormFields
+                entityType="calendar_events"
+                definitions={eventDefs}
+                values={formData.properties}
+                onChange={(properties) => setFormData({ ...formData, properties })}
+              />
               <div className="modal-actions">
                 <button 
                   type="button" 
@@ -270,6 +322,17 @@ const Calendar = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {showPropertyManager && (
+        <PropertyManager
+          entityType="calendar_events"
+          entityLabel="Calendar events"
+          definitions={eventDefs}
+          onAdd={addPropertyDefinition}
+          onDelete={deletePropertyDefinition}
+          onClose={() => setShowPropertyManager(false)}
+        />
       )}
     </div>
   )

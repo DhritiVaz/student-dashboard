@@ -235,6 +235,9 @@ h4 { font-size: 16px; }
   color: var(--text-secondary);
   font-weight: 500;
   font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.2s ease;
 }
 
@@ -252,6 +255,9 @@ h4 { font-size: 16px; }
   cursor: pointer;
   color: var(--text-secondary);
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.2s ease;
 }
 
@@ -268,6 +274,9 @@ h4 { font-size: 16px; }
   font-weight: 600;
   font-size: 14px;
   padding: 8px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.2s ease;
 }
 
@@ -291,6 +300,14 @@ h4 { font-size: 16px; }
 .icon-btn:hover {
   color: var(--text-primary);
   background: var(--bg-elevated);
+}
+
+/* Keep icons in buttons aligned and prevent shrink */
+.btn-primary svg,
+.btn-secondary svg,
+.btn-ghost svg,
+.btn-text-action svg {
+  flex-shrink: 0;
 }
 
 /* ========== STATUS BADGES ========== */
@@ -430,6 +447,10 @@ h4 { font-size: 16px; }
   overflow-y: auto;
 }
 
+.modal-content.modal-sm {
+  max-width: 380px;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -498,7 +519,7 @@ h4 { font-size: 16px; }
   border-radius: var(--border-radius-lg);
 }
 
-.empty-state svg {
+.empty-state > svg {
   margin-bottom: 16px;
   opacity: 0.5;
 }

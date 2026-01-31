@@ -4,6 +4,13 @@ const AuthContext = createContext()
 
 const getApiUrl = () => import.meta.env.VITE_API_URL || ''
 
+/** When on Vite dev server (port 5173), use relative URL so proxy is used and auth cookie works. */
+function getEffectiveApiBase() {
+  if (typeof window === 'undefined') return getApiUrl()
+  if (window.location.port === '5173') return ''
+  return getApiUrl()
+}
+
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {
@@ -18,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(true)
 
   const fetchWithAuth = useCallback((url, options = {}) => {
-    return fetch(`${getApiUrl()}${url}`, {
+    return fetch(`${getEffectiveApiBase()}${url}`, {
       ...options,
       credentials: 'include',
       headers: {

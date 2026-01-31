@@ -1,23 +1,49 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
-import { Plus, Edit2, Trash2, X, Calculator, TrendingUp, Award, Target } from 'lucide-react'
+import { useSemester } from '../context/SemesterContext'
+import { Plus, Edit2, Trash2, X, Calculator, TrendingUp, Award, Target, Settings2 } from 'lucide-react'
+import PropertyFormFields from '../components/PropertyFormFields'
+import PropertyManager from '../components/PropertyManager'
 import './GPA.css'
 
 const GPA = () => {
-  const { grades, addGrade, updateGrade, deleteGrade, courses, getCourseById } = useData()
+  const {
+    grades,
+    addGrade,
+    updateGrade,
+    deleteGrade,
+    courses,
+    getCourseById,
+    getCourseDisplayName,
+    getCourseProperty,
+    getSemesterById,
+    getPropertyDefinitions,
+    addPropertyDefinition,
+    deletePropertyDefinition
+  } = useData()
+  const { selectedSemesterId, isViewingAll } = useSemester()
+
+  const selectedSemester = selectedSemesterId ? getSemesterById(selectedSemesterId) : null
+  const gradesInScope = isViewingAll
+    ? grades
+    : grades.filter((g) => selectedSemester && g.semester === selectedSemester.name)
   const [showModal, setShowModal] = useState(false)
+  const [showPropertyManager, setShowPropertyManager] = useState(false)
   const [editingGrade, setEditingGrade] = useState(null)
   const [formData, setFormData] = useState({
     courseId: '',
     grade: '',
     credits: '',
-    semester: ''
+    semester: '',
+    properties: {}
   })
 
   const gradePoints = {
     'S': 10.0, 'A': 9.0, 'B': 8.0, 'C': 7.0,
     'D': 6.0, 'E': 5.0
   }
+
+  const gradeDefs = getPropertyDefinitions('grades')
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -31,7 +57,7 @@ const GPA = () => {
   }
 
   const resetForm = () => {
-    setFormData({ courseId: '', grade: '', credits: '', semester: '' })
+    setFormData({ courseId: '', grade: '', credits: '', semester: '', properties: {} })
     setEditingGrade(null)
   }
 
@@ -41,7 +67,8 @@ const GPA = () => {
       courseId: grade.courseId || '',
       grade: grade.grade || '',
       credits: grade.credits || '',
-      semester: grade.semester || ''
+      semester: grade.semester || '',
+      properties: { ...(grade.properties || {}) }
     })
     setShowModal(true)
   }
@@ -81,8 +108,34 @@ const GPA = () => {
     return { cgpa: cgpa.toFixed(2), semesters: semesters.length }
   }
 
-  const { gpa, totalCredits, totalPoints } = calculateGPA()
-  const { cgpa, semesters } = calculateCGPA()
+  const gradeListForStats = isViewingAll ? grades : gradesInScope
+  const { gpa, totalCredits, totalPoints } = (() => {
+    if (gradeListForStats.length === 0) return { gpa: 0, totalCredits: 0, totalPoints: 0 }
+    let totalPoints = 0
+    let totalCredits = 0
+    gradeListForStats.forEach((grade) => {
+      const points = gradePoints[grade.grade] || 0
+      const credits = parseFloat(grade.credits) || 0
+      totalPoints += points * credits
+      totalCredits += credits
+    })
+    const gpa = totalCredits > 0 ? totalPoints / totalCredits : 0
+    return { gpa: gpa.toFixed(2), totalCredits, totalPoints: totalPoints.toFixed(1) }
+  })()
+  const { cgpa, semesters: semCount } = (() => {
+    const semesters = [...new Set(grades.map((g) => g.semester).filter(Boolean))]
+    if (semesters.length === 0) return { cgpa: 0, semesters: 0 }
+    let totalPoints = 0
+    let totalCredits = 0
+    grades.forEach((grade) => {
+      const points = gradePoints[grade.grade] || 0
+      const credits = parseFloat(grade.credits) || 0
+      totalPoints += points * credits
+      totalCredits += credits
+    })
+    const cgpa = totalCredits > 0 ? totalPoints / totalCredits : 0
+    return { cgpa: cgpa.toFixed(2), semesters: semesters.length }
+  })()
 
   const getGradeColor = (grade) => {
     if (['S'].includes(grade)) return '#10b981'
@@ -99,7 +152,7 @@ const GPA = () => {
   }
 
   // Group grades by semester
-  const gradesBySemester = grades.reduce((acc, grade) => {
+  const gradesBySemester = gradesInScope.reduce((acc, grade) => {
     const sem = grade.semester || 'Unassigned'
     if (!acc[sem]) acc[sem] = []
     acc[sem].push(grade)
@@ -114,7 +167,10 @@ const GPA = () => {
           <p className="subtitle">Track your academic performance</p>
         </div>
         <div className="header-actions">
-          <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true) }}>
+          <button type="button" className="btn-secondary" onClick={() => setShowPropertyManager(true)}>
+            <Settings2 size={18} /> Properties
+          </button>
+          <button type="button" className="btn-primary" onClick={() => { resetForm(); setShowModal(true) }}>
             <Plus size={18} />
             Add Grade
           </button>
@@ -133,14 +189,14 @@ const GPA = () => {
                   fill="none" 
                   stroke="#3b82f6" 
                   strokeWidth="8"
-                  strokeDasharray={`${(parseFloat(cgpa) / 10) * 283} 283`}
+                  strokeDasharray={`${(parseFloat(isViewingAll ? cgpa : gpa) / 10) * 283} 283`}
                   strokeLinecap="round"
                   transform="rotate(-90 50 50)"
                 />
               </svg>
               <div className="stat-ring-value">
-                <span className="big-value">{cgpa}</span>
-                <span className="label">CGPA</span>
+                <span className="big-value">{isViewingAll ? cgpa : gpa}</span>
+                <span className="label">{isViewingAll ? 'CGPA' : 'Semester GPA'}</span>
               </div>
             </div>
           </div>
@@ -152,9 +208,9 @@ const GPA = () => {
             <TrendingUp size={22} />
           </div>
           <div className="stat-info">
-            <span className="stat-label">Current GPA</span>
+            <span className="stat-label">{isViewingAll ? 'Current GPA' : 'This semester'}</span>
             <span className="stat-number">{gpa}</span>
-            <span className="stat-sub">This semester</span>
+            <span className="stat-sub">{gradeListForStats.length} grades</span>
           </div>
         </div>
 
@@ -165,7 +221,7 @@ const GPA = () => {
           <div className="stat-info">
             <span className="stat-label">Total Credits</span>
             <span className="stat-number">{totalCredits}</span>
-            <span className="stat-sub">Across {semesters} semesters</span>
+            <span className="stat-sub">{isViewingAll ? `Across ${semCount} semesters` : 'This semester'}</span>
           </div>
         </div>
 
@@ -207,8 +263,8 @@ const GPA = () => {
                     {grade.grade}
                 </div>
                       <div className="grade-info">
-                        <span className="grade-code">{course?.courseCode || 'N/A'}</span>
-                        <span className="grade-course">{course?.courseName || 'Unknown Course'}</span>
+                        <span className="grade-code">{course ? getCourseProperty(course, 'Course Code') || 'N/A' : 'N/A'}</span>
+                        <span className="grade-course">{course ? getCourseDisplayName(course) : 'Unknown Course'}</span>
                         <span className="grade-credits">{grade.credits} Credits</span>
                 </div>
                       <div className="grade-actions">
@@ -238,12 +294,23 @@ const GPA = () => {
       </div>
 
       {/* Modal */}
+      {showPropertyManager && (
+        <PropertyManager
+          entityType="grades"
+          entityLabel="Grades"
+          definitions={gradeDefs}
+          onAdd={addPropertyDefinition}
+          onDelete={deletePropertyDefinition}
+          onClose={() => setShowPropertyManager(false)}
+        />
+      )}
+
       {showModal && (
         <div className="modal-overlay" onClick={() => { setShowModal(false); resetForm() }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingGrade ? 'Edit Grade' : 'Add New Grade'}</h2>
-              <button className="icon-btn" onClick={() => { setShowModal(false); resetForm() }}>
+              <button type="button" className="icon-btn" onClick={() => { setShowModal(false); resetForm() }}>
                 <X size={20} />
               </button>
             </div>
@@ -258,7 +325,7 @@ const GPA = () => {
                   <option value="">Select a course</option>
                   {courses.map(course => (
                     <option key={course.id} value={course.id}>
-                      {course.courseCode} - {course.courseName}
+                      {getCourseProperty(course, 'Course Code')} - {getCourseDisplayName(course)}
                     </option>
                   ))}
                 </select>
@@ -299,6 +366,12 @@ const GPA = () => {
                   placeholder="e.g., Fall 2025"
                 />
               </div>
+              <PropertyFormFields
+                entityType="grades"
+                definitions={gradeDefs}
+                values={formData.properties}
+                onChange={(properties) => setFormData({ ...formData, properties })}
+              />
               <div className="modal-actions">
                 <button type="button" className="btn-secondary" onClick={() => { setShowModal(false); resetForm() }}>
                   Cancel

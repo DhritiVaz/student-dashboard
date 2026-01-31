@@ -6,9 +6,14 @@ import {
   Brain,
   Calculator,
   Folder,
-  PanelLeft
+  PanelLeft,
+  Calendar,
+  Layers,
+  CalendarRange
 } from 'lucide-react'
 import { useState } from 'react'
+import { useData } from '../context/DataContext'
+import { useSemester } from '../context/SemesterContext'
 import './Layout.css'
 import TopBar from './TopBar'
 import PageTransition from './PageTransition'
@@ -16,10 +21,13 @@ import PageTransition from './PageTransition'
 const Layout = ({ children }) => {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const { semesters } = useData()
+  const { selectedSemesterId, setSelectedSemesterId, isViewingAll } = useSemester()
 
   const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard', color: 'blue' },
     { path: '/courses', icon: BookOpen, label: 'Courses', color: 'purple' },
+    { path: '/calendar', icon: Calendar, label: 'Calendar', color: 'orange' },
     { path: '/timetable', icon: Clock, label: 'Timetable', color: 'cyan' },
     { path: '/mindspace', icon: Brain, label: 'Notes', color: 'pink' },
     { path: '/gpa', icon: Calculator, label: 'CGPA', color: 'green' },
@@ -45,6 +53,41 @@ const Layout = ({ children }) => {
 
         {/* Navigation */}
         <nav className="sidebar-nav">
+          <div className="nav-section">
+            <span className="nav-section-label">Viewing</span>
+            <button
+              type="button"
+              className={`nav-item semester-nav-item ${isViewingAll ? 'active' : ''}`}
+              data-color="blue"
+              onClick={() => setSelectedSemesterId(null)}
+              style={{ animationDelay: '0ms' }}
+            >
+              <div className="nav-icon-wrapper">
+                <Layers size={20} />
+              </div>
+              <span className="nav-label">All</span>
+              {isViewingAll && <div className="nav-indicator" />}
+            </button>
+            {semesters.map((sem, idx) => {
+              const isActive = selectedSemesterId === sem.id
+              return (
+                <button
+                  key={sem.id}
+                  type="button"
+                  className={`nav-item semester-nav-item ${isActive ? 'active' : ''}`}
+                  data-color="purple"
+                  onClick={() => setSelectedSemesterId(sem.id)}
+                  style={{ animationDelay: `${(idx + 1) * 50}ms` }}
+                >
+                  <div className="nav-icon-wrapper">
+                    <CalendarRange size={20} />
+                  </div>
+                  <span className="nav-label">{sem.name}</span>
+                  {isActive && <div className="nav-indicator" />}
+                </button>
+              )
+            })}
+          </div>
           <div className="nav-section">
             <span className="nav-section-label">Menu</span>
             {navItems.map((item, index) => {

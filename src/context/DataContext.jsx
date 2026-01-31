@@ -3,6 +3,19 @@ import { useAuth } from './AuthContext'
 
 const DataContext = createContext()
 const getApiUrl = () => import.meta.env.VITE_API_URL || ''
+
+/** When served from Vite dev server (port 5173), use relative /api so the proxy is used and the auth cookie is sent. */
+function getEffectiveApiBase() {
+  if (typeof window === 'undefined') return getApiUrl()
+  if (window.location.port === '5173') return ''
+  return getApiUrl()
+}
+
+function getDataApiUrl() {
+  const base = getEffectiveApiBase()
+  return base ? `${base}/api/data` : '/api/data'
+}
+
 const DEMO_EMAIL = 'demo@university.edu'
 
 const emptyTimetable = {
@@ -17,128 +30,44 @@ export const useData = () => {
   return context
 }
 
-// Comprehensive placeholder data
+// Default semesters and property definitions for demo
+const defaultSemesters = [
+  { id: 's1', name: 'Fall 2025', order: 0 }
+]
+
+const defaultPropertyDefinitions = {
+  courses: [
+    { id: 'pc1', name: 'Course Code', type: 'text', order: 0 },
+    { id: 'pc2', name: 'Course Name', type: 'text', order: 1 },
+    { id: 'pc3', name: 'Venue', type: 'text', order: 2 },
+    { id: 'pc4', name: 'Faculty', type: 'text', order: 3 },
+    { id: 'pc5', name: 'Credits', type: 'text', order: 4 }
+  ],
+  calendar_events: [],
+  mind_space_items: [],
+  files: [],
+  grades: []
+}
+
+// Comprehensive placeholder data (new shape: name, semesterId, properties)
 const defaultCourses = [
   {
     id: '1',
-    courseCode: 'CS301',
-    courseName: 'Data Structures & Algorithms',
-    venue: 'ROOM-A101',
-    faculty: 'Dr. Sarah Chen',
-    classNumber: 'CH101',
-    credits: '4',
-    description: 'Advanced data structures including trees, graphs, and algorithm analysis',
+    name: 'Data Structures & Algorithms',
+    semesterId: 's1',
+    properties: { 'Course Code': 'CS301', 'Venue': 'ROOM-A101', 'Faculty': 'Dr. Sarah Chen', 'Credits': '4' },
     progress: 78,
     color: '#3b82f6'
   },
-  {
-    id: '2',
-    courseCode: 'CS302',
-    courseName: 'Database Management Systems',
-    venue: 'LAB-B205',
-    faculty: 'Prof. Michael Ross',
-    classNumber: 'CH102',
-    credits: '3',
-    description: 'Relational databases, SQL, and NoSQL systems',
-    progress: 65,
-    color: '#a855f7'
-  },
-  {
-    id: '3',
-    courseCode: 'CS303',
-    courseName: 'Operating Systems',
-    venue: 'ROOM-C301',
-    faculty: 'Dr. Emily Wang',
-    classNumber: 'CH103',
-    credits: '4',
-    description: 'Process management, memory systems, and file systems',
-    progress: 52,
-    color: '#06b6d4'
-  },
-  {
-    id: '4',
-    courseCode: 'CS304',
-    courseName: 'Computer Networks',
-    venue: 'LAB-D102',
-    faculty: 'Prof. James Miller',
-    classNumber: 'CH104',
-    credits: '3',
-    description: 'Network protocols, architecture, and security fundamentals',
-    progress: 41,
-    color: '#10b981'
-  },
-  {
-    id: '5',
-    courseCode: 'MA201',
-    courseName: 'Linear Algebra',
-    venue: 'ROOM-E201',
-    faculty: 'Dr. Lisa Anderson',
-    classNumber: 'CH105',
-    credits: '3',
-    description: 'Vector spaces, matrices, and linear transformations',
-    progress: 88,
-    color: '#f59e0b'
-  },
-  {
-    id: '6',
-    courseCode: 'CS305',
-    courseName: 'Machine Learning',
-    venue: 'LAB-F301',
-    faculty: 'Dr. David Park',
-    classNumber: 'CH106',
-    credits: '4',
-    description: 'Supervised and unsupervised learning algorithms',
-    progress: 35,
-    color: '#ec4899'
-  },
-  {
-    id: '7',
-    courseCode: 'CS306',
-    courseName: 'Web Development',
-    venue: 'LAB-G102',
-    faculty: 'Prof. Anna Martinez',
-    classNumber: 'CH107',
-    credits: '3',
-    description: 'Full-stack development with modern frameworks',
-    progress: 92,
-    color: '#f97316'
-  },
-  {
-    id: '8',
-    courseCode: 'CS307',
-    courseName: 'Software Engineering',
-    venue: 'ROOM-H201',
-    faculty: 'Dr. Robert Kim',
-    classNumber: 'CH108',
-    credits: '3',
-    description: 'Software development lifecycle and best practices',
-    progress: 70,
-    color: '#84cc16'
-  },
-  {
-    id: '9',
-    courseCode: 'MA202',
-    courseName: 'Probability & Statistics',
-    venue: 'ROOM-E202',
-    faculty: 'Dr. Jennifer White',
-    classNumber: 'CH109',
-    credits: '3',
-    description: 'Statistical methods and probability theory',
-    progress: 55,
-    color: '#14b8a6'
-  },
-  {
-    id: '10',
-    courseCode: 'CS308',
-    courseName: 'Artificial Intelligence',
-    venue: 'LAB-F302',
-    faculty: 'Prof. Kevin Zhang',
-    classNumber: 'CH110',
-    credits: '4',
-    description: 'AI fundamentals, search algorithms, and neural networks',
-    progress: 28,
-    color: '#8b5cf6'
-  }
+  { id: '2', name: 'Database Management Systems', semesterId: 's1', properties: { 'Course Code': 'CS302', 'Venue': 'LAB-B205', 'Faculty': 'Prof. Michael Ross', 'Credits': '3' }, progress: 65, color: '#a855f7' },
+  { id: '3', name: 'Operating Systems', semesterId: 's1', properties: { 'Course Code': 'CS303', 'Venue': 'ROOM-C301', 'Faculty': 'Dr. Emily Wang', 'Credits': '4' }, progress: 52, color: '#06b6d4' },
+  { id: '4', name: 'Computer Networks', semesterId: 's1', properties: { 'Course Code': 'CS304', 'Venue': 'LAB-D102', 'Faculty': 'Prof. James Miller', 'Credits': '3' }, progress: 41, color: '#10b981' },
+  { id: '5', name: 'Linear Algebra', semesterId: 's1', properties: { 'Course Code': 'MA201', 'Venue': 'ROOM-E201', 'Faculty': 'Dr. Lisa Anderson', 'Credits': '3' }, progress: 88, color: '#f59e0b' },
+  { id: '6', name: 'Machine Learning', semesterId: 's1', properties: { 'Course Code': 'CS305', 'Venue': 'LAB-F301', 'Faculty': 'Dr. David Park', 'Credits': '4' }, progress: 35, color: '#ec4899' },
+  { id: '7', name: 'Web Development', semesterId: 's1', properties: { 'Course Code': 'CS306', 'Venue': 'LAB-G102', 'Faculty': 'Prof. Anna Martinez', 'Credits': '3' }, progress: 92, color: '#f97316' },
+  { id: '8', name: 'Software Engineering', semesterId: 's1', properties: { 'Course Code': 'CS307', 'Venue': 'ROOM-H201', 'Faculty': 'Dr. Robert Kim', 'Credits': '3' }, progress: 70, color: '#84cc16' },
+  { id: '9', name: 'Probability & Statistics', semesterId: 's1', properties: { 'Course Code': 'MA202', 'Venue': 'ROOM-E202', 'Faculty': 'Dr. Jennifer White', 'Credits': '3' }, progress: 55, color: '#14b8a6' },
+  { id: '10', name: 'Artificial Intelligence', semesterId: 's1', properties: { 'Course Code': 'CS308', 'Venue': 'LAB-F302', 'Faculty': 'Prof. Kevin Zhang', 'Credits': '4' }, progress: 28, color: '#8b5cf6' }
 ]
 
 const defaultTimetable = {
@@ -590,13 +519,14 @@ function getDataKey(user) {
   return user.email?.toLowerCase() === DEMO_EMAIL ? 'demo' : user.id
 }
 
-const SAVE_DEBOUNCE_MS = 800
+const SAVE_DEBOUNCE_MS = 250
 
 export const DataProvider = ({ children }) => {
   const { user } = useAuth()
   const dataKey = getDataKey(user)
   const skipSaveRef = useRef(false)
   const saveTimeoutRef = useRef(null)
+  const latestPayloadRef = useRef(null)
 
   const [courses, setCourses] = useState([])
   const [calendarEvents, setCalendarEvents] = useState([])
@@ -604,7 +534,35 @@ export const DataProvider = ({ children }) => {
   const [timetable, setTimetable] = useState(emptyTimetable)
   const [files, setFiles] = useState([])
   const [grades, setGrades] = useState([])
+  const [semesters, setSemesters] = useState([])
+  const [propertyDefinitions, setPropertyDefinitions] = useState({})
   const [dataLoading, setDataLoading] = useState(false)
+
+  const saveToBackend = (payload) => {
+    const body = payload ?? latestPayloadRef.current ?? {
+      courses,
+      calendarEvents,
+      mindSpaceItems,
+      timetable,
+      files,
+      grades,
+      semesters,
+      propertyDefinitions
+    }
+    if (!body) return
+    fetch(getDataApiUrl(), {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+      .then((res) => {
+        if (!res.ok) {
+          console.warn('[Data] Save failed:', res.status, '- data may not persist after reload. Ensure backend is running and you are logged in.')
+        }
+      })
+      .catch((err) => console.error('[Data] Save error:', err))
+  }
 
   // Load data from backend when user (dataKey) changes
   useEffect(() => {
@@ -615,13 +573,21 @@ export const DataProvider = ({ children }) => {
       setTimetable(emptyTimetable)
       setFiles([])
       setGrades([])
+      setSemesters([])
+      setPropertyDefinitions({})
       setDataLoading(false)
       return
     }
     let cancelled = false
     setDataLoading(true)
-    fetch(`${getApiUrl()}/api/data`, { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('Failed to load'))))
+    fetch(getDataApiUrl(), { credentials: 'include' })
+      .then((res) => {
+        if (!res.ok) {
+          console.warn('[Data] Load failed:', res.status, res.statusText, '- ensure backend is running and you are logged in (use app from same origin as dev server)')
+          return Promise.reject(new Error(`Load failed: ${res.status}`))
+        }
+        return res.json()
+      })
       .then((data) => {
         if (cancelled) return
         const isDemo = dataKey === 'demo'
@@ -633,8 +599,10 @@ export const DataProvider = ({ children }) => {
           setTimetable(defaultTimetable)
           setFiles(defaultFiles)
           setGrades(defaultGrades)
+          setSemesters(defaultSemesters)
+          setPropertyDefinitions(defaultPropertyDefinitions)
           skipSaveRef.current = true
-          fetch(`${getApiUrl()}/api/data`, {
+          fetch(getDataApiUrl(), {
             method: 'PUT',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -644,7 +612,9 @@ export const DataProvider = ({ children }) => {
               mindSpaceItems: defaultMindSpaceItems,
               timetable: defaultTimetable,
               files: defaultFiles,
-              grades: defaultGrades
+              grades: defaultGrades,
+              semesters: defaultSemesters,
+              propertyDefinitions: defaultPropertyDefinitions
             })
           }).catch(() => {})
         } else {
@@ -654,6 +624,8 @@ export const DataProvider = ({ children }) => {
           setTimetable(data.timetable && Object.keys(data.timetable).length ? data.timetable : emptyTimetable)
           setFiles(data.files ?? [])
           setGrades(data.grades ?? [])
+          setSemesters(data.semesters ?? [])
+          setPropertyDefinitions(data.propertyDefinitions ?? {})
           skipSaveRef.current = true
         }
       })
@@ -665,6 +637,8 @@ export const DataProvider = ({ children }) => {
           setTimetable(emptyTimetable)
           setFiles([])
           setGrades([])
+          setSemesters([])
+          setPropertyDefinitions({})
         }
       })
       .finally(() => {
@@ -672,6 +646,20 @@ export const DataProvider = ({ children }) => {
       })
     return () => { cancelled = true }
   }, [dataKey])
+
+  // Keep latest payload ref updated for unload save
+  useEffect(() => {
+    latestPayloadRef.current = {
+      courses,
+      calendarEvents,
+      mindSpaceItems,
+      timetable,
+      files,
+      grades,
+      semesters,
+      propertyDefinitions
+    }
+  }, [courses, calendarEvents, mindSpaceItems, timetable, files, grades, semesters, propertyDefinitions])
 
   // Debounced save to backend when data changes
   useEffect(() => {
@@ -683,31 +671,48 @@ export const DataProvider = ({ children }) => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     saveTimeoutRef.current = setTimeout(() => {
       saveTimeoutRef.current = null
-      fetch(`${getApiUrl()}/api/data`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          courses,
-          calendarEvents,
-          mindSpaceItems,
-          timetable,
-          files,
-          grades
-        })
-      }).catch(() => {})
+      saveToBackend(latestPayloadRef.current)
     }, SAVE_DEBOUNCE_MS)
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
-  }, [dataKey, courses, calendarEvents, mindSpaceItems, timetable, files, grades])
+  }, [dataKey, courses, calendarEvents, mindSpaceItems, timetable, files, grades, semesters, propertyDefinitions])
+
+  // Save immediately when user leaves tab or refreshes so data isn't lost
+  useEffect(() => {
+    if (!dataKey) return
+    const apiUrl = getDataApiUrl()
+    const flushSave = () => {
+      const payload = latestPayloadRef.current
+      if (payload) {
+        fetch(apiUrl, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          keepalive: true
+        }).catch(() => {})
+      }
+    }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushSave()
+    }
+    window.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('pagehide', flushSave)
+    return () => {
+      window.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('pagehide', flushSave)
+    }
+  }, [dataKey])
 
   const addCourse = (course) => {
     const newCourse = {
       id: Date.now().toString(),
-      ...course,
-      progress: 0,
-      color: ['#3b82f6', '#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ec4899'][Math.floor(Math.random() * 6)],
+      name: course.name ?? '',
+      semesterId: course.semesterId ?? null,
+      properties: course.properties ?? {},
+      progress: course.progress ?? 0,
+      color: course.color ?? ['#3b82f6', '#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ec4899'][Math.floor(Math.random() * 6)],
       createdAt: new Date().toISOString()
     }
     setCourses([...courses, newCourse])
@@ -733,7 +738,14 @@ export const DataProvider = ({ children }) => {
   const addCalendarEvent = (event) => {
     const newEvent = {
       id: Date.now().toString(),
-      ...event,
+      title: event.title ?? '',
+      date: event.date ?? '',
+      time: event.time ?? '',
+      type: event.type ?? 'other',
+      courseId: event.courseId ?? '',
+      semesterId: event.semesterId ?? null,
+      description: event.description ?? '',
+      properties: event.properties ?? {},
       createdAt: new Date().toISOString()
     }
     setCalendarEvents([...calendarEvents, newEvent])
@@ -741,7 +753,9 @@ export const DataProvider = ({ children }) => {
   }
 
   const updateCalendarEvent = (id, updates) => {
-    setCalendarEvents(calendarEvents.map(e => e.id === id ? { ...e, ...updates } : e))
+    setCalendarEvents(calendarEvents.map(e =>
+      e.id === id ? { ...e, ...updates, semesterId: updates.semesterId ?? e.semesterId } : e
+    ))
   }
 
   const deleteCalendarEvent = (id) => {
@@ -751,9 +765,14 @@ export const DataProvider = ({ children }) => {
   const addMindSpaceItem = (item) => {
     const newItem = {
       id: Date.now().toString(),
-      ...item,
+      title: item.title ?? '',
+      content: item.content ?? '',
+      type: item.type ?? 'text',
+      priority: item.priority ?? 'medium',
+      file: item.file ?? null,
+      properties: item.properties ?? {},
       createdAt: new Date().toISOString(),
-      completed: false
+      completed: item.completed ?? false
     }
     setMindSpaceItems([...mindSpaceItems, newItem])
     return newItem
@@ -774,7 +793,13 @@ export const DataProvider = ({ children }) => {
   const addFile = (file) => {
     const newFile = {
       id: Date.now().toString(),
-      ...file,
+      name: file.name ?? '',
+      courseId: file.courseId ?? null,
+      fileName: file.fileName ?? file.name,
+      fileSize: file.fileSize ?? 0,
+      fileType: file.fileType ?? '',
+      fileData: file.fileData ?? null,
+      properties: file.properties ?? {},
       uploadedAt: new Date().toISOString()
     }
     setFiles([...files, newFile])
@@ -788,7 +813,11 @@ export const DataProvider = ({ children }) => {
   const addGrade = (grade) => {
     const newGrade = {
       id: Date.now().toString(),
-      ...grade
+      courseId: grade.courseId ?? '',
+      grade: grade.grade ?? '',
+      credits: grade.credits ?? '',
+      semester: grade.semester ?? '',
+      properties: grade.properties ?? {}
     }
     setGrades([...grades, newGrade])
     return newGrade
@@ -806,6 +835,79 @@ export const DataProvider = ({ children }) => {
     return courses.find(c => c.id === id)
   }
 
+  const getCourseDisplayName = (course) => {
+    if (!course) return ''
+    return course.name ?? course.courseName ?? 'Untitled'
+  }
+
+  const getCourseProperty = (course, key) => {
+    if (!course) return ''
+    if (course.properties && typeof course.properties[key] !== 'undefined' && course.properties[key] !== '') return course.properties[key]
+    const lower = key.toLowerCase()
+    if (lower === 'course code') return course.courseCode ?? ''
+    if (lower === 'course name') return course.courseName ?? course.name ?? ''
+    if (lower === 'venue') return course.venue ?? ''
+    if (lower === 'faculty') return course.faculty ?? ''
+    if (lower === 'credits') return course.credits ?? ''
+    return ''
+  }
+
+  // Semesters CRUD
+  const addSemester = (semester) => {
+    const newSemester = {
+      id: Date.now().toString(),
+      name: semester.name ?? 'New Semester',
+      order: typeof semester.order === 'number' ? semester.order : semesters.length
+    }
+    setSemesters([...semesters, newSemester].sort((a, b) => a.order - b.order))
+    return newSemester
+  }
+
+  const updateSemester = (id, updates) => {
+    setSemesters(semesters.map(s => s.id === id ? { ...s, ...updates } : s))
+  }
+
+  const deleteSemester = (id) => {
+    setSemesters(semesters.filter(s => s.id !== id))
+    setCourses(courses.map(c => c.semesterId === id ? { ...c, semesterId: null } : c))
+  }
+
+  const getSemesterById = (id) => {
+    return semesters.find(s => s.id === id) ?? null
+  }
+
+  // Property definitions CRUD (per entity type: courses, calendar_events, mind_space_items, files, grades)
+  const ENTITY_TYPES = ['courses', 'calendar_events', 'mind_space_items', 'files', 'grades']
+
+  const getPropertyDefinitions = (entityType) => {
+    const list = propertyDefinitions[entityType]
+    return Array.isArray(list) ? [...list].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)) : []
+  }
+
+  const addPropertyDefinition = (entityType, def) => {
+    const list = getPropertyDefinitions(entityType)
+    const newDef = {
+      id: Date.now().toString(),
+      name: def.name ?? 'New Property',
+      type: def.type ?? 'text',
+      order: typeof def.order === 'number' ? def.order : list.length
+    }
+    const next = { ...propertyDefinitions, [entityType]: [...list, newDef] }
+    setPropertyDefinitions(next)
+    return newDef
+  }
+
+  const updatePropertyDefinition = (entityType, id, updates) => {
+    const list = propertyDefinitions[entityType] ?? []
+    const updated = list.map(d => d.id === id ? { ...d, ...updates } : d)
+    setPropertyDefinitions({ ...propertyDefinitions, [entityType]: updated })
+  }
+
+  const deletePropertyDefinition = (entityType, id) => {
+    const list = (propertyDefinitions[entityType] ?? []).filter(d => d.id !== id)
+    setPropertyDefinitions({ ...propertyDefinitions, [entityType]: list })
+  }
+
   // Reset current user's data to defaults (demo = placeholder, others = empty) and save to backend
   const resetToDefaults = () => {
     if (!dataKey) return
@@ -816,14 +918,18 @@ export const DataProvider = ({ children }) => {
     const newTimetable = isDemo ? defaultTimetable : emptyTimetable
     const newFiles = isDemo ? defaultFiles : []
     const newGrades = isDemo ? defaultGrades : []
+    const newSemesters = isDemo ? defaultSemesters : []
+    const newPropDefs = isDemo ? defaultPropertyDefinitions : {}
     setCourses(newCourses)
     setCalendarEvents(newEvents)
     setMindSpaceItems(newMind)
     setTimetable(newTimetable)
     setFiles(newFiles)
     setGrades(newGrades)
+    setSemesters(newSemesters)
+    setPropertyDefinitions(newPropDefs)
     skipSaveRef.current = true
-    fetch(`${getApiUrl()}/api/data`, {
+    fetch(getDataApiUrl(), {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -833,7 +939,9 @@ export const DataProvider = ({ children }) => {
         mindSpaceItems: newMind,
         timetable: newTimetable,
         files: newFiles,
-        grades: newGrades
+        grades: newGrades,
+        semesters: newSemesters,
+        propertyDefinitions: newPropDefs
       })
     }).catch(() => {})
   }
@@ -845,6 +953,8 @@ export const DataProvider = ({ children }) => {
     timetable,
     files,
     grades,
+    semesters,
+    propertyDefinitions,
     dataLoading,
     addCourse,
     updateCourse,
@@ -862,6 +972,17 @@ export const DataProvider = ({ children }) => {
     updateGrade,
     deleteGrade,
     getCourseById,
+    getCourseDisplayName,
+    getCourseProperty,
+    addSemester,
+    updateSemester,
+    deleteSemester,
+    getSemesterById,
+    getPropertyDefinitions,
+    addPropertyDefinition,
+    updatePropertyDefinition,
+    deletePropertyDefinition,
+    ENTITY_TYPES,
     resetToDefaults
   }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { DataProvider } from './context/DataContext'
+import { SemesterProvider } from './context/SemesterContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Layout from './components/Layout'
@@ -46,8 +47,9 @@ function AppContent() {
 
   return (
     <Router>
-      <Layout>
-        <Routes>
+      <SemesterProvider>
+        <Layout>
+          <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/calendar" element={<Calendar />} />
@@ -58,7 +60,8 @@ function AppContent() {
           <Route path="/tasks" element={<Dashboard />} />
           <Route path="/notes" element={<MindSpace />} />
         </Routes>
-      </Layout>
+        </Layout>
+      </SemesterProvider>
     </Router>
   )
 }

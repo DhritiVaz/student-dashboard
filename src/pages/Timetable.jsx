@@ -1,10 +1,18 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
+import { useSemester } from '../context/SemesterContext'
 import { Plus, Edit2, Trash2, X, Clock, MapPin, Calendar, List, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react'
 import './Timetable.css'
 
 const Timetable = () => {
-  const { timetable, updateTimetable, courses, getCourseById } = useData()
+  const { timetable, updateTimetable, courses, getCourseById, getCourseDisplayName, getCourseProperty } = useData()
+  const { selectedSemesterId, isViewingAll } = useSemester()
+
+  const courseIdsInScope = isViewingAll
+    ? null
+    : new Set(courses.filter((c) => c.semesterId === selectedSemesterId).map((c) => c.id))
+  const filterBySemester = (dayPeriods) =>
+    isViewingAll ? dayPeriods : (dayPeriods || []).filter((p) => courseIdsInScope && courseIdsInScope.has(p.courseId))
   const [viewMode, setViewMode] = useState('day')
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -35,7 +43,7 @@ const Timetable = () => {
     e.preventDefault()
     const dayPeriods = [...(timetable[formData.day] || [])]
     const course = getCourseById(formData.courseId)
-    const finalVenue = formData.venue || (course ? course.venue : '')
+    const finalVenue = formData.venue || (course ? getCourseProperty(course, 'Venue') : '')
 
     if (editingId !== null) {
       const index = dayPeriods.findIndex(p => p.period === editingId)
@@ -87,7 +95,7 @@ const Timetable = () => {
         courseId: periodData.courseId || '',
         startTime: periodData.startTime || '',
         endTime: periodData.endTime || '',
-        venue: periodData.venue || (course ? course.venue : '')
+        venue: periodData.venue || (course ? getCourseProperty(course, 'Venue') : '')
       })
       setShowModal(true)
     }
@@ -102,7 +110,7 @@ const Timetable = () => {
   }
 
   const getDayClasses = (dayKey) => {
-    const classes = timetable[dayKey] || []
+    const classes = filterBySemester(timetable[dayKey] || [])
     return [...classes].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
   }
 
@@ -162,7 +170,7 @@ const Timetable = () => {
                     </div>
                     <div className="class-content">
                       <div className="class-header">
-                        <span className="class-code" style={{ color: course.color }}>{course.courseCode}</span>
+                        <span className="class-code" style={{ color: course.color }}>{getCourseProperty(course, 'Course Code') || '—'}</span>
                         <div className="class-actions">
                           <button onClick={() => handleEdit(activeDay, item.period)}>
                             <Edit2 size={14} />
@@ -172,11 +180,11 @@ const Timetable = () => {
                           </button>
                         </div>
                   </div>
-                    <h3 className="class-name">{course.courseName}</h3>
+                    <h3 className="class-name">{getCourseDisplayName(course)}</h3>
                       <div className="class-meta">
                         <span className="meta-item">
                           <MapPin size={14} />
-                          {item.venue || course.venue || 'TBA'}
+                          {item.venue || getCourseProperty(course, 'Venue') || 'TBA'}
                         </span>
                       </div>
                   </div>
@@ -212,7 +220,7 @@ const Timetable = () => {
 
   // Find class for a specific day and time slot
   const getClassForSlot = (dayKey, slot) => {
-    const dayClasses = timetable[dayKey] || []
+    const dayClasses = filterBySemester(timetable[dayKey] || [])
     return dayClasses.find(cls => {
       const clsStart = cls.startTime
       return clsStart >= slot.start && clsStart < slot.end
@@ -265,10 +273,10 @@ const Timetable = () => {
                             onClick={() => handleEdit(day.key, classItem.period)}
                           >
                             <span className="slot-course-name" style={{ color: course.color }}>
-                              {course.courseName}
+                              {getCourseDisplayName(course)}
                             </span>
                             <span className="slot-details">
-                              {course.courseCode} • {classItem.venue || course.venue}
+                              {getCourseProperty(course, 'Course Code')} • {classItem.venue || getCourseProperty(course, 'Venue')}
                             </span>
                           </div>
                         </td>
@@ -291,7 +299,7 @@ const Timetable = () => {
   }
 
   const renderListView = () => {
-    const allDaysWithClasses = days.filter(d => (timetable[d.key] || []).length > 0)
+    const allDaysWithClasses = days.filter(d => filterBySemester(timetable[d.key] || []).length > 0)
 
     return (
       <div className="view-container list-view fade-in">
@@ -312,8 +320,8 @@ const Timetable = () => {
                       <div className="list-time">{item.startTime} - {item.endTime}</div>
                       <div className="list-color" style={{ background: course.color }}></div>
                       <div className="list-info">
-                        <span className="list-name">{course.courseName}</span>
-                        <span className="list-venue">{item.venue || course.venue}</span>
+                        <span className="list-name">{getCourseDisplayName(course)}</span>
+                        <span className="list-venue">{item.venue || getCourseProperty(course, 'Venue')}</span>
                       </div>
                       <button className="list-edit" onClick={() => handleEdit(day.key, item.period)}>
                         <Edit2 size={14} />
@@ -421,15 +429,15 @@ const Timetable = () => {
                     setFormData({
                       ...formData,
                       courseId: e.target.value,
-                      venue: c ? c.venue : ''
+                      venue: c ? getCourseProperty(c, 'Venue') : ''
                     })
                   }}
                   required
                 >
                   <option value="">Select a course</option>
-                  {courses.map(course => (
+                  {(isViewingAll ? courses : courses.filter(c => c.semesterId === selectedSemesterId)).map(course => (
                     <option key={course.id} value={course.id}>
-                      {course.courseCode} - {course.courseName}
+                      {getCourseProperty(course, 'Course Code')} - {getCourseDisplayName(course)}
                     </option>
                   ))}
                 </select>

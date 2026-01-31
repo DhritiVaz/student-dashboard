@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
-import { Plus, Edit2, Trash2, X, Check, FileText, Upload, Brain, CheckCircle2 } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Check, FileText, Upload, Brain, CheckCircle2, Settings2 } from 'lucide-react'
+import PropertyFormFields from '../components/PropertyFormFields'
+import PropertyManager from '../components/PropertyManager'
 import './MindSpace.css'
 
 const MindSpace = () => {
@@ -8,17 +10,24 @@ const MindSpace = () => {
     mindSpaceItems,
     addMindSpaceItem,
     updateMindSpaceItem,
-    deleteMindSpaceItem
+    deleteMindSpaceItem,
+    getPropertyDefinitions,
+    addPropertyDefinition,
+    deletePropertyDefinition
   } = useData()
   const [showModal, setShowModal] = useState(false)
+  const [showPropertyManager, setShowPropertyManager] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     type: 'text',
     priority: 'medium',
-    file: null
+    file: null,
+    properties: {}
   })
+
+  const noteDefs = getPropertyDefinitions('mind_space_items')
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -37,7 +46,8 @@ const MindSpace = () => {
       content: '',
       type: 'text',
       priority: 'medium',
-      file: null
+      file: null,
+      properties: {}
     })
     setEditingItem(null)
   }
@@ -49,7 +59,8 @@ const MindSpace = () => {
       content: item.content || '',
       type: item.type || 'text',
       priority: item.priority || 'medium',
-      file: item.file || null
+      file: item.file || null,
+      properties: { ...(item.properties || {}) }
     })
     setShowModal(true)
   }
@@ -104,7 +115,11 @@ const MindSpace = () => {
           <p className="subtitle">{incompleteItems.length} active • {completedItems.length} completed</p>
         </div>
         <div className="header-actions">
+          <button type="button" className="btn-secondary" onClick={() => setShowPropertyManager(true)}>
+            <Settings2 size={18} /> Properties
+          </button>
           <button
+            type="button"
             className="btn-primary"
             onClick={() => {
               resetForm()
@@ -231,10 +246,21 @@ const MindSpace = () => {
           <Brain size={48} />
           <h3>Your mind space is empty</h3>
           <p>Add notes and tasks to organize your thoughts</p>
-          <button className="btn-primary" onClick={() => setShowModal(true)}>
+          <button type="button" className="btn-primary" onClick={() => setShowModal(true)}>
             <Plus size={18} /> Add First Note
           </button>
         </div>
+      )}
+
+      {showPropertyManager && (
+        <PropertyManager
+          entityType="mind_space_items"
+          entityLabel="Notes"
+          definitions={noteDefs}
+          onAdd={addPropertyDefinition}
+          onDelete={deletePropertyDefinition}
+          onClose={() => setShowPropertyManager(false)}
+        />
       )}
 
       {showModal && (
@@ -304,6 +330,12 @@ const MindSpace = () => {
                   </label>
                 </div>
               )}
+              <PropertyFormFields
+                entityType="mind_space_items"
+                definitions={noteDefs}
+                values={formData.properties}
+                onChange={(properties) => setFormData({ ...formData, properties })}
+              />
               <div className="modal-actions">
                 <button type="button" className="btn-secondary" onClick={() => { setShowModal(false); resetForm() }}>
                   Cancel

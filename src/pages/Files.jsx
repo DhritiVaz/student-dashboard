@@ -1,16 +1,42 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
-import { Plus, Trash2, X, Upload, FileText, Download, BookOpen, Image, Video, Music, FileSpreadsheet, File } from 'lucide-react'
+import { useSemester } from '../context/SemesterContext'
+import { Plus, Trash2, X, Upload, FileText, Download, BookOpen, Image, Video, Music, FileSpreadsheet, File, Settings2 } from 'lucide-react'
+import PropertyFormFields from '../components/PropertyFormFields'
+import PropertyManager from '../components/PropertyManager'
 import './Files.css'
 
 const Files = () => {
-  const { files, addFile, deleteFile, courses, getCourseById } = useData()
+  const {
+    files,
+    addFile,
+    deleteFile,
+    courses,
+    getCourseById,
+    getCourseDisplayName,
+    getCourseProperty,
+    getPropertyDefinitions,
+    addPropertyDefinition,
+    deletePropertyDefinition
+  } = useData()
+  const { selectedSemesterId, isViewingAll } = useSemester()
+
+  const courseIdsInScope = isViewingAll
+    ? null
+    : new Set(courses.filter((c) => c.semesterId === selectedSemesterId).map((c) => c.id))
+  const filesInScope = isViewingAll
+    ? files
+    : files.filter((f) => !f.courseId || (courseIdsInScope && courseIdsInScope.has(f.courseId)))
   const [showModal, setShowModal] = useState(false)
+  const [showPropertyManager, setShowPropertyManager] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     courseId: '',
-    file: null
+    file: null,
+    properties: {}
   })
+
+  const fileDefs = getPropertyDefinitions('files')
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -23,7 +49,8 @@ const Files = () => {
           fileName: formData.file.name,
           fileSize: formData.file.size,
           fileType: formData.file.type,
-          fileData: reader.result
+          fileData: reader.result,
+          properties: formData.properties || {}
         })
         resetForm()
         setShowModal(false)
@@ -33,7 +60,7 @@ const Files = () => {
   }
 
   const resetForm = () => {
-    setFormData({ name: '', courseId: '', file: null })
+    setFormData({ name: '', courseId: '', file: null, properties: {} })
   }
 
   const handleDelete = (id) => {
@@ -88,7 +115,7 @@ const Files = () => {
 
   const accentColors = ['#3b82f6', '#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#f97316']
 
-  const filesByCourse = files.reduce((acc, file) => {
+  const filesByCourse = filesInScope.reduce((acc, file) => {
     const courseId = file.courseId || 'uncategorized'
     if (!acc[courseId]) acc[courseId] = []
     acc[courseId].push(file)
@@ -100,10 +127,15 @@ const Files = () => {
       <div className="page-header">
         <div>
           <h1>Files</h1>
-          <p className="subtitle">{files.length} files uploaded</p>
+          <p className="subtitle">
+          {isViewingAll ? `${files.length} files` : `${filesInScope.length} files in this semester`}
+        </p>
         </div>
         <div className="header-actions">
-          <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true) }}>
+          <button type="button" className="btn-secondary" onClick={() => setShowPropertyManager(true)}>
+            <Settings2 size={18} /> Properties
+          </button>
+          <button type="button" className="btn-primary" onClick={() => { resetForm(); setShowModal(true) }}>
             <Plus size={18} />
             Upload File
           </button>
@@ -123,8 +155,8 @@ const Files = () => {
                     {course ? <BookOpen size={20} /> : <FileText size={20} />}
                     </div>
                   <div className="section-info">
-                    <h3>{course ? course.courseCode : 'Uncategorized'}</h3>
-                    <p>{course ? course.courseName : 'Files not linked to any course'}</p>
+                    <h3>{course ? getCourseProperty(course, 'Course Code') || getCourseDisplayName(course) : 'Uncategorized'}</h3>
+                    <p>{course ? getCourseDisplayName(course) : 'Files not linked to any course'}</p>
                     </div>
                   <span className="file-count" style={{ background: `${accentColor}20`, color: accentColor }}>
                     {courseFiles.length}
@@ -232,11 +264,17 @@ const Files = () => {
                   <option value="">No course selected</option>
                   {courses.map(course => (
                     <option key={course.id} value={course.id}>
-                      {course.courseCode} - {course.courseName}
+                      {getCourseProperty(course, 'Course Code')} - {getCourseDisplayName(course)}
                     </option>
                   ))}
                 </select>
               </div>
+              <PropertyFormFields
+                entityType="files"
+                definitions={fileDefs}
+                values={formData.properties}
+                onChange={(properties) => setFormData({ ...formData, properties })}
+              />
               <div className="modal-actions">
                 <button type="button" className="btn-secondary" onClick={() => { setShowModal(false); resetForm() }}>
                   Cancel
@@ -248,6 +286,17 @@ const Files = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {showPropertyManager && (
+        <PropertyManager
+          entityType="files"
+          entityLabel="Files"
+          definitions={fileDefs}
+          onAdd={addPropertyDefinition}
+          onDelete={deletePropertyDefinition}
+          onClose={() => setShowPropertyManager(false)}
+        />
       )}
     </div>
   )

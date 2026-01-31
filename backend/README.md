@@ -6,6 +6,8 @@ Node.js + Express + PostgreSQL authentication backend. Passwords are hashed with
 
 Copy `.env.example` to `.env`, set `DATABASE_URL` and `JWT_SECRET`, then run `npm install`, `npm run db:init`, and `npm run dev`. API runs at `http://localhost:4000`; the frontend proxies `/api` when using `npm run dev` in the project root.
 
+**Existing databases:** If you added this project before `semesters` and `property_definitions` were added, run `npm run db:init` again. The schema uses `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` so your data is preserved and the new columns are added.
+
 ## Endpoints
 
 | Method | Path | Auth | Description |

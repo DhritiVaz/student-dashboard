@@ -17,7 +17,7 @@ A comprehensive student management dashboard built with React, featuring course 
 - React Router DOM
 - Vite
 - Lucide React (Icons)
-- LocalStorage (Data Persistence)
+- Backend API (data stored in PostgreSQL; use Vite proxy in dev so auth cookie is sent)
 
 ## Getting Started
 
@@ -75,7 +75,13 @@ All entities in the dashboard are interconnected:
 - Everything is managed through a centralized data context
 
 ### Data Persistence
-All data is automatically saved to localStorage, so your information persists between sessions.
+All user data (courses, semesters, calendar, files, grades, etc.) is saved to the backend and persists across reloads.
+
+**Local development (important):**
+1. In the **backend** folder: copy `.env.example` to `.env`, set `DATABASE_URL` and `JWT_SECRET`, then run `npm run db:init` and `npm run dev`.
+2. In the **project root**: run `npm run dev` for the frontend.
+3. **Do not set `VITE_API_URL`** in the project root. The Vite dev server proxies `/api` to the backend so requests stay same-origin; that way the auth cookie is sent and your data loads/saves correctly. If you set `VITE_API_URL=http://localhost:4000`, the cookie won’t be sent to the API and data will appear to disappear after reload.
+4. Log in (e.g. demo@university.edu / demo123). Your data is stored per user in PostgreSQL.
 
 ### Dark Theme
 The application features a modern dark theme with colorful solid accent colors (no gradients) for a clean, professional look.
