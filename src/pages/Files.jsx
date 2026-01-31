@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
-import { Plus, Trash2, X, Upload, FileText, Download, BookOpen } from 'lucide-react'
+import { Plus, Trash2, X, Upload, FileText, Download, BookOpen, Image, Video, Music, FileSpreadsheet, File } from 'lucide-react'
 import './Files.css'
 
 const Files = () => {
@@ -33,11 +33,7 @@ const Files = () => {
   }
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      courseId: '',
-      file: null
-    })
+    setFormData({ name: '', courseId: '', file: null })
   }
 
   const handleDelete = (id) => {
@@ -73,19 +69,24 @@ const Files = () => {
   }
 
   const getFileIcon = (fileType) => {
-    if (fileType?.startsWith('image/')) return '🖼️'
-    if (fileType?.startsWith('video/')) return '🎥'
-    if (fileType?.startsWith('audio/')) return '🎵'
-    if (fileType?.includes('pdf')) return '📄'
-    if (fileType?.includes('word') || fileType?.includes('document')) return '📝'
-    if (fileType?.includes('sheet') || fileType?.includes('excel')) return '📊'
-    return '📁'
+    if (fileType?.startsWith('image/')) return <Image size={24} />
+    if (fileType?.startsWith('video/')) return <Video size={24} />
+    if (fileType?.startsWith('audio/')) return <Music size={24} />
+    if (fileType?.includes('pdf')) return <FileText size={24} />
+    if (fileType?.includes('sheet') || fileType?.includes('excel')) return <FileSpreadsheet size={24} />
+    return <File size={24} />
   }
 
-  const accentColors = [
-    '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
-  ]
+  const getFileColor = (fileType) => {
+    if (fileType?.startsWith('image/')) return '#ec4899'
+    if (fileType?.startsWith('video/')) return '#f97316'
+    if (fileType?.startsWith('audio/')) return '#a855f7'
+    if (fileType?.includes('pdf')) return '#ef4444'
+    if (fileType?.includes('sheet') || fileType?.includes('excel')) return '#10b981'
+    return '#3b82f6'
+  }
+
+  const accentColors = ['#3b82f6', '#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#f97316']
 
   const filesByCourse = files.reduce((acc, file) => {
     const courseId = file.courseId || 'uncategorized'
@@ -95,20 +96,14 @@ const Files = () => {
   }, {})
 
   return (
-    <div className="page-container">
+    <div className="files-page">
       <div className="page-header">
         <div>
-          <h1>File Management</h1>
-          <p className="subtitle">Upload and organize your files by course</p>
+          <h1>Files</h1>
+          <p className="subtitle">{files.length} files uploaded</p>
         </div>
         <div className="header-actions">
-          <button
-            className="btn-primary"
-            onClick={() => {
-              resetForm()
-              setShowModal(true)
-            }}
-          >
+          <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true) }}>
             <Plus size={18} />
             Upload File
           </button>
@@ -116,41 +111,40 @@ const Files = () => {
       </div>
 
       <div className="files-container">
-        {Object.keys(filesByCourse).map((courseId, index) => {
+        {Object.keys(filesByCourse).length > 0 ? (
+          Object.entries(filesByCourse).map(([courseId, courseFiles], sectionIdx) => {
           const course = courseId !== 'uncategorized' ? getCourseById(courseId) : null
-          const courseFiles = filesByCourse[courseId]
-          const accentColor = accentColors[index % accentColors.length]
+            const accentColor = accentColors[sectionIdx % accentColors.length]
 
           return (
             <div key={courseId} className="files-section">
-              <div className="files-section-header" style={{ borderLeftColor: accentColor }}>
-                {course ? (
-                  <>
-                    <BookOpen size={18} />
-                    <div>
-                      <h2>{course.courseCode}</h2>
-                      <p>{course.courseName}</p>
+                <div className="section-header" style={{ '--accent': accentColor }}>
+                  <div className="section-icon" style={{ background: `${accentColor}20`, color: accentColor }}>
+                    {course ? <BookOpen size={20} /> : <FileText size={20} />}
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <FileText size={18} />
-                    <div>
-                      <h2>Uncategorized</h2>
-                      <p>Files not linked to any course</p>
+                  <div className="section-info">
+                    <h3>{course ? course.courseCode : 'Uncategorized'}</h3>
+                    <p>{course ? course.courseName : 'Files not linked to any course'}</p>
                     </div>
-                  </>
-                )}
-                <span className="file-count">{courseFiles.length}</span>
+                  <span className="file-count" style={{ background: `${accentColor}20`, color: accentColor }}>
+                    {courseFiles.length}
+                  </span>
               </div>
+
               <div className="files-grid">
-                {courseFiles.map((file) => (
-                  <div key={file.id} className="file-card">
-                    <div className="file-icon">
+                  {courseFiles.map((file, idx) => {
+                    const fileColor = getFileColor(file.fileType)
+                    return (
+                      <div 
+                        key={file.id} 
+                        className="file-card"
+                        style={{ '--delay': `${idx * 0.05}s` }}
+                      >
+                        <div className="file-icon-box" style={{ background: `${fileColor}15`, color: fileColor }}>
                       {getFileIcon(file.fileType)}
                     </div>
                     <div className="file-info">
-                      <h3>{file.name}</h3>
+                          <h4 className="file-name">{file.name}</h4>
                       <p className="file-meta">
                         {formatFileSize(file.fileSize)}
                         {file.fileType && ` • ${file.fileType.split('/')[1]?.toUpperCase() || 'FILE'}`}
@@ -158,14 +152,14 @@ const Files = () => {
                     </div>
                     <div className="file-actions">
                       <button
-                        className="icon-btn"
+                            className="file-action-btn download"
                         onClick={() => handleDownload(file)}
                         title="Download"
                       >
                         <Download size={16} />
                       </button>
                       <button
-                        className="icon-btn"
+                            className="file-action-btn delete"
                         onClick={() => handleDelete(file.id)}
                         title="Delete"
                       >
@@ -173,47 +167,44 @@ const Files = () => {
                       </button>
                     </div>
                   </div>
-                ))}
+                    )
+                  })}
               </div>
             </div>
           )
-        })}
-
-        {files.length === 0 && (
+          })
+        ) : (
           <div className="empty-state">
-            <p>No files uploaded yet. Upload your first file to get started!</p>
+            <Upload size={48} />
+            <h3>No files uploaded</h3>
+            <p>Upload your course materials, notes, and documents</p>
+            <button className="btn-primary" onClick={() => setShowModal(true)}>
+              <Plus size={18} /> Upload First File
+            </button>
           </div>
         )}
       </div>
 
+      {/* Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => {
-          setShowModal(false)
-          resetForm()
-        }}>
+        <div className="modal-overlay" onClick={() => { setShowModal(false); resetForm() }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Upload File</h2>
-              <button
-                className="icon-btn"
-                onClick={() => {
-                  setShowModal(false)
-                  resetForm()
-                }}
-              >
+              <button className="icon-btn" onClick={() => { setShowModal(false); resetForm() }}>
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>File *</label>
-                <label className="file-upload-large">
-                  <Upload size={24} />
-                  <div>
-                    <span className="upload-text">
-                      {formData.file ? formData.file.name : 'Choose file or drag and drop'}
+                <label>File</label>
+                <label className="file-drop-zone">
+                  <Upload size={32} />
+                  <div className="drop-text">
+                    <span className="drop-main">
+                      {formData.file ? formData.file.name : 'Click to upload or drag and drop'}
                     </span>
-                    <span className="upload-hint">Click to browse or drag and drop</span>
+                    <span className="drop-sub">PDF, DOC, Images, Videos up to 50MB</span>
                   </div>
                   <input
                     type="file"
@@ -224,7 +215,7 @@ const Files = () => {
                 </label>
               </div>
               <div className="form-group">
-                <label>File Name</label>
+                <label>Display Name</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -238,7 +229,7 @@ const Files = () => {
                   value={formData.courseId}
                   onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
                 >
-                  <option value="">None</option>
+                  <option value="">No course selected</option>
                   {courses.map(course => (
                     <option key={course.id} value={course.id}>
                       {course.courseCode} - {course.courseName}
@@ -247,14 +238,7 @@ const Files = () => {
                 </select>
               </div>
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    setShowModal(false)
-                    resetForm()
-                  }}
-                >
+                <button type="button" className="btn-secondary" onClick={() => { setShowModal(false); resetForm() }}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" disabled={!formData.file}>

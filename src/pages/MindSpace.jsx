@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
-import { Plus, Edit2, Trash2, X, Check, FileText, Upload } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Check, FileText, Upload, Brain, CheckCircle2 } from 'lucide-react'
 import './MindSpace.css'
 
 const MindSpace = () => {
@@ -16,6 +16,7 @@ const MindSpace = () => {
     title: '',
     content: '',
     type: 'text',
+    priority: 'medium',
     file: null
   })
 
@@ -35,6 +36,7 @@ const MindSpace = () => {
       title: '',
       content: '',
       type: 'text',
+      priority: 'medium',
       file: null
     })
     setEditingItem(null)
@@ -46,6 +48,7 @@ const MindSpace = () => {
       title: item.title || '',
       content: item.content || '',
       type: item.type || 'text',
+      priority: item.priority || 'medium',
       file: item.file || null
     })
     setShowModal(true)
@@ -85,17 +88,20 @@ const MindSpace = () => {
   const incompleteItems = mindSpaceItems.filter(i => !i.completed)
   const completedItems = mindSpaceItems.filter(i => i.completed)
 
-  const accentColors = [
-    '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
-  ]
+  const priorityColors = {
+    high: { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: 'rgba(239, 68, 68, 0.3)' },
+    medium: { bg: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)' },
+    low: { bg: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: 'rgba(16, 185, 129, 0.3)' }
+  }
+
+  const accentColors = ['#3b82f6', '#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#f97316', '#84cc16']
 
   return (
-    <div className="page-container">
+    <div className="mindspace-page">
       <div className="page-header">
         <div>
           <h1>Mind Space</h1>
-          <p className="subtitle">Your personal space for todos, notes, and files</p>
+          <p className="subtitle">{incompleteItems.length} active • {completedItems.length} completed</p>
         </div>
         <div className="header-actions">
           <button
@@ -106,60 +112,74 @@ const MindSpace = () => {
             }}
           >
             <Plus size={18} />
-            Add Item
+            Add Note
           </button>
         </div>
       </div>
 
       {incompleteItems.length > 0 && (
-        <div className="mindspace-section">
-          <h2 className="section-title">Active</h2>
-          <div className="mindspace-grid">
+        <div className="notes-section">
+          <h2 className="section-title">
+            <span className="title-icon active"></span>
+            Active Tasks
+          </h2>
+          <div className="notes-grid">
             {incompleteItems.map((item, index) => {
               const accentColor = accentColors[index % accentColors.length]
+              const priority = priorityColors[item.priority] || priorityColors.medium
 
               return (
                 <div
                   key={item.id}
-                  className="mindspace-card"
-                  style={{ borderLeftColor: accentColor }}
+                  className="note-card"
+                  style={{ '--delay': `${index * 0.05}s`, '--accent': accentColor }}
                 >
-                  <div className="mindspace-card-header">
-                    <div className="mindspace-checkbox" onClick={() => handleToggleComplete(item.id)}>
-                      <div className={`checkbox ${item.completed ? 'checked' : ''}`}>
-                        {item.completed && <Check size={14} />}
-                      </div>
-                    </div>
-                    <h3>{item.title || 'Untitled'}</h3>
-                    <div className="mindspace-actions">
+                  <div className="card-accent" style={{ background: accentColor }}></div>
+                  
+                  <div className="note-header">
                       <button
-                        className="icon-btn"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <Edit2 size={16} />
+                      className="check-btn"
+                      onClick={() => handleToggleComplete(item.id)}
+                    >
+                      <div className="check-circle"></div>
+                    </button>
+                    <h3 className="note-title">{item.title || 'Untitled'}</h3>
+                    <div className="note-actions">
+                      <button onClick={() => handleEdit(item)}>
+                        <Edit2 size={14} />
                       </button>
-                      <button
-                        className="icon-btn"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <Trash2 size={16} />
+                      <button onClick={() => handleDelete(item.id)} className="delete">
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
 
                   {item.type === 'file' && item.file && (
-                    <div className="mindspace-file">
+                    <div className="note-file">
                       <FileText size={16} />
                       <span>{item.file.name}</span>
-                      <span className="file-size">
-                        {(item.file.size / 1024).toFixed(1)} KB
-                      </span>
+                      <span className="file-size">{(item.file.size / 1024).toFixed(1)} KB</span>
                     </div>
                   )}
 
                   {item.type === 'text' && item.content && (
-                    <p className="mindspace-content">{item.content}</p>
+                    <p className="note-content">{item.content}</p>
                   )}
+
+                  <div className="note-footer">
+                    {item.priority && (
+                      <span 
+                        className="priority-tag"
+                        style={{ 
+                          background: priority.bg, 
+                          color: priority.color,
+                          borderColor: priority.border 
+                        }}
+                      >
+                        {item.priority}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )
             })}
@@ -168,85 +188,67 @@ const MindSpace = () => {
       )}
 
       {completedItems.length > 0 && (
-        <div className="mindspace-section">
-          <h2 className="section-title">Completed</h2>
-          <div className="mindspace-grid">
-            {completedItems.map((item, index) => {
-              const accentColor = accentColors[index % accentColors.length]
-
-              return (
+        <div className="notes-section completed-section">
+          <h2 className="section-title">
+            <span className="title-icon completed"></span>
+            Completed
+          </h2>
+          <div className="notes-grid">
+            {completedItems.map((item, index) => (
                 <div
                   key={item.id}
-                  className="mindspace-card completed"
-                  style={{ borderLeftColor: accentColor }}
+                className="note-card completed"
+                style={{ '--delay': `${index * 0.05}s` }}
                 >
-                  <div className="mindspace-card-header">
-                    <div className="mindspace-checkbox" onClick={() => handleToggleComplete(item.id)}>
-                      <div className="checkbox checked">
-                        <Check size={14} />
-                      </div>
+                <div className="note-header">
+                  <button 
+                    className="check-btn checked"
+                    onClick={() => handleToggleComplete(item.id)}
+                  >
+                    <div className="check-circle">
+                      <Check size={12} />
                     </div>
-                    <h3 className="completed-text">{item.title || 'Untitled'}</h3>
-                    <div className="mindspace-actions">
-                      <button
-                        className="icon-btn"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <Edit2 size={16} />
                       </button>
-                      <button
-                        className="icon-btn"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <Trash2 size={16} />
+                  <h3 className="note-title">{item.title || 'Untitled'}</h3>
+                  <div className="note-actions">
+                    <button onClick={() => handleDelete(item.id)} className="delete">
+                      <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
 
-                  {item.type === 'file' && item.file && (
-                    <div className="mindspace-file">
-                      <FileText size={16} />
-                      <span>{item.file.name}</span>
-                    </div>
-                  )}
-
-                  {item.type === 'text' && item.content && (
-                    <p className="mindspace-content completed-text">{item.content}</p>
+                {item.content && (
+                  <p className="note-content">{item.content}</p>
                   )}
                 </div>
-              )
-            })}
+            ))}
           </div>
         </div>
       )}
 
       {mindSpaceItems.length === 0 && (
         <div className="empty-state">
-          <p>Your mind space is empty. Add items to organize your thoughts!</p>
+          <Brain size={48} />
+          <h3>Your mind space is empty</h3>
+          <p>Add notes and tasks to organize your thoughts</p>
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={18} /> Add First Note
+          </button>
         </div>
       )}
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => {
-          setShowModal(false)
-          resetForm()
-        }}>
+        <div className="modal-overlay" onClick={() => { setShowModal(false); resetForm() }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingItem ? 'Edit Item' : 'Add New Item'}</h2>
-              <button
-                className="icon-btn"
-                onClick={() => {
-                  setShowModal(false)
-                  resetForm()
-                }}
-              >
+              <h2>{editingItem ? 'Edit Note' : 'Add New Note'}</h2>
+              <button className="icon-btn" onClick={() => { setShowModal(false); resetForm() }}>
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Title *</label>
+                <label>Title</label>
                 <input
                   type="text"
                   value={formData.title}
@@ -255,16 +257,28 @@ const MindSpace = () => {
                   placeholder="e.g., Review lecture notes"
                 />
               </div>
+              <div className="form-row">
               <div className="form-group">
-                <label>Type *</label>
+                  <label>Type</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  required
                 >
                   <option value="text">Text Note</option>
                   <option value="file">File</option>
                 </select>
+                </div>
+                <div className="form-group">
+                  <label>Priority</label>
+                  <select
+                    value={formData.priority}
+                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                  >
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
               </div>
               {formData.type === 'text' ? (
                 <div className="form-group">
@@ -273,14 +287,14 @@ const MindSpace = () => {
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                     placeholder="Write your note here..."
-                    rows={6}
+                    rows={4}
                   />
                 </div>
               ) : (
                 <div className="form-group">
                   <label>File</label>
-                  <label className="file-upload">
-                    <Upload size={18} />
+                  <label className="file-upload-area">
+                    <Upload size={24} />
                     <span>{formData.file ? formData.file.name : 'Choose file or drag and drop'}</span>
                     <input
                       type="file"
@@ -291,18 +305,11 @@ const MindSpace = () => {
                 </div>
               )}
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    setShowModal(false)
-                    resetForm()
-                  }}
-                >
+                <button type="button" className="btn-secondary" onClick={() => { setShowModal(false); resetForm() }}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary">
-                  {editingItem ? 'Update' : 'Add'} Item
+                  {editingItem ? 'Update' : 'Add'} Note
                 </button>
               </div>
             </form>

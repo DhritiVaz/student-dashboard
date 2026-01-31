@@ -1,44 +1,55 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
-import { BookOpen, AlertCircle, Clock, CheckCircle, TrendingUp, Calendar as CalendarIcon, FileText, Plus } from 'lucide-react'
+import { 
+  BookOpen, Clock, CheckCircle, TrendingUp, Calendar as CalendarIcon, 
+  FileText, Plus, X, Target, Zap, ArrowUpRight, ChevronRight
+} from 'lucide-react'
 import './Dashboard.css'
 
 const Dashboard = () => {
-    const { courses, timetable, mindSpaceItems, grades } = useData()
+  const { courses, timetable, mindSpaceItems, grades, calendarEvents, addCalendarEvent } = useData()
 
-    // Derived values (will be 0 or empty if no data)
+  // Derived values
     const pendingTasks = mindSpaceItems.filter(i => !i.completed).length
-    const completedCredits = courses.length * 3 // Assumption for purely visual demo without real credits data
+  const completedTasks = mindSpaceItems.filter(i => i.completed).length
+  const totalCredits = courses.reduce((acc, c) => acc + (parseFloat(c.credits) || 0), 0)
 
-    // Empty state helpers
-    const hasCourses = courses.length > 0
-    const hasTasks = pendingTasks > 0
+  // Calculate GPA (10-point scale)
+  const gradePoints = {
+    'S': 10.0, 'A': 9.0, 'B': 8.0, 'C': 7.0,
+    'D': 6.0, 'E': 5.0
+  }
 
-    // Placeholder for CGPA/Attendance since they don't have real logic yet
-    // Show empty state "—" instead of fake numbers
-    const cgpa = grades.length > 0 ? "3.5" : "—" // Mock logic for now, but better than hardcoded "3.8"
-    const attendance = "—" // No attendance data in context yet
+  const calculateCGPA = () => {
+    if (grades.length === 0) return '0.00'
+    let totalPoints = 0
+    let totalCredits = 0
+    grades.forEach(grade => {
+      const points = gradePoints[grade.grade] || 0
+      const credits = parseFloat(grade.credits) || 0
+      totalPoints += points * credits
+      totalCredits += credits
+    })
+    return totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '0.00'
+  }
 
-    // Chart Data - Empty by default
-    const chartData = []
+  const cgpa = calculateCGPA()
 
-    // --- Event Logic ---
+  // Event Modal State
     const [showEventModal, setShowEventModal] = useState(false)
     const [eventForm, setEventForm] = useState({
         title: '',
         date: new Date().toISOString().split('T')[0],
         time: '',
-        type: 'personal', // personal, assignment, exam
+    type: 'personal',
         description: ''
     })
 
-    const { calendarEvents, addCalendarEvent } = useData()
-
-    // Filter for upcoming events (today or future)
+  // Filter upcoming events
     const upcomingEvents = calendarEvents
         .filter(e => new Date(e.date) >= new Date(new Date().setHours(0, 0, 0, 0)))
         .sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')))
-        .slice(0, 5)
+    .slice(0, 6)
 
     const handleEventSubmit = (e) => {
         e.preventDefault()
@@ -53,171 +64,248 @@ const Dashboard = () => {
         })
     }
 
+  // Get today's classes
+  const todayKey = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+  const todayClasses = (timetable[todayKey] || []).sort((a, b) => a.startTime?.localeCompare(b.startTime))
+
+  // Event type colors
+  const eventTypeColors = {
+    assignment: { bg: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)' },
+    exam: { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: 'rgba(239, 68, 68, 0.3)' },
+    quiz: { bg: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', border: 'rgba(168, 85, 247, 0.3)' },
+    presentation: { bg: 'rgba(6, 182, 212, 0.15)', color: '#06b6d4', border: 'rgba(6, 182, 212, 0.3)' },
+    personal: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: 'rgba(59, 130, 246, 0.3)' }
+  }
+
     return (
-        <section className="dashboard">
-            {/* Section 1: Summary Cards */}
-            <section className="stats-cards">
-                <div className="stat-card">
-                    <div className="stat-header">
-                        <span className="stat-label">CGPA</span>
+    <div className="dashboard">
+      {/* Stats Row */}
+      <section className="stats-grid">
+        <div className="stat-card stat-cgpa">
+          <div className="stat-icon-wrap">
+            <TrendingUp size={22} />
+          </div>
+          <div className="stat-content">
+            <span className="stat-label">Current CGPA</span>
+            <span className="stat-value">{cgpa}</span>
+            <span className="stat-meta">Based on {grades.length} courses</span>
                     </div>
-                    <div className="stat-value">{cgpa}</div>
-                    <div className="stat-meta text-neutral">No recent updates</div>
+          <div className="stat-glow stat-glow-blue"></div>
                 </div>
 
-                <div className="stat-card">
-                    <div className="stat-header">
-                        <span className="stat-label">Attendance</span>
+        <div className="stat-card stat-courses">
+          <div className="stat-icon-wrap purple">
+            <BookOpen size={22} />
+          </div>
+          <div className="stat-content">
+            <span className="stat-label">Active Courses</span>
+            <span className="stat-value">{courses.length}</span>
+            <span className="stat-meta">{totalCredits} total credits</span>
                     </div>
-                    <div className="stat-value">{attendance}</div>
-                    <div className="stat-meta text-neutral">Not tracked</div>
+          <div className="stat-glow stat-glow-purple"></div>
                 </div>
 
-                <div className="stat-card">
-                    <div className="stat-header">
-                        <span className="stat-label">Credits</span>
+        <div className="stat-card stat-tasks">
+          <div className="stat-icon-wrap cyan">
+            <Target size={22} />
+          </div>
+          <div className="stat-content">
+            <span className="stat-label">Pending Tasks</span>
+            <span className="stat-value">{pendingTasks}</span>
+            <span className="stat-meta">{completedTasks} completed</span>
                     </div>
-                    <div className="stat-value">{completedCredits || "—"}</div>
-                    <div className="stat-meta text-neutral">Based on courses</div>
+          <div className="stat-glow stat-glow-cyan"></div>
                 </div>
 
-                <div className="stat-card">
-                    <div className="stat-header">
-                        <span className="stat-label">Pending</span>
+        <div className="stat-card stat-events">
+          <div className="stat-icon-wrap green">
+            <Zap size={22} />
+          </div>
+          <div className="stat-content">
+            <span className="stat-label">Upcoming</span>
+            <span className="stat-value">{upcomingEvents.length}</span>
+            <span className="stat-meta">events this week</span>
                     </div>
-                    <div className="stat-value">{pendingTasks}</div>
-                    <div className="stat-meta text-neutral">Active tasks</div>
+          <div className="stat-glow stat-glow-green"></div>
                 </div>
             </section>
 
-            {/* Section 2: Primary Visual Area */}
-            <section className="main-row">
-                <div className="timetable-preview-card">
+      {/* Main Content Grid */}
+      <div className="dashboard-grid">
+        {/* Today's Schedule */}
+        <section className="dashboard-card schedule-card">
                     <div className="card-header">
-                        <h3>Today's Classes</h3>
-                        <span className="text-muted text-sm">{new Date().toLocaleDateString('en-US', { weekday: 'long' })}</span>
+            <div className="card-title-group">
+              <Clock size={18} className="card-icon" />
+              <h3>Today's Schedule</h3>
                     </div>
-                    <div className="timetable-list">
-                        {/* Logic to get today's classes */}
-                        {(() => {
-                            const todayKey = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
-                            const todayClasses = timetable[todayKey] || []
-
-                            if (todayClasses.length === 0) {
-                                return (
-                                    <div className="empty-state-small">
-                                        <Clock size={24} className="text-muted" />
-                                        <p>Enjoy your free day!</p>
+            <span className="day-badge">{new Date().toLocaleDateString('en-US', { weekday: 'long' })}</span>
                                     </div>
-                                )
-                            }
 
-                            return todayClasses.sort((a, b) => a.period - b.period).map(cls => {
+          <div className="schedule-list">
+            {todayClasses.length > 0 ? (
+              todayClasses.map((cls, idx) => {
                                 const course = courses.find(c => c.id === cls.courseId)
                                 if (!course) return null
                                 return (
-                                    <div key={cls.period} className="timetable-row-preview">
-                                        <div className="time-col-preview">
-                                            <span className="time-text">{cls.startTime || "TBA"}</span>
+                  <div key={cls.period} className="schedule-item" style={{ '--delay': `${idx * 0.1}s` }}>
+                    <div className="schedule-time">
+                      <span className="time-start">{cls.startTime}</span>
+                      <span className="time-end">{cls.endTime}</span>
                                         </div>
-                                        <div className="info-col-preview">
-                                            <span className="subject-text">{course.courseName}</span>
-                                            <div className="meta-row">
-                                                <span className="venue-text">{course.venue || "No Venue"}</span>
+                    <div className="schedule-divider" style={{ background: course.color }}></div>
+                    <div className="schedule-info">
+                      <span className="schedule-course">{course.courseName}</span>
+                      <div className="schedule-meta">
+                        <span className="schedule-code">{course.courseCode}</span>
+                        <span className="schedule-venue">{cls.venue || course.venue}</span>
                                             </div>
                                         </div>
                                     </div>
                                 )
                             })
-                        })()}
+            ) : (
+              <div className="empty-state-small">
+                <Clock size={32} className="text-muted" />
+                <p>No classes today!</p>
+                <span className="text-muted">Enjoy your free day</span>
                     </div>
+            )}
                 </div>
+        </section>
 
-                <div className="calendar-card">
+        {/* Upcoming Events */}
+        <section className="dashboard-card events-card">
                     <div className="card-header">
-                        <h3>Upcoming</h3>
-                        <button
-                            className="icon-btn-sm"
-                            aria-label="Add Event"
-                            onClick={() => setShowEventModal(true)}
-                        >
+            <div className="card-title-group">
+              <CalendarIcon size={18} className="card-icon" />
+              <h3>Upcoming Events</h3>
+            </div>
+            <button className="add-btn" onClick={() => setShowEventModal(true)}>
                             <Plus size={16} />
                         </button>
                     </div>
-                    <div className="mini-events">
+
+          <div className="events-list">
                         {upcomingEvents.length > 0 ? (
-                            upcomingEvents.map(event => (
-                                <div key={event.id} className="mini-event-row">
+              upcomingEvents.map((event, idx) => {
+                const eventStyle = eventTypeColors[event.type] || eventTypeColors.personal
+                const eventDate = new Date(event.date)
+                return (
+                  <div 
+                    key={event.id} 
+                    className="event-item"
+                    style={{ '--delay': `${idx * 0.1}s` }}
+                  >
                                     <div className="event-date-badge">
-                                        <span className="day">{new Date(event.date).getDate()}</span>
-                                        <span className="month">{new Date(event.date).toLocaleString('default', { month: 'short' })}</span>
+                      <span className="event-day">{eventDate.getDate()}</span>
+                      <span className="event-month">{eventDate.toLocaleDateString('en-US', { month: 'short' })}</span>
                                     </div>
-                                    <div className="event-info">
+                    <div className="event-content">
                                         <span className="event-title">{event.title}</span>
-                                        <span className="event-time text-muted">
-                                            {event.time ? new Date(`2000-01-01T${event.time}`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'All Day'}
+                      <div className="event-meta">
+                        <span 
+                          className="event-type-badge"
+                          style={{ 
+                            background: eventStyle.bg, 
+                            color: eventStyle.color,
+                            borderColor: eventStyle.border 
+                          }}
+                        >
+                          {event.type}
+                        </span>
+                        {event.time && (
+                          <span className="event-time">
+                            {new Date(`2000-01-01T${event.time}`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                                         </span>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="empty-state-small">
-                                <CalendarIcon size={24} className="text-muted" />
-                                <p>No upcoming events</p>
-                            </div>
                         )}
                     </div>
-                </div>
-            </section>
-
-            {/* Section 3 & 4: Secondary + Table */}
-            <div className="bottom-grid">
-                <section className="info-card">
-                    <div className="card-header">
-                        <h3>Study Progress</h3>
                     </div>
-                    <div className="progress-list">
-                        {hasCourses ? (
-                            courses.slice(0, 3).map(c => (
-                                <div key={c.id} className="progress-item">
-                                    <div className="progress-info">
-                                        <span>{c.courseCode || "Course"}</span>
-                                        <span>0%</span>
+                    <ChevronRight size={16} className="event-arrow" />
                                     </div>
-                                    <div className="progress-bar-bg">
-                                        <div className="progress-bar-fill" style={{ width: '0%' }}></div>
-                                    </div>
-                                </div>
-                            ))
+                )
+              })
                         ) : (
                             <div className="empty-state-small">
-                                <p>No courses enrolled</p>
+                <CalendarIcon size={32} className="text-muted" />
+                <p>No upcoming events</p>
+                <button className="btn-text-action" onClick={() => setShowEventModal(true)}>
+                  + Add Event
+                </button>
                             </div>
                         )}
                     </div>
                 </section>
 
-                <section className="activity-table-section">
+        {/* Course Progress */}
+        <section className="dashboard-card progress-card">
                     <div className="card-header">
-                        <h3>Recent Files</h3>
+            <div className="card-title-group">
+              <BookOpen size={18} className="card-icon" />
+              <h3>Course Progress</h3>
+            </div>
+            <a href="/courses" className="view-all-link">
+              View All <ArrowUpRight size={14} />
+            </a>
+          </div>
+
+          <div className="progress-list">
+            {courses.slice(0, 6).map((course, idx) => (
+              <div key={course.id} className="progress-item" style={{ '--delay': `${idx * 0.1}s` }}>
+                <div className="progress-header">
+                  <div className="progress-course">
+                    <span className="progress-code" style={{ color: course.color }}>{course.courseCode}</span>
+                    <span className="progress-name">{course.courseName}</span>
+                  </div>
+                  <span className="progress-percent">{course.progress || 0}%</span>
+                </div>
+                <div className="progress-bar-container">
+                  <div 
+                    className="progress-bar-fill" 
+                    style={{ 
+                      width: `${course.progress || 0}%`,
+                      background: course.color
+                    }}
+                  ></div>
+                </div>
                     </div>
-                    <div className="table-wrapper">
-                        <table className="clean-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Type</th>
-                                    <th>Date</th>
-                                    <th>Size</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {/* Empty State Row */}
-                                <tr className="empty-row">
-                                    <td colSpan="4" className="text-center">No recent files found</td>
-                                </tr>
-                            </tbody>
-                        </table>
+            ))}
+          </div>
+        </section>
+
+        {/* Quick Tasks */}
+        <section className="dashboard-card tasks-card">
+          <div className="card-header">
+            <div className="card-title-group">
+              <CheckCircle size={18} className="card-icon" />
+              <h3>Recent Tasks</h3>
+            </div>
+            <a href="/mindspace" className="view-all-link">
+              View All <ArrowUpRight size={14} />
+            </a>
+          </div>
+
+          <div className="tasks-list">
+            {mindSpaceItems.filter(t => !t.completed).slice(0, 6).map((task, idx) => (
+              <div 
+                key={task.id} 
+                className={`task-item ${task.completed ? 'completed' : ''}`}
+                style={{ '--delay': `${idx * 0.1}s` }}
+              >
+                <div className={`task-checkbox ${task.completed ? 'checked' : ''}`}>
+                  {task.completed && <CheckCircle size={14} />}
+                </div>
+                <div className="task-content">
+                  <span className="task-title">{task.title}</span>
+                  {task.content && <span className="task-desc">{task.content.substring(0, 50)}...</span>}
+                </div>
+                {task.priority && (
+                  <span className={`priority-badge priority-${task.priority}`}>
+                    {task.priority}
+                  </span>
+                )}
+              </div>
+            ))}
                     </div>
                 </section>
             </div>
@@ -228,7 +316,9 @@ const Dashboard = () => {
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2>Add New Event</h2>
-                            <button className="icon-btn" onClick={() => setShowEventModal(false)}>✕</button>
+              <button className="icon-btn" onClick={() => setShowEventModal(false)}>
+                <X size={20} />
+              </button>
                         </div>
                         <form onSubmit={handleEventSubmit}>
                             <div className="form-group">
@@ -242,7 +332,7 @@ const Dashboard = () => {
                                 />
                             </div>
                             <div className="form-row">
-                                <div className="form-group" style={{ flex: 1 }}>
+                <div className="form-group">
                                     <label>Date</label>
                                     <input
                                         type="date"
@@ -251,7 +341,7 @@ const Dashboard = () => {
                                         onChange={e => setEventForm({ ...eventForm, date: e.target.value })}
                                     />
                                 </div>
-                                <div className="form-group" style={{ flex: 1 }}>
+                <div className="form-group">
                                     <label>Time</label>
                                     <input
                                         type="time"
@@ -260,6 +350,19 @@ const Dashboard = () => {
                                     />
                                 </div>
                             </div>
+              <div className="form-group">
+                <label>Type</label>
+                <select
+                  value={eventForm.type}
+                  onChange={e => setEventForm({ ...eventForm, type: e.target.value })}
+                >
+                  <option value="personal">Personal</option>
+                  <option value="assignment">Assignment</option>
+                  <option value="exam">Exam</option>
+                  <option value="quiz">Quiz</option>
+                  <option value="presentation">Presentation</option>
+                </select>
+              </div>
                             <div className="form-group">
                                 <label>Notes (Optional)</label>
                                 <textarea
@@ -277,7 +380,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             )}
-        </section>
+    </div>
     )
 }
 

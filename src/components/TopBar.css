@@ -4,50 +4,64 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: var(--bg-card);
-  /* White background */
-  /* Clean look */
-  /* border-bottom: 1px solid var(--border-light); Optional: Removed as per request "No borders; use subtle shadow or separation" - we can use margin separation or just whitespace */
-  box-shadow: var(--shadow-subtle);
-  /* Subtle shadow */
-  margin-bottom: var(--spacing-sm);
-  z-index: 40;
-  /* Ensure on top */
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
+  z-index: 40;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.page-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .topbar-title {
-  font-size: 20px;
-  /* Reduced slightly from 24px as requested for balance */
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
-.topbar-actions {
+.topbar-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin: 0;
+}
+
+.topbar-right {
   display: flex;
   align-items: center;
-  gap: var(--spacing-lg);
+  gap: 16px;
 }
 
+/* Search */
 .topbar-search {
   display: flex;
   align-items: center;
-  background: var(--bg-app);
-  /* Light gray background for input */
-  border: 1px solid transparent;
-  /* No border initially */
-  border-radius: 8px;
-  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 14px;
   width: 280px;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  color: var(--text-muted);
+  gap: 10px;
 }
 
 .topbar-search:focus-within {
   background: var(--bg-card);
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px var(--accent-light);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
 }
 
 .topbar-search input {
@@ -55,35 +69,90 @@
   background: transparent;
   outline: none;
   font-size: 14px;
-  width: 100%;
-  margin-left: 8px;
+  flex: 1;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.topbar-search input::placeholder {
+  color: var(--text-dim);
+}
+
+.search-shortcut {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: inherit;
+}
+
+/* Actions */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.topbar-icon-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent-primary);
   color: var(--text-primary);
 }
 
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
+.notification-btn {
+  position: relative;
 }
 
-.avatar {
-  width: 36px;
-  height: 36px;
+.notification-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background-color: var(--accent-primary);
+  background: var(--accent-red);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+}
+
+/* User Menu */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #3b82f6;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.user-info {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .user-name {
@@ -92,7 +161,19 @@
   color: var(--text-primary);
 }
 
-.user-role {
-  font-size: 12px;
-  color: var(--text-secondary);
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .topbar-search {
+    display: none;
+  }
+  
+  .topbar-subtitle {
+    display: none;
+  }
 }

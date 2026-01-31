@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
-import { Plus, Edit2, Trash2, X, Calculator, TrendingUp } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Calculator, TrendingUp, Award, Target } from 'lucide-react'
 import './GPA.css'
 
 const GPA = () => {
@@ -15,18 +15,8 @@ const GPA = () => {
   })
 
   const gradePoints = {
-    'A+': 4.0,
-    'A': 4.0,
-    'A-': 3.7,
-    'B+': 3.3,
-    'B': 3.0,
-    'B-': 2.7,
-    'C+': 2.3,
-    'C': 2.0,
-    'C-': 1.7,
-    'D+': 1.3,
-    'D': 1.0,
-    'F': 0.0
+    'S': 10.0, 'A': 9.0, 'B': 8.0, 'C': 7.0,
+    'D': 6.0, 'E': 5.0
   }
 
   const handleSubmit = (e) => {
@@ -41,12 +31,7 @@ const GPA = () => {
   }
 
   const resetForm = () => {
-    setFormData({
-      courseId: '',
-      grade: '',
-      credits: '',
-      semester: ''
-    })
+    setFormData({ courseId: '', grade: '', credits: '', semester: '' })
     setEditingGrade(null)
   }
 
@@ -69,199 +54,202 @@ const GPA = () => {
 
   const calculateGPA = () => {
     if (grades.length === 0) return { gpa: 0, totalCredits: 0, totalPoints: 0 }
-
     let totalPoints = 0
     let totalCredits = 0
-
     grades.forEach(grade => {
       const points = gradePoints[grade.grade] || 0
       const credits = parseFloat(grade.credits) || 0
       totalPoints += points * credits
       totalCredits += credits
     })
-
     const gpa = totalCredits > 0 ? totalPoints / totalCredits : 0
-    return { gpa: gpa.toFixed(2), totalCredits, totalPoints }
+    return { gpa: gpa.toFixed(2), totalCredits, totalPoints: totalPoints.toFixed(1) }
   }
 
   const calculateCGPA = () => {
     const semesters = [...new Set(grades.map(g => g.semester).filter(Boolean))]
     if (semesters.length === 0) return { cgpa: 0, semesters: 0 }
-
-    let totalSemesterGPA = 0
-    let totalSemesterCredits = 0
-
-    semesters.forEach(semester => {
-      const semesterGrades = grades.filter(g => g.semester === semester)
-      let semesterPoints = 0
-      let semesterCredits = 0
-
-      semesterGrades.forEach(grade => {
+    let totalPoints = 0
+    let totalCredits = 0
+    grades.forEach(grade => {
         const points = gradePoints[grade.grade] || 0
         const credits = parseFloat(grade.credits) || 0
-        semesterPoints += points * credits
-        semesterCredits += credits
+      totalPoints += points * credits
+      totalCredits += credits
       })
-
-      if (semesterCredits > 0) {
-        totalSemesterGPA += (semesterPoints / semesterCredits) * semesterCredits
-        totalSemesterCredits += semesterCredits
-      }
-    })
-
-    const cgpa = totalSemesterCredits > 0 ? totalSemesterGPA / totalSemesterCredits : 0
+    const cgpa = totalCredits > 0 ? totalPoints / totalCredits : 0
     return { cgpa: cgpa.toFixed(2), semesters: semesters.length }
   }
 
-  const { gpa, totalCredits } = calculateGPA()
+  const { gpa, totalCredits, totalPoints } = calculateGPA()
   const { cgpa, semesters } = calculateCGPA()
 
   const getGradeColor = (grade) => {
-    if (['A+', 'A', 'A-'].includes(grade)) return '#10b981'
-    if (['B+', 'B', 'B-'].includes(grade)) return '#3b82f6'
-    if (['C+', 'C', 'C-'].includes(grade)) return '#f59e0b'
-    return '#ef4444'
+    if (['S'].includes(grade)) return '#10b981'
+    if (['A', 'B'].includes(grade)) return '#3b82f6'
+    if (['C', 'D'].includes(grade)) return '#f59e0b'
+    return '#f97316'
   }
 
-  const accentColors = [
-    '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-    '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
-  ]
+  const getGradeGlow = (grade) => {
+    if (['S'].includes(grade)) return 'rgba(16, 185, 129, 0.3)'
+    if (['A', 'B'].includes(grade)) return 'rgba(59, 130, 246, 0.3)'
+    if (['C', 'D'].includes(grade)) return 'rgba(245, 158, 11, 0.3)'
+    return 'rgba(249, 115, 22, 0.3)'
+  }
+
+  // Group grades by semester
+  const gradesBySemester = grades.reduce((acc, grade) => {
+    const sem = grade.semester || 'Unassigned'
+    if (!acc[sem]) acc[sem] = []
+    acc[sem].push(grade)
+    return acc
+  }, {})
 
   return (
-    <div className="page-container">
+    <div className="gpa-page">
       <div className="page-header">
         <div>
-          <h1>GPA Calculator</h1>
-          <p className="subtitle">Track and calculate your GPA and CGPA</p>
+          <h1>CGPA Calculator</h1>
+          <p className="subtitle">Track your academic performance</p>
         </div>
         <div className="header-actions">
-          <button
-            className="btn-primary"
-            onClick={() => {
-              resetForm()
-              setShowModal(true)
-            }}
-          >
+          <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true) }}>
             <Plus size={18} />
             Add Grade
           </button>
         </div>
       </div>
 
+      {/* Stats Cards */}
       <div className="gpa-stats">
-        <div className="stat-card" style={{ borderLeftColor: '#3b82f6' }}>
-          <div className="stat-icon">
-            <Calculator size={24} />
+        <div className="gpa-stat-card main-stat">
+          <div className="stat-visual">
+            <div className="stat-ring">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="var(--bg-elevated)" strokeWidth="8" />
+                <circle 
+                  cx="50" cy="50" r="45" 
+                  fill="none" 
+                  stroke="#3b82f6" 
+                  strokeWidth="8"
+                  strokeDasharray={`${(parseFloat(cgpa) / 10) * 283} 283`}
+                  strokeLinecap="round"
+                  transform="rotate(-90 50 50)"
+                />
+              </svg>
+              <div className="stat-ring-value">
+                <span className="big-value">{cgpa}</span>
+                <span className="label">CGPA</span>
+              </div>
+            </div>
           </div>
-          <div className="stat-content">
-            <h3>Current GPA</h3>
-            <p className="stat-value">{gpa}</p>
-            <p className="stat-label">{totalCredits} total credits</p>
+          <div className="stat-glow"></div>
+        </div>
+
+        <div className="gpa-stat-card">
+          <div className="stat-icon-box purple">
+            <TrendingUp size={22} />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Current GPA</span>
+            <span className="stat-number">{gpa}</span>
+            <span className="stat-sub">This semester</span>
           </div>
         </div>
-        <div className="stat-card" style={{ borderLeftColor: '#10b981' }}>
-          <div className="stat-icon">
-            <TrendingUp size={24} />
+
+        <div className="gpa-stat-card">
+          <div className="stat-icon-box cyan">
+            <Award size={22} />
           </div>
-          <div className="stat-content">
-            <h3>CGPA</h3>
-            <p className="stat-value">{cgpa}</p>
-            <p className="stat-label">{semesters} semester{semesters !== 1 ? 's' : ''}</p>
+          <div className="stat-info">
+            <span className="stat-label">Total Credits</span>
+            <span className="stat-number">{totalCredits}</span>
+            <span className="stat-sub">Across {semesters} semesters</span>
+          </div>
+        </div>
+
+        <div className="gpa-stat-card">
+          <div className="stat-icon-box green">
+            <Target size={22} />
+          </div>
+          <div className="stat-info">
+            <span className="stat-label">Grade Points</span>
+            <span className="stat-number">{totalPoints}</span>
+            <span className="stat-sub">Total earned</span>
           </div>
         </div>
       </div>
 
-      <div className="grades-list">
-        {/* Header Row */}
-        <div className="grades-list-header">
-          <span>Code</span>
-          <span>Course Name</span>
-          <span>Grade</span>
-          <span>Credits</span>
-          <span>Semester</span>
-          <span style={{ textAlign: 'right' }}>Actions</span>
-        </div>
-
-        {/* Rows */}
-        {grades.length > 0 ? (
-          grades.map((grade) => {
+      {/* Grades List */}
+      <div className="grades-container">
+        {Object.keys(gradesBySemester).length > 0 ? (
+          Object.entries(gradesBySemester).map(([semester, semGrades]) => (
+            <div key={semester} className="semester-section">
+              <h3 className="semester-title">{semester}</h3>
+              <div className="grades-grid">
+                {semGrades.map((grade, idx) => {
             const course = grade.courseId ? getCourseById(grade.courseId) : null
             const gradeColor = getGradeColor(grade.grade)
+                  const gradeGlow = getGradeGlow(grade.grade)
 
             return (
-              <div key={grade.id} className="grade-list-row">
-                <div className="col-code">
-                  {course ? course.courseCode : '?'}
-                </div>
-
-                <div className="col-course">
-                  {course ? (
-                    <span className="course-title">{course.courseName}</span>
-                  ) : (
-                    <span className="no-course">Unlinked Course</span>
-                  )}
-                </div>
-
-                <div className="col-grade">
-                  <span
-                    className="grade-pill"
-                    style={{
+                    <div 
+                      key={grade.id} 
+                      className="grade-card"
+                      style={{ '--delay': `${idx * 0.05}s` }}
+                    >
+                      <div className="grade-badge" style={{ 
+                        background: `${gradeColor}15`, 
                       color: gradeColor,
-                      backgroundColor: gradeColor + '15' // 15 = low opacity hex
-                    }}
-                  >
+                        boxShadow: `0 0 20px ${gradeGlow}`
+                      }}>
                     {grade.grade}
-                  </span>
                 </div>
-
-                <div className="col-credits">
-                  {grade.credits} Credits
+                      <div className="grade-info">
+                        <span className="grade-code">{course?.courseCode || 'N/A'}</span>
+                        <span className="grade-course">{course?.courseName || 'Unknown Course'}</span>
+                        <span className="grade-credits">{grade.credits} Credits</span>
                 </div>
-
-                <div className="col-sem">
-                  {grade.semester || '-'}
-                </div>
-
-                <div className="col-actions">
-                  <button onClick={() => handleEdit(grade)} className="icon-btn">
-                    <Edit2 size={16} />
+                      <div className="grade-actions">
+                        <button onClick={() => handleEdit(grade)}>
+                          <Edit2 size={14} />
                   </button>
-                  <button onClick={() => handleDelete(grade.id)} className="icon-btn">
-                    <Trash2 size={16} />
+                        <button onClick={() => handleDelete(grade.id)} className="delete">
+                          <Trash2 size={14} />
                   </button>
                 </div>
               </div>
             )
-          })
+                })}
+              </div>
+            </div>
+          ))
         ) : (
           <div className="empty-state">
-            <p>No grades recorded yet.</p>
+            <Calculator size={48} />
+            <h3>No grades recorded</h3>
+            <p>Add your course grades to calculate your CGPA</p>
+            <button className="btn-primary" onClick={() => setShowModal(true)}>
+              <Plus size={18} /> Add First Grade
+            </button>
           </div>
         )}
       </div>
 
+      {/* Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => {
-          setShowModal(false)
-          resetForm()
-        }}>
+        <div className="modal-overlay" onClick={() => { setShowModal(false); resetForm() }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingGrade ? 'Edit Grade' : 'Add New Grade'}</h2>
-              <button
-                className="icon-btn"
-                onClick={() => {
-                  setShowModal(false)
-                  resetForm()
-                }}
-              >
+              <button className="icon-btn" onClick={() => { setShowModal(false); resetForm() }}>
                 <X size={20} />
               </button>
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Course *</label>
+                <label>Course</label>
                 <select
                   value={formData.courseId}
                   onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
@@ -277,20 +265,20 @@ const GPA = () => {
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Grade *</label>
+                  <label>Grade</label>
                   <select
                     value={formData.grade}
                     onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
                     required
                   >
                     <option value="">Select grade</option>
-                    {Object.keys(gradePoints).map(grade => (
-                      <option key={grade} value={grade}>{grade}</option>
+                    {Object.keys(gradePoints).map(g => (
+                      <option key={g} value={g}>{g}</option>
                     ))}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Credits *</label>
+                  <label>Credits</label>
                   <input
                     type="number"
                     step="0.5"
@@ -308,18 +296,11 @@ const GPA = () => {
                   type="text"
                   value={formData.semester}
                   onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
-                  placeholder="e.g., Fall 2024"
+                  placeholder="e.g., Fall 2025"
                 />
               </div>
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    setShowModal(false)
-                    resetForm()
-                  }}
-                >
+                <button type="button" className="btn-secondary" onClick={() => { setShowModal(false); resetForm() }}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary">

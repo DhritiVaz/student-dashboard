@@ -1,0 +1,125 @@
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  overflow: hidden;
+}
+
+.loading-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 56px;
+}
+
+/* Much larger title with advanced reveal + post-reveal presence */
+.loading-title {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.12em 0.35em;
+  font-size: clamp(56px, 20vw, 160px);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+  color: #fff;
+  margin: 0;
+  font-family: 'Outfit', -apple-system, sans-serif;
+}
+
+.loading-title-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.5em) scale(0.88);
+  filter: blur(14px);
+  animation: loadingWordReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.loading-title-word:first-child {
+  animation-delay: 0.12s;
+}
+
+.loading-title-word:last-child {
+  animation-delay: 0.32s;
+}
+
+@keyframes loadingWordReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(0.5em) scale(0.88);
+    filter: blur(14px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-0.02em) scale(1.02);
+    filter: blur(0);
+    text-shadow: 0 0 0 transparent;
+  }
+  85% {
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Progress line with track reveal + fill */
+.loading-line-wrap {
+  width: min(280px, 60vw);
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  border-radius: 4px;
+  opacity: 0;
+  transform: scaleX(0.5);
+  animation: loadingTrackIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+}
+
+@keyframes loadingTrackIn {
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.loading-line {
+  height: 100%;
+  width: 0;
+  background: #fff;
+  border-radius: 4px;
+  animation: loadingLineGrow 1.5s cubic-bezier(0.22, 1, 0.36, 1) 1s forwards;
+}
+
+@keyframes loadingLineGrow {
+  to {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .loading-title {
+    font-size: clamp(48px, 18vw, 100px);
+  }
+}
+
+@media (max-width: 480px) {
+  .loading-inner {
+    gap: 40px;
+  }
+
+  .loading-title {
+    font-size: clamp(40px, 16vw, 72px);
+    letter-spacing: -0.04em;
+  }
+
+  .loading-line-wrap {
+    width: 200px;
+    height: 3px;
+  }
+}

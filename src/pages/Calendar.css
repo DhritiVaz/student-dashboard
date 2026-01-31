@@ -11,7 +11,7 @@
   border-radius: var(--border-radius);
   padding: 20px;
   transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: var(--shadow-subtle);
+  box-shadow: var(--shadow-sm);
 }
 
 .event-card:hover {

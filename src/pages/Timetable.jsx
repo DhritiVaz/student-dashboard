@@ -1,15 +1,14 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
-import { Plus, Edit2, Trash2, X, Clock, MapPin, Calendar, List, Layout as LayoutIcon, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Clock, MapPin, Calendar, List, LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react'
 import './Timetable.css'
 
 const Timetable = () => {
   const { timetable, updateTimetable, courses, getCourseById } = useData()
-  const [viewMode, setViewMode] = useState('day') // 'day', 'week', 'list'
+  const [viewMode, setViewMode] = useState('day')
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
 
-  // Clean initial state
   const [formData, setFormData] = useState({
     day: 'monday',
     courseId: '',
@@ -28,18 +27,14 @@ const Timetable = () => {
     { key: 'sunday', label: 'Sun', fullLabel: 'Sunday' }
   ]
 
-  // Default to today
   const todayKey = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
   const initialDay = days.find(d => d.key === todayKey) ? todayKey : 'monday'
   const [activeDay, setActiveDay] = useState(initialDay)
 
-  // --- Actions ---
   const handleSubmit = (e) => {
     e.preventDefault()
     const dayPeriods = [...(timetable[formData.day] || [])]
     const course = getCourseById(formData.courseId)
-
-    // Use course venue if not explicitly set
     const finalVenue = formData.venue || (course ? course.venue : '')
 
     if (editingId !== null) {
@@ -64,9 +59,7 @@ const Timetable = () => {
       })
     }
 
-    // Sort by start time
     dayPeriods.sort((a, b) => a.startTime.localeCompare(b.startTime))
-
     updateTimetable(formData.day, dayPeriods)
     resetForm()
     setShowModal(false)
@@ -108,79 +101,93 @@ const Timetable = () => {
     }
   }
 
-  // --- Render Helpers ---
-
   const getDayClasses = (dayKey) => {
     const classes = timetable[dayKey] || []
     return [...classes].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
   }
 
-  // 1. Day View Render
   const renderDayView = () => {
     const sortedClasses = getDayClasses(activeDay)
     const currentDayLabel = days.find(d => d.key === activeDay)?.fullLabel
 
     return (
       <div className="view-container fade-in">
-        {/* Day Navigation */}
-        <div className="day-nav-header">
-          <button
-            className="nav-arrow"
-            onClick={() => {
+        <div className="day-nav">
+          <button className="nav-arrow" onClick={() => {
               const idx = days.findIndex(d => d.key === activeDay)
               const prev = days[idx - 1] || days[days.length - 1]
               setActiveDay(prev.key)
-            }}
-          >
+          }}>
             <ChevronLeft size={20} />
           </button>
-          <h2 className="current-day-title">{currentDayLabel}</h2>
+          
+          <div className="day-tabs">
+            {days.slice(0, 5).map(day => (
           <button
-            className="nav-arrow"
-            onClick={() => {
+                key={day.key}
+                className={`day-tab ${activeDay === day.key ? 'active' : ''} ${day.key === todayKey ? 'today' : ''}`}
+                onClick={() => setActiveDay(day.key)}
+              >
+                <span className="tab-label">{day.label}</span>
+                {day.key === todayKey && <span className="today-dot"></span>}
+              </button>
+            ))}
+          </div>
+          
+          <button className="nav-arrow" onClick={() => {
               const idx = days.findIndex(d => d.key === activeDay)
               const next = days[idx + 1] || days[0]
               setActiveDay(next.key)
-            }}
-          >
+          }}>
             <ChevronRight size={20} />
           </button>
         </div>
 
+        <div className="classes-container">
         {sortedClasses.length > 0 ? (
-          <div className="day-list">
-            {sortedClasses.map((item) => {
+            <div className="classes-list">
+              {sortedClasses.map((item, idx) => {
               const course = getCourseById(item.courseId)
               if (!course) return null
               return (
-                <div key={item.period} className="day-class-card">
-                  <div className="time-strip">
-                    <span className="start-time">{item.startTime}</span>
-                    <span className="end-time">{item.endTime}</span>
-                  </div>
-                  <div className="class-details">
-                    <h3 className="class-name">{course.courseName}</h3>
-                    <div className="class-info-row">
-                      <span className="class-code-badge">{course.courseCode}</span>
-                      {(item.venue || course.venue) && (
-                        <span className="venue-meta">
-                          <MapPin size={14} /> {item.venue || course.venue}
-                        </span>
-                      )}
+                  <div 
+                    key={item.period} 
+                    className="class-card"
+                    style={{ '--delay': `${idx * 0.1}s`, '--accent': course.color }}
+                  >
+                    <div className="class-time-block">
+                      <span className="time-start">{item.startTime}</span>
+                      <div className="time-line" style={{ background: course.color }}></div>
+                      <span className="time-end">{item.endTime}</span>
                     </div>
+                    <div className="class-content">
+                      <div className="class-header">
+                        <span className="class-code" style={{ color: course.color }}>{course.courseCode}</span>
+                        <div className="class-actions">
+                          <button onClick={() => handleEdit(activeDay, item.period)}>
+                            <Edit2 size={14} />
+                          </button>
+                          <button onClick={() => handleDelete(activeDay, item.period)} className="delete">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                   </div>
-                  <div className="card-actions">
-                    <button onClick={() => handleEdit(activeDay, item.period)}><Edit2 size={16} /></button>
-                    <button onClick={() => handleDelete(activeDay, item.period)} className="delete-btn"><Trash2 size={16} /></button>
+                    <h3 className="class-name">{course.courseName}</h3>
+                      <div className="class-meta">
+                        <span className="meta-item">
+                          <MapPin size={14} />
+                          {item.venue || course.venue || 'TBA'}
+                        </span>
+                      </div>
                   </div>
                 </div>
               )
             })}
           </div>
         ) : (
-          <div className="empty-day-placeholder">
-            <Clock size={48} className="text-calm" />
-            <p>No classes scheduled for {currentDayLabel}</p>
+            <div className="empty-state-small">
+              <Clock size={48} />
+              <p>No classes on {currentDayLabel}</p>
             <button className="btn-text-action" onClick={() => {
               resetForm()
               setFormData(prev => ({ ...prev, day: activeDay }))
@@ -188,70 +195,129 @@ const Timetable = () => {
             }}>+ Add Class</button>
           </div>
         )}
-      </div>
-    )
-  }
-
-  // 2. Week View Render
-  const renderWeekView = () => {
-    return (
-      <div className="view-container week-grid-container fade-in">
-        <div className="week-grid">
-          {days.map(day => {
-            const dayClasses = getDayClasses(day.key)
-            return (
-              <div key={day.key} className="week-col">
-                <div className="week-col-header">
-                  <span className="day-short">{day.label}</span>
-                </div>
-                <div className="week-col-body">
-                  {dayClasses.map(item => {
-                    const course = getCourseById(item.courseId)
-                    if (!course) return null
-                    return (
-                      <div key={item.period} className="week-card-mini" onClick={() => handleEdit(day.key, item.period)}>
-                        <span className="mini-time">{item.startTime}</span>
-                        <span className="mini-code">{course.courseCode}</span>
-                      </div>
-                    )
-                  })}
-                  {dayClasses.length === 0 && (
-                    <div className="week-empty-slot"></div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
         </div>
       </div>
     )
   }
 
-  // 3. List View Render
+  // Time slots for the grid
+  const timeSlots = [
+    { start: '09:00', end: '10:00', label: '09:00 - 10:00' },
+    { start: '10:00', end: '11:00', label: '10:00 - 11:00' },
+    { start: '11:00', end: '12:00', label: '11:00 - 12:00', isBreak: true },
+    { start: '12:00', end: '13:00', label: '12:00 - 01:00' },
+    { start: '14:00', end: '15:00', label: '02:00 - 03:00' },
+    { start: '15:00', end: '16:00', label: '03:00 - 04:00' },
+  ]
+
+  // Find class for a specific day and time slot
+  const getClassForSlot = (dayKey, slot) => {
+    const dayClasses = timetable[dayKey] || []
+    return dayClasses.find(cls => {
+      const clsStart = cls.startTime
+      return clsStart >= slot.start && clsStart < slot.end
+    })
+  }
+
+  const renderWeekView = () => {
+    const weekDays = days.slice(0, 5)
+
+    return (
+      <div className="view-container week-view fade-in">
+        <div className="week-table-container">
+          <table className="week-table">
+            <thead>
+              <tr>
+                <th className="time-header">Time</th>
+                {weekDays.map(day => (
+                  <th key={day.key} className={`day-header ${day.key === todayKey ? 'today' : ''}`}>
+                    {day.fullLabel}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {timeSlots.map((slot, slotIdx) => (
+                <tr key={slot.label} className={slot.isBreak ? 'break-row' : ''}>
+                  <td className="time-cell">{slot.label}</td>
+                  {weekDays.map(day => {
+                    if (slot.isBreak) {
+                      return (
+                        <td key={day.key} className="slot-cell break-cell">
+                          <span className="break-text">Break</span>
+                        </td>
+                      )
+                    }
+
+                    const classItem = getClassForSlot(day.key, slot)
+                    const course = classItem ? getCourseById(classItem.courseId) : null
+
+                    if (course) {
+                      return (
+                        <td key={day.key} className="slot-cell">
+                          <div 
+                            className="slot-class"
+                            style={{ 
+                              '--accent': course.color,
+                              backgroundColor: `${course.color}15`,
+                              borderColor: `${course.color}30`
+                            }}
+                            onClick={() => handleEdit(day.key, classItem.period)}
+                          >
+                            <span className="slot-course-name" style={{ color: course.color }}>
+                              {course.courseName}
+                            </span>
+                            <span className="slot-details">
+                              {course.courseCode} • {classItem.venue || course.venue}
+                            </span>
+                          </div>
+                        </td>
+                      )
+                    }
+
+                    return (
+                      <td key={day.key} className="slot-cell empty-cell">
+                        <span className="free-text">Free</span>
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+
   const renderListView = () => {
-    // Flatten all classes
     const allDaysWithClasses = days.filter(d => (timetable[d.key] || []).length > 0)
 
     return (
-      <div className="view-container list-view-container fade-in">
+      <div className="view-container list-view fade-in">
         {allDaysWithClasses.length > 0 ? (
           allDaysWithClasses.map(day => (
-            <div key={day.key} className="list-day-group">
-              <h3 className="list-day-header">{day.fullLabel}</h3>
-              <div className="list-group-items">
-                {getDayClasses(day.key).map(item => {
+            <div key={day.key} className="list-day-section">
+              <h3 className="list-day-title">{day.fullLabel}</h3>
+              <div className="list-classes">
+                {getDayClasses(day.key).map((item, idx) => {
                   const course = getCourseById(item.courseId)
                   if (!course) return null
                   return (
-                    <div key={item.period} className="list-item-row">
+                    <div 
+                      key={item.period} 
+                      className="list-item"
+                      style={{ '--delay': `${idx * 0.05}s` }}
+                    >
                       <div className="list-time">{item.startTime} - {item.endTime}</div>
-                      <div className="list-content">
-                        <span className="list-subject">{course.courseName}</span>
+                      <div className="list-color" style={{ background: course.color }}></div>
+                      <div className="list-info">
+                        <span className="list-name">{course.courseName}</span>
                         <span className="list-venue">{item.venue || course.venue}</span>
                       </div>
-                      <div className="list-actions">
-                        <button onClick={() => handleEdit(day.key, item.period)}><Edit2 size={14} /></button>
-                      </div>
+                      <button className="list-edit" onClick={() => handleEdit(day.key, item.period)}>
+                        <Edit2 size={14} />
+                      </button>
                     </div>
                   )
                 })}
@@ -259,10 +325,13 @@ const Timetable = () => {
             </div>
           ))
         ) : (
-          <div className="empty-day-placeholder">
-            <List size={48} className="text-calm" />
-            <p>Your timetable is completely empty.</p>
-            <button className="btn-text-action" onClick={() => setShowModal(true)}>Start Adding Classes</button>
+          <div className="empty-state">
+            <List size={48} />
+            <h3>No classes scheduled</h3>
+            <p>Start adding classes to build your timetable</p>
+            <button className="btn-primary" onClick={() => setShowModal(true)}>
+              <Plus size={18} /> Add Class
+            </button>
           </div>
         )}
       </div>
@@ -271,70 +340,62 @@ const Timetable = () => {
 
   return (
     <div className="timetable-page">
-      {/* Page Header */}
-      <div className="timetable-header">
+      <div className="page-header">
         <div>
           <h1>Timetable</h1>
-          <p className="subtitle">Manage your weekly schedule</p>
+          <p className="subtitle">Your weekly class schedule</p>
         </div>
 
-        <div className="header-controls">
-          {/* View Switcher */}
-          <div className="view-switcher">
+        <div className="header-actions">
+          <div className="view-toggle">
             <button
-              className={`view-btn ${viewMode === 'day' ? 'active' : ''}`}
+              className={`toggle-btn ${viewMode === 'day' ? 'active' : ''}`}
               onClick={() => setViewMode('day')}
-              title="Day View"
             >
-              <LayoutIcon size={18} />
+              <LayoutGrid size={18} />
               <span>Day</span>
             </button>
             <button
-              className={`view-btn ${viewMode === 'week' ? 'active' : ''}`}
+              className={`toggle-btn ${viewMode === 'week' ? 'active' : ''}`}
               onClick={() => setViewMode('week')}
-              title="Week View"
             >
               <Calendar size={18} />
               <span>Week</span>
             </button>
             <button
-              className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+              className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
               onClick={() => setViewMode('list')}
-              title="List View"
             >
               <List size={18} />
               <span>List</span>
             </button>
           </div>
 
-          <button
-            className="btn-primary"
-            onClick={() => {
+          <button className="btn-primary" onClick={() => {
               resetForm()
               setFormData(prev => ({ ...prev, day: activeDay }))
               setShowModal(true)
-            }}
-          >
+          }}>
             <Plus size={18} />
             Add Class
           </button>
         </div>
       </div>
 
-      {/* Main Content Area */}
       <div className="timetable-content">
         {viewMode === 'day' && renderDayView()}
         {viewMode === 'week' && renderWeekView()}
         {viewMode === 'list' && renderListView()}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{editingId ? 'Edit Class' : 'Add Class'}</h2>
-              <button className="icon-btn" onClick={() => setShowModal(false)}><X size={20} /></button>
+              <button className="icon-btn" onClick={() => setShowModal(false)}>
+                <X size={20} />
+              </button>
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -376,7 +437,7 @@ const Timetable = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Start</label>
+                  <label>Start Time</label>
                   <input
                     type="time"
                     value={formData.startTime}
@@ -385,7 +446,7 @@ const Timetable = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label>End</label>
+                  <label>End Time</label>
                   <input
                     type="time"
                     value={formData.endTime}
@@ -396,10 +457,10 @@ const Timetable = () => {
               </div>
 
               <div className="form-group">
-                <label>Venue (Room/Lab)</label>
+                <label>Venue</label>
                 <input
                   type="text"
-                  placeholder="e.g. Room 301 (Optional)"
+                  placeholder="Room/Lab (Optional)"
                   value={formData.venue}
                   onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
                 />
