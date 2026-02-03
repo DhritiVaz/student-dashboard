@@ -36,8 +36,11 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   // On mount: verify session via JWT cookie (GET /api/auth/me)
+  // Loading screen is shown for at least LOADING_MIN_MS so the splash is visible
+  const LOADING_MIN_MS = 2500
   useEffect(() => {
     let cancelled = false
+    const start = Date.now()
     fetchWithAuth('/api/auth/me')
       .then((res) => {
         if (cancelled) return
@@ -57,7 +60,12 @@ export const AuthProvider = ({ children }) => {
         }
       })
       .finally(() => {
-        if (!cancelled) setAuthLoading(false)
+        if (cancelled) return
+        const elapsed = Date.now() - start
+        const remaining = Math.max(0, LOADING_MIN_MS - elapsed)
+        setTimeout(() => {
+          if (!cancelled) setAuthLoading(false)
+        }, remaining)
       })
     return () => { cancelled = true }
   }, [fetchWithAuth])
