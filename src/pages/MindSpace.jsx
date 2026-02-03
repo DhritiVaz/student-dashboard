@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
+import { useSemester } from '../context/SemesterContext'
 import { Plus, Edit2, Trash2, X, Check, FileText, Upload, Brain, CheckCircle2, Settings2 } from 'lucide-react'
 import PropertyFormFields from '../components/PropertyFormFields'
 import PropertyManager from '../components/PropertyManager'
@@ -8,6 +9,7 @@ import './MindSpace.css'
 const MindSpace = () => {
   const {
     mindSpaceItems,
+    semesters,
     addMindSpaceItem,
     updateMindSpaceItem,
     deleteMindSpaceItem,
@@ -15,6 +17,10 @@ const MindSpace = () => {
     addPropertyDefinition,
     deletePropertyDefinition
   } = useData()
+  const { selectedSemesterId, isViewingAll } = useSemester()
+  const itemsInScope = isViewingAll
+    ? mindSpaceItems
+    : mindSpaceItems.filter((i) => i.semesterId === selectedSemesterId)
   const [showModal, setShowModal] = useState(false)
   const [showPropertyManager, setShowPropertyManager] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
@@ -24,6 +30,7 @@ const MindSpace = () => {
     type: 'text',
     priority: 'medium',
     file: null,
+    semesterId: '',
     properties: {}
   })
 
@@ -31,10 +38,11 @@ const MindSpace = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const payload = { ...formData, semesterId: formData.semesterId || null }
     if (editingItem) {
-      updateMindSpaceItem(editingItem.id, formData)
+      updateMindSpaceItem(editingItem.id, payload)
     } else {
-      addMindSpaceItem(formData)
+      addMindSpaceItem(payload)
     }
     resetForm()
     setShowModal(false)
@@ -47,6 +55,7 @@ const MindSpace = () => {
       type: 'text',
       priority: 'medium',
       file: null,
+      semesterId: selectedSemesterId ?? '',
       properties: {}
     })
     setEditingItem(null)
@@ -60,6 +69,7 @@ const MindSpace = () => {
       type: item.type || 'text',
       priority: item.priority || 'medium',
       file: item.file || null,
+      semesterId: item.semesterId ?? '',
       properties: { ...(item.properties || {}) }
     })
     setShowModal(true)
@@ -96,8 +106,8 @@ const MindSpace = () => {
     }
   }
 
-  const incompleteItems = mindSpaceItems.filter(i => !i.completed)
-  const completedItems = mindSpaceItems.filter(i => i.completed)
+  const incompleteItems = itemsInScope.filter(i => !i.completed)
+  const completedItems = itemsInScope.filter(i => i.completed)
 
   const priorityColors = {
     high: { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: 'rgba(239, 68, 68, 0.3)' },
@@ -241,13 +251,13 @@ const MindSpace = () => {
         </div>
       )}
 
-      {mindSpaceItems.length === 0 && (
+      {itemsInScope.length === 0 && (
         <div className="empty-state">
           <Brain size={48} />
-          <h3>Your mind space is empty</h3>
-          <p>Add notes and tasks to organize your thoughts</p>
-          <button type="button" className="btn-primary" onClick={() => setShowModal(true)}>
-            <Plus size={18} /> Add First Note
+          <h3>{isViewingAll ? 'Your mind space is empty' : 'No notes for this semester'}</h3>
+          <p>{isViewingAll ? 'Add notes and tasks to organize your thoughts' : 'Add a note for this semester or switch to All to see all notes.'}</p>
+          <button type="button" className="btn-primary" onClick={() => { resetForm(); setShowModal(true) }}>
+            <Plus size={18} /> Add Note
           </button>
         </div>
       )}
@@ -282,6 +292,18 @@ const MindSpace = () => {
                   required
                   placeholder="e.g., Review lecture notes"
                 />
+              </div>
+              <div className="form-group">
+                <label>Semester</label>
+                <select
+                  value={formData.semesterId}
+                  onChange={(e) => setFormData({ ...formData, semesterId: e.target.value })}
+                >
+                  <option value="">No semester</option>
+                  {semesters.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="form-row">
               <div className="form-group">

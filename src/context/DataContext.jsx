@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { useAuth } from './AuthContext'
+import { defaultCourses, defaultCalendarEvents, defaultTimetable, defaultMindSpaceItems, defaultGrades, defaultFiles } from '../data/demoData'
 
 const DataContext = createContext()
 const getApiUrl = () => import.meta.env.VITE_API_URL || ''
@@ -30,9 +31,14 @@ export const useData = () => {
   return context
 }
 
-// Default semesters and property definitions for demo
+// Default semesters and property definitions for demo (6 semesters)
 const defaultSemesters = [
-  { id: 's1', name: 'Fall 2025', order: 0 }
+  { id: 's1', name: 'Fall 2025', order: 0 },
+  { id: 's2', name: 'Spring 2025', order: 1 },
+  { id: 's3', name: 'Winter 2024', order: 2 },
+  { id: 's4', name: 'Fall 2024', order: 3 },
+  { id: 's5', name: 'Spring 2024', order: 4 },
+  { id: 's6', name: 'Winter 2023', order: 5 }
 ]
 
 const defaultPropertyDefinitions = {
@@ -41,478 +47,41 @@ const defaultPropertyDefinitions = {
     { id: 'pc2', name: 'Course Name', type: 'text', order: 1 },
     { id: 'pc3', name: 'Venue', type: 'text', order: 2 },
     { id: 'pc4', name: 'Faculty', type: 'text', order: 3 },
-    { id: 'pc5', name: 'Credits', type: 'text', order: 4 }
+    { id: 'pc5', name: 'Credits', type: 'text', order: 4 },
+    { id: 'pc6', name: 'Section', type: 'text', order: 5 },
+    { id: 'pc7', name: 'Prerequisites', type: 'text', order: 6 },
+    { id: 'pc8', name: 'Office Hours', type: 'text', order: 7 },
+    { id: 'pc9', name: 'Schedule', type: 'text', order: 8 },
+    { id: 'pc10', name: 'Contact Hours', type: 'text', order: 9 },
+    { id: 'pc11', name: 'Department', type: 'text', order: 10 },
+    { id: 'pc12', name: 'Textbook', type: 'text', order: 11 },
+    { id: 'pc13', name: 'Syllabus Link', type: 'text', order: 12 },
+    { id: 'pc14', name: 'LMS Link', type: 'text', order: 13 }
   ],
-  calendar_events: [],
-  mind_space_items: [],
-  files: [],
-  grades: []
+  calendar_events: [
+    { id: 'pe1', name: 'Location', type: 'text', order: 0 },
+    { id: 'pe2', name: 'Reminder', type: 'text', order: 1 },
+    { id: 'pe3', name: 'Meeting Link', type: 'text', order: 2 }
+  ],
+  mind_space_items: [
+    { id: 'pm1', name: 'Tags', type: 'text', order: 0 },
+    { id: 'pm2', name: 'Due Date', type: 'text', order: 1 },
+    { id: 'pm3', name: 'Related Course', type: 'text', order: 2 }
+  ],
+  files: [
+    { id: 'pf1', name: 'Category', type: 'text', order: 0 },
+    { id: 'pf2', name: 'Notes', type: 'text', order: 1 },
+    { id: 'pf3', name: 'Version', type: 'text', order: 2 }
+  ],
+  grades: [
+    { id: 'pg1', name: 'Remarks', type: 'text', order: 0 },
+    { id: 'pg2', name: 'Grade Type', type: 'text', order: 1 },
+    { id: 'pg3', name: 'Internal', type: 'text', order: 2 },
+    { id: 'pg4', name: 'External', type: 'text', order: 3 }
+  ]
 }
 
-// Comprehensive placeholder data (new shape: name, semesterId, properties)
-const defaultCourses = [
-  {
-    id: '1',
-    name: 'Data Structures & Algorithms',
-    semesterId: 's1',
-    properties: { 'Course Code': 'CS301', 'Venue': 'ROOM-A101', 'Faculty': 'Dr. Sarah Chen', 'Credits': '4' },
-    progress: 78,
-    color: '#3b82f6'
-  },
-  { id: '2', name: 'Database Management Systems', semesterId: 's1', properties: { 'Course Code': 'CS302', 'Venue': 'LAB-B205', 'Faculty': 'Prof. Michael Ross', 'Credits': '3' }, progress: 65, color: '#a855f7' },
-  { id: '3', name: 'Operating Systems', semesterId: 's1', properties: { 'Course Code': 'CS303', 'Venue': 'ROOM-C301', 'Faculty': 'Dr. Emily Wang', 'Credits': '4' }, progress: 52, color: '#06b6d4' },
-  { id: '4', name: 'Computer Networks', semesterId: 's1', properties: { 'Course Code': 'CS304', 'Venue': 'LAB-D102', 'Faculty': 'Prof. James Miller', 'Credits': '3' }, progress: 41, color: '#10b981' },
-  { id: '5', name: 'Linear Algebra', semesterId: 's1', properties: { 'Course Code': 'MA201', 'Venue': 'ROOM-E201', 'Faculty': 'Dr. Lisa Anderson', 'Credits': '3' }, progress: 88, color: '#f59e0b' },
-  { id: '6', name: 'Machine Learning', semesterId: 's1', properties: { 'Course Code': 'CS305', 'Venue': 'LAB-F301', 'Faculty': 'Dr. David Park', 'Credits': '4' }, progress: 35, color: '#ec4899' },
-  { id: '7', name: 'Web Development', semesterId: 's1', properties: { 'Course Code': 'CS306', 'Venue': 'LAB-G102', 'Faculty': 'Prof. Anna Martinez', 'Credits': '3' }, progress: 92, color: '#f97316' },
-  { id: '8', name: 'Software Engineering', semesterId: 's1', properties: { 'Course Code': 'CS307', 'Venue': 'ROOM-H201', 'Faculty': 'Dr. Robert Kim', 'Credits': '3' }, progress: 70, color: '#84cc16' },
-  { id: '9', name: 'Probability & Statistics', semesterId: 's1', properties: { 'Course Code': 'MA202', 'Venue': 'ROOM-E202', 'Faculty': 'Dr. Jennifer White', 'Credits': '3' }, progress: 55, color: '#14b8a6' },
-  { id: '10', name: 'Artificial Intelligence', semesterId: 's1', properties: { 'Course Code': 'CS308', 'Venue': 'LAB-F302', 'Faculty': 'Prof. Kevin Zhang', 'Credits': '4' }, progress: 28, color: '#8b5cf6' }
-]
-
-const defaultTimetable = {
-  monday: [
-    { period: 1, courseId: '1', startTime: '08:00', endTime: '09:30', venue: 'ROOM-A101' },
-    { period: 2, courseId: '3', startTime: '10:00', endTime: '11:30', venue: 'ROOM-C301' },
-    { period: 3, courseId: '5', startTime: '12:00', endTime: '13:00', venue: 'ROOM-E201' },
-    { period: 4, courseId: '7', startTime: '14:00', endTime: '15:30', venue: 'LAB-G102' },
-    { period: 5, courseId: '9', startTime: '16:00', endTime: '17:00', venue: 'ROOM-E202' }
-  ],
-  tuesday: [
-    { period: 1, courseId: '2', startTime: '08:00', endTime: '09:30', venue: 'LAB-B205' },
-    { period: 2, courseId: '4', startTime: '10:00', endTime: '11:30', venue: 'LAB-D102' },
-    { period: 3, courseId: '6', startTime: '12:00', endTime: '13:30', venue: 'LAB-F301' },
-    { period: 4, courseId: '8', startTime: '14:00', endTime: '15:30', venue: 'ROOM-H201' },
-    { period: 5, courseId: '10', startTime: '16:00', endTime: '17:30', venue: 'LAB-F302' }
-  ],
-  wednesday: [
-    { period: 1, courseId: '1', startTime: '08:00', endTime: '09:30', venue: 'ROOM-A101' },
-    { period: 2, courseId: '5', startTime: '10:00', endTime: '11:00', venue: 'ROOM-E201' },
-    { period: 3, courseId: '3', startTime: '11:30', endTime: '13:00', venue: 'ROOM-C301' },
-    { period: 4, courseId: '7', startTime: '14:00', endTime: '15:30', venue: 'LAB-G102' },
-    { period: 5, courseId: '9', startTime: '16:00', endTime: '17:00', venue: 'ROOM-E202' }
-  ],
-  thursday: [
-    { period: 1, courseId: '2', startTime: '08:00', endTime: '09:30', venue: 'LAB-B205' },
-    { period: 2, courseId: '6', startTime: '10:00', endTime: '11:30', venue: 'LAB-F301' },
-    { period: 3, courseId: '4', startTime: '12:00', endTime: '13:30', venue: 'LAB-D102' },
-    { period: 4, courseId: '8', startTime: '14:00', endTime: '15:30', venue: 'ROOM-H201' },
-    { period: 5, courseId: '10', startTime: '16:00', endTime: '17:30', venue: 'LAB-F302' }
-  ],
-  friday: [
-    { period: 1, courseId: '1', startTime: '08:00', endTime: '09:30', venue: 'ROOM-A101' },
-    { period: 2, courseId: '3', startTime: '10:00', endTime: '11:30', venue: 'ROOM-C301' },
-    { period: 3, courseId: '5', startTime: '12:00', endTime: '13:00', venue: 'ROOM-E201' },
-    { period: 4, courseId: '6', startTime: '14:00', endTime: '15:30', venue: 'LAB-F301' }
-  ],
-  saturday: [
-    { period: 1, courseId: '7', startTime: '09:00', endTime: '10:30', venue: 'LAB-G102' },
-    { period: 2, courseId: '10', startTime: '11:00', endTime: '12:30', venue: 'LAB-F302' }
-  ],
-  sunday: []
-}
-
-const defaultCalendarEvents = [
-  {
-    id: '1',
-    title: 'DSA Assignment #4 Due',
-    date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '23:59',
-    type: 'assignment',
-    courseId: '1',
-    description: 'Submit linked list and tree implementation'
-  },
-  {
-    id: '2',
-    title: 'DBMS Mid-term Exam',
-    date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '10:00',
-    type: 'exam',
-    courseId: '2',
-    description: 'Chapters 1-5, SQL queries, Normalization'
-  },
-  {
-    id: '3',
-    title: 'ML Project Presentation',
-    date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '14:00',
-    type: 'presentation',
-    courseId: '6',
-    description: 'Final project demo - Image Classification'
-  },
-  {
-    id: '4',
-    title: 'OS Lab Report Submission',
-    date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '17:00',
-    type: 'assignment',
-    courseId: '3',
-    description: 'Process scheduling simulation report'
-  },
-  {
-    id: '5',
-    title: 'Linear Algebra Quiz #3',
-    date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '11:00',
-    type: 'quiz',
-    courseId: '5',
-    description: 'Eigenvalues and Eigenvectors'
-  },
-  {
-    id: '6',
-    title: 'Networks Lab Practical',
-    date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '09:00',
-    type: 'exam',
-    courseId: '4',
-    description: 'TCP/IP configuration and troubleshooting'
-  },
-  {
-    id: '7',
-    title: 'Web Dev Project Demo',
-    date: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '15:00',
-    type: 'presentation',
-    courseId: '7',
-    description: 'E-commerce website demonstration'
-  },
-  {
-    id: '8',
-    title: 'Software Engineering Sprint Review',
-    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '10:00',
-    type: 'presentation',
-    courseId: '8',
-    description: 'Sprint 3 deliverables review'
-  },
-  {
-    id: '9',
-    title: 'Probability Assignment Due',
-    date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '23:59',
-    type: 'assignment',
-    courseId: '9',
-    description: 'Bayes theorem problems'
-  },
-  {
-    id: '10',
-    title: 'AI Mini Project Submission',
-    date: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '18:00',
-    type: 'assignment',
-    courseId: '10',
-    description: 'Search algorithm implementation'
-  },
-  {
-    id: '11',
-    title: 'Study Group - DSA',
-    date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '19:00',
-    type: 'personal',
-    description: 'Group study session for graphs'
-  },
-  {
-    id: '12',
-    title: 'Career Fair',
-    date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    time: '09:00',
-    type: 'personal',
-    description: 'Campus placement drive'
-  }
-]
-
-const defaultMindSpaceItems = [
-  {
-    id: '1',
-    title: 'Review Binary Search Trees',
-    content: 'Cover AVL trees, Red-Black trees, and B-trees for the upcoming DSA exam. Focus on balancing operations.',
-    type: 'text',
-    completed: false,
-    priority: 'high',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '2',
-    title: 'SQL Practice Questions',
-    content: 'Complete 20 complex join queries from the practice set. Focus on subqueries and aggregate functions.',
-    type: 'text',
-    completed: false,
-    priority: 'high',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '3',
-    title: 'OS Concepts Summary',
-    content: 'Make notes on deadlock prevention, memory management, and page replacement algorithms.',
-    type: 'text',
-    completed: true,
-    priority: 'medium',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '4',
-    title: 'Network Protocols Cheat Sheet',
-    content: 'TCP/IP, UDP, HTTP, HTTPS, FTP - create a quick reference guide with port numbers.',
-    type: 'text',
-    completed: false,
-    priority: 'medium',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '5',
-    title: 'ML Model Comparison',
-    content: 'Compare accuracy of different classifiers (SVM, Random Forest, Neural Network) on the dataset.',
-    type: 'text',
-    completed: true,
-    priority: 'high',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '6',
-    title: 'React Component Patterns',
-    content: 'Study HOCs, Render Props, Custom Hooks, and Context API patterns for the web dev project.',
-    type: 'text',
-    completed: false,
-    priority: 'medium',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '7',
-    title: 'Git Workflow Documentation',
-    content: 'Document the branching strategy and PR review process for the team project.',
-    type: 'text',
-    completed: true,
-    priority: 'low',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '8',
-    title: 'Linear Algebra Formulas',
-    content: 'Compile all important formulas for determinants, matrix operations, and vector spaces.',
-    type: 'text',
-    completed: false,
-    priority: 'high',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '9',
-    title: 'Research Paper Reading',
-    content: 'Read "Attention Is All You Need" paper for AI course presentation.',
-    type: 'text',
-    completed: false,
-    priority: 'medium',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '10',
-    title: 'Docker Setup Guide',
-    content: 'Create a step-by-step guide for containerizing the web application.',
-    type: 'text',
-    completed: true,
-    priority: 'low',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '11',
-    title: 'Probability Distributions',
-    content: 'Review Normal, Binomial, Poisson distributions with examples.',
-    type: 'text',
-    completed: false,
-    priority: 'medium',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: '12',
-    title: 'API Design Best Practices',
-    content: 'Study RESTful API design principles and implement in the project.',
-    type: 'text',
-    completed: false,
-    priority: 'low',
-    createdAt: new Date().toISOString()
-  }
-]
-
-const defaultGrades = [
-  { id: '1', courseId: '1', grade: 'S', credits: '4', semester: 'Fall 2025' },
-  { id: '2', courseId: '2', grade: 'A', credits: '3', semester: 'Fall 2025' },
-  { id: '3', courseId: '5', grade: 'B', credits: '3', semester: 'Fall 2025' },
-  { id: '4', courseId: '7', grade: 'S', credits: '3', semester: 'Fall 2025' },
-  { id: '5', courseId: '3', grade: 'A', credits: '4', semester: 'Winter 2025' },
-  { id: '6', courseId: '4', grade: 'B', credits: '3', semester: 'Winter 2025' },
-  { id: '7', courseId: '8', grade: 'A', credits: '3', semester: 'Winter 2025' },
-  { id: '8', courseId: '9', grade: 'B', credits: '3', semester: 'Winter 2025' },
-  { id: '9', courseId: '6', grade: 'S', credits: '4', semester: 'Fall 2024' },
-  { id: '10', courseId: '10', grade: 'A', credits: '4', semester: 'Fall 2024' },
-  { id: '11', courseId: '1', grade: 'A', credits: '4', semester: 'Fall 2024' },
-  { id: '12', courseId: '2', grade: 'S', credits: '3', semester: 'Winter 2024' },
-  { id: '13', courseId: '5', grade: 'A', credits: '3', semester: 'Winter 2024' },
-  { id: '14', courseId: '3', grade: 'B', credits: '4', semester: 'Winter 2024' }
-]
-
-const defaultFiles = [
-  {
-    id: '1',
-    name: 'DSA_Lecture_Notes_Week1-4.pdf',
-    courseId: '1',
-    fileName: 'DSA_Lecture_Notes_Week1-4.pdf',
-    fileSize: 2457600,
-    fileType: 'application/pdf',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '2',
-    name: 'DSA_Assignment_Solutions.pdf',
-    courseId: '1',
-    fileName: 'DSA_Assignment_Solutions.pdf',
-    fileSize: 1536000,
-    fileType: 'application/pdf',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '3',
-    name: 'SQL_Complete_Cheatsheet.pdf',
-    courseId: '2',
-    fileName: 'SQL_Complete_Cheatsheet.pdf',
-    fileSize: 1024000,
-    fileType: 'application/pdf',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '4',
-    name: 'DBMS_ER_Diagrams.png',
-    courseId: '2',
-    fileName: 'DBMS_ER_Diagrams.png',
-    fileSize: 819200,
-    fileType: 'image/png',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '5',
-    name: 'OS_Lab_Manual_Complete.pdf',
-    courseId: '3',
-    fileName: 'OS_Lab_Manual_Complete.pdf',
-    fileSize: 5120000,
-    fileType: 'application/pdf',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '6',
-    name: 'Process_Scheduling_Simulation.zip',
-    courseId: '3',
-    fileName: 'Process_Scheduling_Simulation.zip',
-    fileSize: 3072000,
-    fileType: 'application/zip',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '7',
-    name: 'Network_Topology_Diagrams.png',
-    courseId: '4',
-    fileName: 'Network_Topology_Diagrams.png',
-    fileSize: 1228800,
-    fileType: 'image/png',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '8',
-    name: 'TCP_IP_Protocol_Stack.pdf',
-    courseId: '4',
-    fileName: 'TCP_IP_Protocol_Stack.pdf',
-    fileSize: 2048000,
-    fileType: 'application/pdf',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '9',
-    name: 'Linear_Algebra_Formula_Sheet.pdf',
-    courseId: '5',
-    fileName: 'Linear_Algebra_Formula_Sheet.pdf',
-    fileSize: 512000,
-    fileType: 'application/pdf',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '10',
-    name: 'ML_Project_Dataset.csv',
-    courseId: '6',
-    fileName: 'ML_Project_Dataset.csv',
-    fileSize: 4096000,
-    fileType: 'text/csv',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '11',
-    name: 'ML_Model_Notebook.ipynb',
-    courseId: '6',
-    fileName: 'ML_Model_Notebook.ipynb',
-    fileSize: 1843200,
-    fileType: 'application/json',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '12',
-    name: 'React_Project_Boilerplate.zip',
-    courseId: '7',
-    fileName: 'React_Project_Boilerplate.zip',
-    fileSize: 2560000,
-    fileType: 'application/zip',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '13',
-    name: 'API_Documentation.pdf',
-    courseId: '7',
-    fileName: 'API_Documentation.pdf',
-    fileSize: 1024000,
-    fileType: 'application/pdf',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '14',
-    name: 'Software_Requirements_Spec.docx',
-    courseId: '8',
-    fileName: 'Software_Requirements_Spec.docx',
-    fileSize: 768000,
-    fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '15',
-    name: 'Probability_Solved_Examples.pdf',
-    courseId: '9',
-    fileName: 'Probability_Solved_Examples.pdf',
-    fileSize: 1536000,
-    fileType: 'application/pdf',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '16',
-    name: 'AI_Search_Algorithms.pptx',
-    courseId: '10',
-    fileName: 'AI_Search_Algorithms.pptx',
-    fileSize: 3584000,
-    fileType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '17',
-    name: 'Resume_2025.pdf',
-    courseId: null,
-    fileName: 'Resume_2025.pdf',
-    fileSize: 256000,
-    fileType: 'application/pdf',
-    uploadedAt: new Date().toISOString()
-  },
-  {
-    id: '18',
-    name: 'Internship_Offer_Letter.pdf',
-    courseId: null,
-    fileName: 'Internship_Offer_Letter.pdf',
-    fileSize: 384000,
-    fileType: 'application/pdf',
-    uploadedAt: new Date().toISOString()
-  }
-]
+// Demo placeholder data (courses, events, timetable, notes, grades, files) imported from ../data/demoData
 
 function getDataKey(user) {
   if (!user) return null
@@ -592,7 +161,13 @@ export const DataProvider = ({ children }) => {
         if (cancelled) return
         const isDemo = dataKey === 'demo'
         const isEmpty = !data.courses?.length && !data.calendarEvents?.length && !data.mindSpaceItems?.length
-        if (isDemo && isEmpty) {
+        // Demo: treat as incomplete if we have old/partial data (e.g. < 48 courses, < 60 events/notes) and upgrade to full dataset
+        const isDemoIncomplete = isDemo && !isEmpty && (
+          (data.courses?.length ?? 0) < 48 ||
+          (data.calendarEvents?.length ?? 0) < 60 ||
+          (data.mindSpaceItems?.length ?? 0) < 60
+        )
+        if (isDemo && (isEmpty || isDemoIncomplete)) {
           setCourses(defaultCourses)
           setCalendarEvents(defaultCalendarEvents)
           setMindSpaceItems(defaultMindSpaceItems)
@@ -618,15 +193,36 @@ export const DataProvider = ({ children }) => {
             })
           }).catch(() => {})
         } else {
+          // Demo account: always use defaultSemesters (6) so demo never shows old/stale semester list from backend
+          const semestersToUse = isDemo ? defaultSemesters : (data.semesters ?? [])
           setCourses(data.courses ?? [])
           setCalendarEvents(data.calendarEvents ?? [])
           setMindSpaceItems(data.mindSpaceItems ?? [])
           setTimetable(data.timetable && Object.keys(data.timetable).length ? data.timetable : emptyTimetable)
           setFiles(data.files ?? [])
           setGrades(data.grades ?? [])
-          setSemesters(data.semesters ?? [])
+          setSemesters(semestersToUse)
           setPropertyDefinitions(data.propertyDefinitions ?? {})
           skipSaveRef.current = true
+          // Persist demo semesters to backend so stored data matches (backend expects full payload)
+          if (isDemo && (data.semesters ?? []).length !== defaultSemesters.length) {
+            const fullPayload = {
+              courses: data.courses ?? [],
+              calendarEvents: data.calendarEvents ?? [],
+              mindSpaceItems: data.mindSpaceItems ?? [],
+              timetable: data.timetable && Object.keys(data.timetable).length ? data.timetable : emptyTimetable,
+              files: data.files ?? [],
+              grades: data.grades ?? [],
+              semesters: defaultSemesters,
+              propertyDefinitions: data.propertyDefinitions ?? {}
+            }
+            fetch(getDataApiUrl(), {
+              method: 'PUT',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(fullPayload)
+            }).catch(() => {})
+          }
         }
       })
       .catch(() => {
@@ -771,6 +367,7 @@ export const DataProvider = ({ children }) => {
       priority: item.priority ?? 'medium',
       file: item.file ?? null,
       properties: item.properties ?? {},
+      semesterId: item.semesterId ?? null,
       createdAt: new Date().toISOString(),
       completed: item.completed ?? false
     }

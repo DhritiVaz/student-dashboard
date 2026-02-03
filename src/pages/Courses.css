@@ -89,6 +89,21 @@
   gap: 2rem;
 }
 
+.courses-by-semester-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.courses-by-semester-title svg {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
 .courses-semester-block {
   background: var(--bg-elevated);
   border: 1px solid var(--border-color);
@@ -107,10 +122,18 @@
 }
 
 .courses-semester-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
+}
+
+.courses-semester-name svg {
+  color: var(--accent-primary);
+  flex-shrink: 0;
 }
 
 .courses-semester-count {

@@ -268,9 +268,9 @@
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 24px;
   flex: 1;
-  min-height: 0;
+  min-height: 640px;
 }
 
 .dashboard-card {
@@ -281,6 +281,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 300px;
   transition: all 0.3s ease;
   opacity: 0;
   transform: translateY(20px);
@@ -311,14 +312,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 22px 26px;
   border-bottom: 1px solid var(--border-color);
 }
 
 .card-title-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .card-icon {
@@ -326,23 +327,23 @@
 }
 
 .card-header h3 {
-  font-size: 16px;
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .day-badge {
   background: var(--bg-elevated);
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-secondary);
 }
 
 .add-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-color);
@@ -363,8 +364,8 @@
 .view-all-link {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 13px;
+  gap: 6px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--accent-primary);
   text-decoration: none;
@@ -378,19 +379,20 @@
 /* ========== SCHEDULE CARD ========== */
 
 .schedule-list {
-  padding: 16px 24px 24px;
+  padding: 20px 26px 26px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   flex: 1;
   overflow-y: auto;
+  min-height: 200px;
 }
 
 .schedule-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
+  gap: 18px;
+  padding: 18px 20px;
   background: var(--bg-elevated);
   border-radius: 12px;
   border: 1px solid transparent;
@@ -409,23 +411,23 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 60px;
+  min-width: 64px;
 }
 
 .time-start {
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .time-end {
-  font-size: 11px;
+  font-size: 0.8125rem;
   color: var(--text-dim);
 }
 
 .schedule-divider {
   width: 3px;
-  height: 40px;
+  height: 48px;
   border-radius: 2px;
   background: var(--accent-primary);
 }
@@ -435,11 +437,12 @@
 }
 
 .schedule-course {
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  line-height: 1.35;
 }
 
 .schedule-meta {
@@ -449,32 +452,33 @@
 }
 
 .schedule-code {
-  font-size: 12px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--accent-primary);
 }
 
 .schedule-venue {
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--text-muted);
 }
 
 /* ========== EVENTS CARD ========== */
 
 .events-list {
-  padding: 16px 24px 24px;
+  padding: 20px 26px 26px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   flex: 1;
   overflow-y: auto;
+  min-height: 200px;
 }
 
 .event-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 16px;
+  gap: 18px;
+  padding: 18px 20px;
   background: var(--bg-elevated);
   border-radius: 12px;
   border: 1px solid transparent;
@@ -491,8 +495,8 @@
 }
 
 .event-date-badge {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 10px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -504,14 +508,14 @@
 }
 
 .event-day {
-  font-size: 18px;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1;
 }
 
 .event-month {
-  font-size: 10px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--accent-primary);
   text-transform: uppercase;
@@ -523,11 +527,12 @@
 }
 
 .event-title {
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  line-height: 1.35;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -540,9 +545,9 @@
 }
 
 .event-type-badge {
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 6px;
-  font-size: 10px;
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -550,7 +555,7 @@
 }
 
 .event-time {
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--text-muted);
 }
 
@@ -567,12 +572,13 @@
 /* ========== PROGRESS CARD ========== */
 
 .progress-list {
-  padding: 16px 24px 24px;
+  padding: 20px 26px 26px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   flex: 1;
   overflow-y: auto;
+  min-height: 200px;
 }
 
 .progress-item {
@@ -585,43 +591,44 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .progress-course {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .progress-code {
-  font-size: 12px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
 .progress-name {
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
+  line-height: 1.35;
 }
 
 .progress-percent {
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-secondary);
 }
 
 .progress-bar-container {
   width: 100%;
-  height: 8px;
+  height: 10px;
   background: var(--bg-elevated);
-  border-radius: 4px;
+  border-radius: 5px;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 5px;
   transition: width 0.8s ease;
   position: relative;
 }
@@ -629,19 +636,20 @@
 /* ========== TASKS CARD ========== */
 
 .tasks-list {
-  padding: 16px 24px 24px;
+  padding: 20px 26px 26px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   flex: 1;
   overflow-y: auto;
+  min-height: 200px;
 }
 
 .task-item {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 14px 16px;
+  gap: 16px;
+  padding: 18px 20px;
   background: var(--bg-elevated);
   border-radius: 12px;
   border: 1px solid transparent;
@@ -660,8 +668,8 @@
 }
 
 .task-checkbox {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 6px;
   border: 2px solid var(--border-color);
   display: flex;
@@ -684,11 +692,12 @@
 }
 
 .task-title {
-  font-size: 14px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  line-height: 1.35;
 }
 
 .task-item.completed .task-title {
@@ -697,18 +706,19 @@
 }
 
 .task-desc {
-  font-size: 12px;
+  font-size: 0.875rem;
   color: var(--text-dim);
   display: block;
+  line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .priority-badge {
-  padding: 4px 8px;
+  padding: 5px 10px;
   border-radius: 6px;
-  font-size: 10px;
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -726,6 +736,22 @@
 .priority-low {
   background: rgba(16, 185, 129, 0.15);
   color: var(--accent-green);
+}
+
+/* Empty states inside dashboard cards */
+.dashboard-card .empty-state-small {
+  padding: 48px 24px;
+  gap: 14px;
+  min-height: 160px;
+}
+
+.dashboard-card .empty-state-small p {
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.dashboard-card .empty-state-small .text-muted {
+  font-size: 0.875rem;
 }
 
 /* ========== RESPONSIVE ========== */

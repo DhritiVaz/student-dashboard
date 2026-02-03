@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
 import { useSemester } from '../context/SemesterContext'
-import { Plus, Edit2, Trash2, X, List, Grid, BookOpen, Settings2, Layers } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, List, Grid, BookOpen, Settings2, Layers, CalendarRange } from 'lucide-react'
 import PropertyFormFields from '../components/PropertyFormFields'
 import PropertyManager from '../components/PropertyManager'
 import './Courses.css'
@@ -261,11 +261,18 @@ const Courses = () => {
       <div className="courses-content">
         {showGroupedBySemester ? (
           <div className="courses-grouped">
+            <h2 className="courses-by-semester-title">
+              <Layers size={22} />
+              Courses by semester
+            </h2>
             {coursesBySemester.map(({ semester, courses: semCourses }) => (
               <div key={semester.id} className="courses-semester-block">
                 <div className="courses-semester-header">
-                  <h3 className="courses-semester-name">{semester.name}</h3>
-                  <span className="courses-semester-count">{semCourses.length} courses</span>
+                  <h3 className="courses-semester-name">
+                    <CalendarRange size={18} />
+                    {semester.name}
+                  </h3>
+                  <span className="courses-semester-count">{semCourses.length} course{semCourses.length !== 1 ? 's' : ''}</span>
                   <button
                     type="button"
                     className="btn-text-link"

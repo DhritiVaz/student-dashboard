@@ -16,6 +16,7 @@ const Calendar = () => {
     semesters,
     getCourseById,
     getCourseDisplayName,
+    getCourseProperty,
     getPropertyDefinitions,
     addPropertyDefinition,
     deletePropertyDefinition

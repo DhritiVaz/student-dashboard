@@ -1,10 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Eye, EyeOff, Mail, Lock, User, GraduationCap, Building2, CheckCircle, AlertCircle } from 'lucide-react'
 import './LoginScreen.css'
 
 const LoginScreen = () => {
-  const [isSignUp, setIsSignUp] = useState(false)
+  const location = useLocation()
+  const [isSignUp, setIsSignUp] = useState(location.pathname === '/signup')
+  useEffect(() => {
+    setIsSignUp(location.pathname === '/signup')
+  }, [location.pathname])
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -235,6 +240,9 @@ const LoginScreen = () => {
           </button>
         )}
 
+        <div className="login-back-home">
+          <Link to="/">← Back to home</Link>
+        </div>
       </div>
     </div>
   )

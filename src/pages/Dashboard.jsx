@@ -87,7 +87,7 @@ const Dashboard = () => {
   const upcomingEvents = eventsInScope
     .filter((e) => new Date(e.date) >= new Date(new Date().setHours(0, 0, 0, 0)))
     .sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')))
-    .slice(0, 6)
+    .slice(0, 8)
 
   const calculateCGPA = (gradeList) => {
     if (!gradeList.length) return '0.00'
@@ -437,7 +437,7 @@ const Dashboard = () => {
             </Link>
           </div>
           <div className="progress-list">
-            {coursesInScope.slice(0, 6).map((course, idx) => (
+            {coursesInScope.slice(0, 8).map((course, idx) => (
               <div key={course.id} className="progress-item" style={{ '--delay': `${idx * 0.1}s` }}>
                 <div className="progress-header">
                   <div className="progress-course">
@@ -478,7 +478,7 @@ const Dashboard = () => {
           <div className="tasks-list">
             {mindSpaceItems
               .filter((t) => !t.completed)
-              .slice(0, 6)
+              .slice(0, 8)
               .map((task, idx) => (
                 <div
                   key={task.id}

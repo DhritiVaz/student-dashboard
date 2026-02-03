@@ -12,13 +12,12 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
     useEffect(() => {
-        // Always set dark theme
-        document.documentElement.setAttribute('data-theme', 'dark')
+        document.documentElement.setAttribute('data-theme', 'light')
     }, [])
 
     const value = {
-        theme: 'dark',
-        isDark: true
+        theme: 'light',
+        isDark: false
     }
 
     return (
