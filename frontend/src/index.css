@@ -1,0 +1,806 @@
+@import '@fontsource-variable/dm-sans';
+@import '@fontsource-variable/inter';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Reduced motion: respect user preference ────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Skip link (visible on focus for keyboard users) ───────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+  z-index: 999;
+  padding: 12px 16px;
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.skip-link:focus {
+  top: 12px;
+  left: 12px;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body, input, textarea, button, select {
+    font-family: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    overscroll-behavior: none;
+  }
+  body {
+    background: #0e0e0e;
+    color: #f0f0f0;
+    overflow-x: hidden;
+  }
+}
+
+/* ── Landing page: scrollbar, loading spinner ────────────────────────────── */
+.landing-page {
+  font-family: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;
+}
+
+@keyframes landing-spinner {
+  to { transform: rotate(360deg); }
+}
+.landing-loading-spinner {
+  animation: landing-spinner 0.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-loading-spinner { animation: none; opacity: 0.6; }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+
+/* ── Landing route: hide scrollbar, match black background ─────────────────── */
+html.landing-route {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html.landing-route::-webkit-scrollbar {
+  display: none;
+}
+html.landing-route body {
+  background: #0a0a0a;
+}
+
+/* ── Remove default number input spinners ──────────────────────────────────── */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ── Date/datetime picker: match site dark theme ───────────────────────────── */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  color-scheme: dark;
+  /* Muted gray instead of blue for selected date, links, focus rings */
+  accent-color: #71717a;
+}
+/* Calendar/clock icon — subtle, visible on dark input */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+/* ── React-datepicker: match site color palette ─────────────────────────────── */
+.datetime-picker-dark-popper {
+  overflow: visible !important;
+}
+/* Uses same colors as Modal (#1a1a1a, #2e2e2e), Select (#1e1e1e, #333), body (#0e0e0e) */
+.datetime-picker-dark-popper .react-datepicker {
+  background: #1a1a1a !important;
+  border: 1px solid #2e2e2e !important;
+  color: #f0f0f0 !important;
+  font-family: 'Inter Variable', 'Inter', system-ui, sans-serif !important;
+  border-radius: 10px !important;
+  overflow: visible;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+}
+.datetime-picker-dark-popper .react-datepicker__header {
+  background: #1e1e1e !important;
+  border-color: #252525 !important;
+  color: #f0f0f0 !important;
+}
+.datetime-picker-dark-popper .react-datepicker__current-month,
+.datetime-picker-dark-popper .react-datepicker__day-name,
+.datetime-picker-dark-popper .react-datepicker-time__header {
+  color: #f0f0f0 !important;
+}
+.datetime-picker-dark-popper .react-datepicker__navigation-icon::before {
+  border-color: #52525b !important;
+}
+.datetime-picker-dark-popper .react-datepicker__day {
+  color: #f0f0f0 !important;
+}
+.datetime-picker-dark-popper .react-datepicker__day:hover {
+  background: rgba(255,255,255,0.04) !important;
+  color: #f0f0f0 !important;
+}
+.datetime-picker-dark-popper .react-datepicker__day--selected,
+.datetime-picker-dark-popper .react-datepicker__day--keyboard-selected {
+  background: rgba(255,255,255,0.08) !important;
+  color: #f0f0f0 !important;
+}
+.datetime-picker-dark-popper .react-datepicker__day--outside-month {
+  color: #52525b !important;
+}
+.datetime-picker-dark-popper .react-datepicker__day--today {
+  font-weight: 600;
+  color: #a1a1aa !important;
+}
+.datetime-picker-dark-popper .react-datepicker__triangle {
+  stroke: #2e2e2e !important;
+  fill: #1a1a1a !important;
+}
+.datetime-picker-dark-popper .react-datepicker__time-container,
+.datetime-picker-dark-popper .react-datepicker__time-box {
+  border-color: #252525 !important;
+  background: #1e1e1e !important;
+}
+.datetime-picker-dark-popper .react-datepicker__time-list-item {
+  color: #a1a1aa !important;
+}
+.datetime-picker-dark-popper .react-datepicker__time-list-item:hover {
+  background: rgba(255,255,255,0.04) !important;
+  color: #f0f0f0 !important;
+}
+.datetime-picker-dark-popper .react-datepicker__time-list-item--selected {
+  background: rgba(255,255,255,0.08) !important;
+  color: #f0f0f0 !important;
+}
+.datetime-picker-dark-popper .react-datepicker__input-time-container,
+.datetime-picker-dark-popper .react-datepicker__time-list {
+  background: #1e1e1e !important;
+}
+.datetime-picker-dark-popper .react-datepicker__footer,
+.datetime-picker-dark-popper .react-datepicker__close-icon {
+  background: #1e1e1e !important;
+  border-color: #252525 !important;
+}
+.datetime-picker-dark-popper .react-datepicker__close-icon::after {
+  background-color: #52525b !important;
+}
+.datetime-picker-dark-popper .react-datepicker__today-button {
+  color: #a1a1aa !important;
+  background: transparent !important;
+}
+.datetime-picker-dark-popper .react-datepicker__today-button:hover {
+  color: #f0f0f0 !important;
+  text-decoration: underline;
+}
+/* Month/year read-view: styled as clickable chips with cleaner arrow */
+.datetime-picker-dark-popper .react-datepicker__month-read-view,
+.datetime-picker-dark-popper .react-datepicker__year-read-view {
+  color: #f0f0f0 !important;
+  background: #252525 !important;
+  border: 1px solid #333 !important;
+  border-radius: 6px !important;
+  padding: 6px 28px 6px 10px !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: background 0.12s, border-color 0.12s, color 0.12s !important;
+}
+.datetime-picker-dark-popper .react-datepicker__month-read-view:hover,
+.datetime-picker-dark-popper .react-datepicker__year-read-view:hover {
+  background: #2e2e2e !important;
+  border-color: #52525b !important;
+}
+.datetime-picker-dark-popper .react-datepicker__current-month {
+  margin-bottom: 6px !important;
+}
+.datetime-picker-dark-popper .react-datepicker__month-dropdown-container,
+.datetime-picker-dark-popper .react-datepicker__year-dropdown-container {
+  margin: 0 8px !important;
+}
+/* Replace default triangle with crisp SVG chevron */
+.datetime-picker-dark-popper .react-datepicker__month-read-view--down-arrow,
+.datetime-picker-dark-popper .react-datepicker__year-read-view--down-arrow,
+.datetime-picker-dark-popper .react-datepicker__month-year-read-view--down-arrow {
+  border: none !important;
+  position: absolute !important;
+  width: 10px !important;
+  height: 6px !important;
+  right: 10px !important;
+  top: 50% !important;
+  margin-top: 0 !important;
+  transform: translateY(-50%) !important;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23a1a1aa' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E") no-repeat center !important;
+  opacity: 1 !important;
+  transition: opacity 0.12s !important;
+}
+.datetime-picker-dark-popper .react-datepicker__month-read-view:hover .react-datepicker__month-read-view--down-arrow,
+.datetime-picker-dark-popper .react-datepicker__year-read-view:hover .react-datepicker__year-read-view--down-arrow {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23f0f0f0' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E") !important;
+}
+/* Scroll-mode dropdowns: themed custom dropdown (not native select) */
+.datetime-picker-dark-popper .react-datepicker__month-dropdown,
+.datetime-picker-dark-popper .react-datepicker__year-dropdown,
+.datetime-picker-dark-popper .react-datepicker__month-year-dropdown {
+  background: #1e1e1e !important;
+  border: 1px solid #333 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  font-family: 'Inter Variable', 'Inter', system-ui, sans-serif !important;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.datetime-picker-dark-popper .react-datepicker__month-option,
+.datetime-picker-dark-popper .react-datepicker__year-option,
+.datetime-picker-dark-popper .react-datepicker__month-year-option {
+  color: #f0f0f0 !important;
+  background: transparent !important;
+  padding: 8px 12px !important;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+.datetime-picker-dark-popper .react-datepicker__month-option:hover,
+.datetime-picker-dark-popper .react-datepicker__year-option:hover,
+.datetime-picker-dark-popper .react-datepicker__month-year-option:hover {
+  background: rgba(255,255,255,0.04) !important;
+}
+.datetime-picker-dark-popper .react-datepicker__month-option--selected_month,
+.datetime-picker-dark-popper .react-datepicker__year-option--selected_year,
+.datetime-picker-dark-popper .react-datepicker__month-year-option--selected_month-year {
+  background: rgba(255,255,255,0.08) !important;
+  font-weight: 500;
+}
+.datetime-picker-dark-popper .react-datepicker__month-option--selected,
+.datetime-picker-dark-popper .react-datepicker__year-option--selected,
+.datetime-picker-dark-popper .react-datepicker__month-year-option--selected {
+  margin-right: 8px;
+  color: #71717a;
+}
+.datetime-picker-dark-popper .react-datepicker__month-dropdown::-webkit-scrollbar,
+.datetime-picker-dark-popper .react-datepicker__year-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+.datetime-picker-dark-popper .react-datepicker__month-dropdown::-webkit-scrollbar-track,
+.datetime-picker-dark-popper .react-datepicker__year-dropdown::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+.datetime-picker-dark-popper .react-datepicker__month-dropdown::-webkit-scrollbar-thumb,
+.datetime-picker-dark-popper .react-datepicker__year-dropdown::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 3px;
+}
+.datetime-picker-dark-popper .react-datepicker__time-container {
+  min-width: 85px;
+}
+
+/* Time below calendar, edge-to-edge (showTimeInput + customTimeInput) */
+.datetime-picker-dark-popper .react-datepicker__input-time-container {
+  clear: both !important;
+  float: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 10px 12px 12px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  border-top: 1px solid #252525;
+}
+.datetime-picker-dark-popper .react-datepicker__input-time-container .react-datepicker-time__caption {
+  margin-bottom: 6px;
+  color: #f0f0f0;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.datetime-picker-dark-popper .react-datepicker__input-time-container .react-datepicker-time__input-container {
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+  width: 100%;
+}
+.datetime-picker-dark-popper .react-datepicker__input-time-container .react-datepicker-time__input {
+  margin-left: 0;
+  flex: 1;
+}
+
+/* Custom time select: up/down arrow steppers, all minutes 0-59 */
+.custom-time-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-family: 'Inter Variable', 'Inter', system-ui, sans-serif;
+}
+.custom-time-select .custom-time-stepper {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Stepper: up arrow | value | down arrow */
+.custom-time-stepper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.custom-time-stepper__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+.custom-time-stepper__btn:hover {
+  color: #f0f0f0;
+  background: rgba(255,255,255,0.06);
+}
+.custom-time-stepper__btn:active {
+  background: rgba(255,255,255,0.1);
+}
+.custom-time-stepper__value {
+  min-width: 2ch;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #f0f0f0;
+  padding: 2px 4px;
+  line-height: 1.2;
+}
+
+/* ── Skeleton shimmer ────────────────────────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.skeleton {
+  background: #1e1e1e;
+  position: relative;
+  overflow: hidden;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent   0%,
+    rgba(255,255,255,0.055) 40%,
+    rgba(255,255,255,0.10)  50%,
+    rgba(255,255,255,0.055) 60%,
+    transparent 100%
+  );
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+/* ── Left panel animations ───────────────────────────────────────────────── */
+
+/* Soft radial glow — breathes slowly */
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.10; transform: translate(-50%, -50%) scale(1); }
+  50%       { opacity: 0.18; transform: translate(-50%, -50%) scale(1.12); }
+}
+.glow-pulse {
+  animation: glowPulse 7s ease-in-out infinite;
+}
+
+/* Floating cards */
+@keyframes floatA {
+  0%, 100% { transform: translateY(0px) rotate(-1deg); }
+  50%       { transform: translateY(-10px) rotate(-1deg); }
+}
+@keyframes floatB {
+  0%, 100% { transform: translateY(0px) rotate(1.5deg); }
+  50%       { transform: translateY(-7px) rotate(1.5deg); }
+}
+@keyframes floatC {
+  0%, 100% { transform: translateY(0px) rotate(-0.5deg); }
+  50%       { transform: translateY(-12px) rotate(-0.5deg); }
+}
+
+/* Card entrance */
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* Feature bullets — gentle pulse */
+@keyframes bulletPulse {
+  0%, 100% { opacity: 0.45; }
+  50%       { opacity: 0.75; }
+}
+
+/* ── Page-enter animations ───────────────────────────────────────────────── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes staggerFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Shake (error) ───────────────────────────────────────────────────────── */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  12%       { transform: translateX(-6px); }
+  25%       { transform: translateX(6px); }
+  37%       { transform: translateX(-5px); }
+  50%       { transform: translateX(5px); }
+  62%       { transform: translateX(-3px); }
+  75%       { transform: translateX(3px); }
+  87%       { transform: translateX(-1px); }
+}
+.form-shake { animation: shake 350ms ease-in-out; }
+
+/* ── Slide-down for error messages ───────────────────────────────────────── */
+.error-slide { animation: slideDown 200ms ease-out; }
+
+/* ── Auth form container (consistent width for login & register) ───────────── */
+.auth-form-container { width: 380px; max-width: 100%; }
+
+/* ── Form card slide-up ──────────────────────────────────────────────────── */
+.form-enter { animation: slideUp 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* ── Page leave ──────────────────────────────────────────────────────────── */
+.page-leave { animation: fadeOut 280ms ease-out forwards; }
+
+/* ── Staggered content (left panel) ─────────────────────────────────────── */
+.stagger-1 { animation: staggerFade 400ms ease-out 200ms both; }
+.stagger-2 { animation: staggerFade 400ms ease-out 320ms both; }
+.stagger-3 { animation: staggerFade 400ms ease-out 440ms both; }
+.stagger-4 { animation: staggerFade 400ms ease-out 560ms both; }
+
+/* Staggered form fields */
+.field-1 { animation: staggerFade 380ms cubic-bezier(0.16,1,0.3,1) 80ms both; }
+.field-2 { animation: staggerFade 380ms cubic-bezier(0.16,1,0.3,1) 140ms both; }
+.field-3 { animation: staggerFade 380ms cubic-bezier(0.16,1,0.3,1) 200ms both; }
+.field-4 { animation: staggerFade 380ms cubic-bezier(0.16,1,0.3,1) 260ms both; }
+.field-5 { animation: staggerFade 380ms cubic-bezier(0.16,1,0.3,1) 320ms both; }
+
+/* ── Password strength bar ───────────────────────────────────────────────── */
+.strength-bar {
+  height: 3px;
+  border-radius: 9999px;
+  background: #e5e7eb;
+  overflow: hidden;
+  position: relative;
+}
+.strength-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  border-radius: 9999px;
+  transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 300ms ease;
+}
+
+/* ── Solid button (dark-mode inverted to white) ──────────────────────────── */
+.btn-solid {
+  background: #ffffff;
+  color: #111;
+}
+
+/* Auth buttons: white background, dark text (Sign in / Create account) */
+.btn-auth {
+  background: #ffffff !important;
+  color: #111 !important;
+}
+.btn-auth:hover:not(:disabled),
+.btn-solid.btn-auth:hover:not(:disabled) {
+  transform: none !important;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.12);
+}
+.btn-auth .css-spinner {
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: #111;
+}
+.btn-solid:hover:not(:disabled) {
+  box-shadow: 0 8px 22px -4px rgba(255, 255, 255, 0.15);
+}
+.btn-solid:active:not(:disabled) {
+  transform: scale(0.98) translateY(0);
+}
+.btn-solid:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Card hover: border only (no shadow, no bg change) ──────────────────────── */
+.card-hover {
+  transition: border-color 150ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-hover {
+    transition: none;
+  }
+}
+
+/* ── Button active/press: scale down ────────────────────────────────────────── */
+.btn-press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ── CSS spinner ─────────────────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.css-spinner {
+  width: 17px; height: 17px;
+  border: 2px solid rgba(14, 14, 14, 0.35);
+  border-top-color: #0e0e0e;
+  border-radius: 9999px;
+  animation: spin 600ms linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Markdown prose (dark) ──────────────────────────────────────────────── */
+.md-prose { font-size: 15px; line-height: 1.75; color: #d4d4d8; }
+.md-prose > *:first-child { margin-top: 0; }
+.md-prose h1 { font-size: 1.6em; font-weight: 700; color: #f0f0f0; margin: 1.2em 0 0.5em; line-height: 1.25; }
+.md-prose h2 { font-size: 1.3em; font-weight: 700; color: #f0f0f0; margin: 1.2em 0 0.4em; line-height: 1.3; }
+.md-prose h3 { font-size: 1.1em; font-weight: 600; color: #e4e4e7; margin: 1em 0 0.3em; }
+.md-prose h4, .md-prose h5, .md-prose h6 { font-size: 1em; font-weight: 600; color: #d4d4d8; margin: 0.8em 0 0.3em; }
+.md-prose p { margin: 0.6em 0; }
+.md-prose ul, .md-prose ol { padding-left: 1.5em; margin: 0.5em 0; }
+.md-prose li { margin: 0.25em 0; }
+.md-prose ul li { list-style-type: disc; }
+.md-prose ol li { list-style-type: decimal; }
+.md-prose blockquote { border-left: 2px solid #333; padding-left: 1em; margin: 0.8em 0; color: #71717a; font-style: italic; }
+.md-prose code { font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 0.88em; background: #1e1e1e; border: 1px solid #333; border-radius: 4px; padding: 0.1em 0.4em; color: #e4e4e7; }
+.md-prose pre { background: #161616; border: 1px solid #2a2a2a; border-radius: 8px; padding: 1em 1.25em; margin: 0.8em 0; overflow-x: auto; }
+.md-prose pre code { background: none; border: none; padding: 0; font-size: 0.87em; line-height: 1.6; }
+.md-prose a { color: #a1a1aa; text-decoration: underline; text-underline-offset: 2px; }
+.md-prose a:hover { color: #f0f0f0; }
+.md-prose hr { border: none; border-top: 1px solid #2a2a2a; margin: 1.5em 0; }
+.md-prose strong { font-weight: 600; color: #f0f0f0; }
+.md-prose em { font-style: italic; }
+.md-prose table { width: 100%; border-collapse: collapse; margin: 0.8em 0; font-size: 0.9em; }
+.md-prose th { text-align: left; font-weight: 600; padding: 0.5em 0.75em; border-bottom: 2px solid #2a2a2a; color: #f0f0f0; }
+.md-prose td { padding: 0.5em 0.75em; border-bottom: 1px solid #1f1f1f; }
+
+/* ── Note editor: size + site theme ─────────────────────────────────────── */
+.note-editor-page {
+  color-scheme: dark;
+}
+.note-editor-main {
+  display: flex;
+  flex-direction: column;
+}
+.note-editor-main .note-editor,
+.note-editor-main .w-md-editor {
+  flex: 1;
+  min-height: calc(100vh - 8rem) !important;
+}
+.note-editor-main .w-md-editor-content {
+  flex: 1;
+  min-height: 0;
+}
+.note-editor-main .w-md-editor-text {
+  min-height: 100%;
+}
+/* Match site dark theme — blended edges */
+.note-editor-page .w-md-editor {
+  --color-canvas-default: #111111;
+  --color-canvas-subtle: #1a1a1a;
+  --color-border-default: rgba(255, 255, 255, 0.06);
+  --color-border-muted: rgba(255, 255, 255, 0.04);
+  --color-fg-default: #d4d4d8;
+  --color-fg-muted: #a1a1aa;
+  --color-fg-subtle: #71717a;
+  --color-neutral-muted: rgba(255, 255, 255, 0.08);
+  --color-accent-fg: #a1a1aa;
+  --md-editor-background-color: #0d0d0d;
+  --md-editor-box-shadow-color: rgba(255, 255, 255, 0.06);
+  background-color: #0d0d0d !important;
+  box-shadow: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+}
+.note-editor-page .w-md-editor-toolbar {
+  background-color: #0d0d0d !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 6px 6px 0 0;
+}
+.note-editor-page .w-md-editor-toolbar li > button {
+  color: #a1a1aa;
+}
+.note-editor-page .w-md-editor-toolbar li > button:hover,
+.note-editor-page .w-md-editor-toolbar li > button:focus {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #f0f0f0;
+}
+.note-editor-page .w-md-editor-input,
+.note-editor-page .w-md-editor-preview {
+  background-color: #0d0d0d !important;
+}
+.note-editor-page .w-md-editor-preview {
+  box-shadow: inset 1px 0 0 0 rgba(255, 255, 255, 0.06) !important;
+}
+.note-editor-page .w-md-editor-area {
+  border-radius: 0 0 6px 6px;
+}
+.note-editor-page .wmde-markdown {
+  background-color: #0d0d0d !important;
+  color: #d4d4d8;
+}
+.note-editor-page .wmde-markdown h1, .note-editor-page .wmde-markdown h2, .note-editor-page .wmde-markdown h3 {
+  color: #f0f0f0;
+}
+.note-editor-page .wmde-markdown code {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #e4e4e7;
+}
+.note-editor-page .wmde-markdown pre {
+  background: #161616;
+  border: 1px solid #2a2a2a;
+}
+.note-editor-page .wmde-markdown pre code {
+  background: none;
+  border: none;
+}
+
+/* ── Dark mode global overrides ─────────────────────────────────────────── */
+/* Backgrounds: light → dark surfaces */
+.bg-white                           { background-color: #161616 !important; }
+.bg-\[\#fafafa\]                    { background-color: #111111 !important; }
+.bg-\[\#f9f9f9\]                    { background-color: #111111 !important; }
+.bg-\[\#f5f5f5\]                    { background-color: #1a1a1a !important; }
+.bg-\[\#f0f0f0\]                    { background-color: #222222 !important; }
+.bg-\[\#ebebeb\]                    { background-color: #2a2a2a !important; }
+/* Hover backgrounds */
+.hover\:bg-white:hover              { background-color: #1e1e1e !important; }
+.hover\:bg-\[\#fafafa\]:hover       { background-color: #181818 !important; }
+.hover\:bg-\[\#f5f5f5\]:hover       { background-color: #1e1e1e !important; }
+.hover\:bg-\[\#f0f0f0\]:hover       { background-color: #252525 !important; }
+.hover\:bg-\[\#ebebeb\]:hover       { background-color: #2a2a2a !important; }
+/* Focus-within backgrounds */
+.focus-within\:border-\[\#111\]:focus-within { border-color: rgba(255,255,255,0.7) !important; }
+
+/* Semantic light backgrounds → dark tinted equivalents */
+.bg-\[\#f0fdf4\]                    { background-color: rgba(5,46,22,0.3) !important; }
+.bg-red-50                          { background-color: rgba(127,29,29,0.3) !important; }
+.bg-orange-50                       { background-color: rgba(120,53,15,0.3) !important; }
+.bg-amber-50                        { background-color: rgba(120,80,15,0.3) !important; }
+.bg-blue-50, .bg-\[\#eff6ff\]      { background-color: rgba(23,37,84,0.3) !important; }
+.bg-sky-50                          { background-color: rgba(8,47,73,0.3) !important; }
+.bg-purple-50                       { background-color: rgba(59,7,100,0.3) !important; }
+.bg-violet-50                       { background-color: rgba(46,16,101,0.3) !important; }
+.bg-green-50                        { background-color: rgba(5,46,22,0.3) !important; }
+.hover\:bg-red-50:hover             { background-color: rgba(127,29,29,0.25) !important; }
+
+/* Text: dark → light */
+.text-\[\#111\]                     { color: #f0f0f0 !important; }
+.text-\[\#111827\]                  { color: #f0f0f0 !important; }
+.text-\[\#374151\]                  { color: #d4d4d8 !important; }
+.text-\[\#6b7280\]                  { color: #a1a1aa !important; }
+.text-\[\#9ca3af\]                  { color: #71717a !important; }
+.text-\[\#b0b7c3\]                  { color: #52525b !important; }
+/* Hover text */
+.hover\:text-\[\#111\]:hover        { color: #ffffff !important; }
+.hover\:text-\[\#111827\]:hover     { color: #ffffff !important; }
+.hover\:text-\[\#6b7280\]:hover     { color: #a1a1aa !important; }
+/* Semantic badge text: dark shades → bright for dark bg */
+.text-blue-700                      { color: #93c5fd !important; }
+.text-sky-700                       { color: #7dd3fc !important; }
+.text-sky-600                       { color: #38bdf8 !important; }
+.text-purple-700                    { color: #c4b5fd !important; }
+.text-violet-700                    { color: #c4b5fd !important; }
+.text-orange-700                    { color: #fdba74 !important; }
+.text-amber-500                     { color: #fcd34d !important; }
+
+/* Borders: light → dark */
+.border-\[\#e5e7eb\]                { border-color: #2a2a2a !important; }
+.border-\[\#d1d5db\]                { border-color: #333333 !important; }
+.border-\[\#f0f0f0\]                { border-color: #1f1f1f !important; }
+/* Semantic light borders → subtle dark */
+.border-\[\#bbf7d0\]                { border-color: rgba(187,247,208,0.12) !important; }
+.border-red-100                     { border-color: rgba(254,202,202,0.12) !important; }
+.border-red-200                     { border-color: rgba(254,202,202,0.2) !important; }
+.border-orange-100                  { border-color: rgba(254,215,170,0.12) !important; }
+.border-amber-100                   { border-color: rgba(254,243,199,0.12) !important; }
+.border-blue-100, .border-\[\#bfdbfe\] { border-color: rgba(219,234,254,0.12) !important; }
+.border-sky-100                     { border-color: rgba(186,230,253,0.12) !important; }
+.border-purple-100                  { border-color: rgba(233,213,255,0.12) !important; }
+.border-violet-100                  { border-color: rgba(237,233,254,0.12) !important; }
+.border-green-100                   { border-color: rgba(187,247,208,0.12) !important; }
+.border-\[\#bbf7d0\]                { border-color: rgba(187,247,208,0.12) !important; }
+/* Active/selected state backgrounds that use #111 or light gray */
+.bg-\[\#111\]                       { background-color: rgba(255,255,255,0.12) !important; }
+.hover\:bg-\[\#111\]:hover          { background-color: rgba(255,255,255,0.16) !important; }
+.bg-\[\#e5e7eb\]                    { background-color: rgba(255,255,255,0.10) !important; }
+/* Active/selected borders using #111 */
+.border-\[\#111\]                   { border-color: rgba(255,255,255,0.4) !important; }
+.hover\:border-\[\#111\]:hover      { border-color: rgba(255,255,255,0.5) !important; }
+.hover\:border-\[\#d1d5db\]:hover   { border-color: #3a3a3a !important; }
+.hover\:border-red-300:hover        { border-color: rgba(252,165,165,0.35) !important; }
+
+/* Divide colors */
+.divide-\[\#f5f5f5\] > :not([hidden]) ~ :not([hidden]) { border-color: #1e1e1e !important; }
+
+/* Box shadows: light shadows → deeper on dark */
+/* (keep existing box-shadow values — they still add depth on dark bg) */
+
+/* ── Toast animations ────────────────────────────────────────────────────── */
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes toast-slide-out {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(100%); }
+}
+.toast-enter { animation: toast-slide-in 0.3s cubic-bezier(0.22,1,0.36,1) forwards; }
+.toast-exit  { animation: toast-slide-out 0.25s ease-out forwards; }
+
+/* ── Checkmark flash (success state) ─────────────────────────────────────── */
+@keyframes checkPop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  60%  { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.check-pop { animation: checkPop 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+/* ── Auth form panel: light text on dark bg (matches main site) ── */
+.auth-form-panel .text-\[\#111\],
+.auth-form-panel .text-\[\#111827\]                    { color: rgba(255,255,255,0.9) !important; }
+.auth-form-panel .text-\[\#6b7280\],
+.auth-form-panel .text-\[\#9ca3af\]                   { color: rgba(255,255,255,0.5) !important; }
+.auth-form-panel .hover\:text-\[\#111\]:hover,
+.auth-form-panel .hover\:text-\[\#111827\]:hover      { color: rgba(255,255,255,0.95) !important; }
+.auth-form-panel .strength-bar                        { background: rgba(255,255,255,0.15); }
+
+/* ── Landing page: dark theme (black + dark grey) ─────────────────────────── */
+.landing-page { background-color: #0a0a0a !important; }
+/* Filled buttons stay white on landing (bypass dark override) */
+.landing-page .bg-white { background-color: #ffffff !important; }

@@ -1,0 +1,18 @@
+{
+  "name": "student-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["shared", "backend", "frontend"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w shared\" \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w shared && npm run build -w backend && npm run build -w frontend",
+    "start": "npm run start -w backend",
+    "test": "npm run test -w backend && npm run test -w frontend",
+    "format": "prettier --write \"**/*.{ts,tsx,json}\" --ignore-path .gitignore",
+    "lint": "eslint \"backend/src/**/*.ts\" \"frontend/src/**/*.{ts,tsx}\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.3.2"
+  }
+}

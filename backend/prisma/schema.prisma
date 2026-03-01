@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum AssignmentStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum CalendarEventType {
+  CLASS
+  EXAM
+  DEADLINE
+  PERSONAL
+}
+
+// ─── Core Models ──────────────────────────────────────────────────────────────
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  semesters      Semester[]
+  tasks          Task[]
+  calendarEvents CalendarEvent[]
+  refreshTokens  RefreshToken[]
+
+  @@index([email])
+  @@index([deletedAt])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Semester {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses Course[]
+
+  @@index([userId])
+  @@index([deletedAt])
+}
+
+model Course {
+  id          String    @id @default(cuid())
+  semesterId  String
+  name        String
+  code        String?
+  instructor  String?
+  description String?
+  color       String?
+  credits     Float?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  semester       Semester        @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  assignments    Assignment[]
+  notes          Note[]
+  calendarEvents CalendarEvent[]
+  tasks          Task[]
+
+  @@index([semesterId])
+  @@index([deletedAt])
+}
+
+model Assignment {
+  id          String           @id @default(cuid())
+  courseId    String
+  title       String
+  description String?
+  dueDate     DateTime?
+  weight      Float            @default(0)
+  isSubmitted Boolean          @default(false)
+  status      AssignmentStatus @default(NOT_STARTED)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+
+  course Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  grades Grade[]
+  tasks  Task[]
+
+  @@index([courseId])
+  @@index([dueDate])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model Grade {
+  id           String    @id @default(cuid())
+  assignmentId String    @unique
+  score        Float
+  maxScore     Float
+  feedback     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@index([assignmentId])
+}
+
+model Note {
+  id        String    @id @default(cuid())
+  courseId  String
+  title     String
+  content   String
+  tags      String[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([deletedAt])
+}
+
+model CalendarEvent {
+  id          String            @id @default(cuid())
+  userId      String
+  courseId    String?
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  isAllDay    Boolean           @default(false)
+  color       String?
+  type        CalendarEventType @default(CLASS)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([deletedAt])
+}
+
+model Task {
+  id           String       @id @default(cuid())
+  userId       String
+  courseId     String?
+  assignmentId String?
+  title        String
+  description  String?
+  dueDate      DateTime?
+  isCompleted  Boolean      @default(false)
+  priority     TaskPriority @default(MEDIUM)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  deletedAt    DateTime?
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course?     @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  assignment Assignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([assignmentId])
+  @@index([dueDate])
+  @@index([isCompleted])
+  @@index([deletedAt])
+}
