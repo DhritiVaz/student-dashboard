@@ -31,7 +31,7 @@ export function BrandingPanel() {
       />
 
       {/* ── Title + tagline ──────────────────────────────────────────── */}
-      <div className="relative z-10 stagger-1">
+      <div className="relative z-10 stagger-1" style={{ marginTop: 30 }}>
         <h1
           className="font-bold leading-[1] tracking-tight text-white"
           style={{ fontSize: "5rem" }}
