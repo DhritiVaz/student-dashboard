@@ -62,6 +62,8 @@ export async function login(
   password: string
 ): Promise<{ user: User; accessToken: string; refreshToken: string }> {
   const user = await prisma.user.findUnique({ where: { email } });
+  console.log("Login email:", email);
+  console.log("Found user:", user);
   if (!user || user.deletedAt) {
     throw Object.assign(new Error("Invalid credentials"), { status: 401 });
   }
