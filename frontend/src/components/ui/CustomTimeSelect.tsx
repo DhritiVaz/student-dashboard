@@ -1,125 +1,150 @@
-import { useCallback, useMemo } from "react";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { useRef, useEffect, useCallback, useMemo } from "react";
 
 interface CustomTimeSelectProps {
-  value: string; // "HH:mm" (24h)
+  value: string; // "HH:mm" 24h
   onChange: (time: string) => void;
   date?: Date;
 }
 
-function parse24h(hhmm: string): { hour12: number; minute: number; pm: boolean } {
-  if (!hhmm || !hhmm.includes(":")) {
-    return { hour12: 12, minute: 0, pm: false };
-  }
-  const [hStr, mStr] = hhmm.split(":");
-  const h24 = Math.min(23, Math.max(0, parseInt(hStr, 10) || 0));
-  const min = Math.min(59, Math.max(0, parseInt(mStr, 10) || 0));
-  let hour12: number;
-  let pm: boolean;
-  if (h24 === 0) {
-    hour12 = 12;
-    pm = false;
-  } else if (h24 === 12) {
-    hour12 = 12;
-    pm = true;
-  } else if (h24 < 12) {
-    hour12 = h24;
-    pm = false;
-  } else {
-    hour12 = h24 - 12;
-    pm = true;
-  }
-  return { hour12, minute: min, pm };
+function parse24h(hhmm: string) {
+  if (!hhmm?.includes(":")) return { hour: 9, minute: 0 };
+  const [h, m] = hhmm.split(":").map(n => parseInt(n, 10) || 0);
+  return { hour: Math.min(23, Math.max(0, h)), minute: Math.min(59, Math.max(0, m)) };
 }
 
-function to24h(hour12: number, minute: number, pm: boolean): string {
-  let h24: number;
-  if (hour12 === 12) {
-    h24 = pm ? 12 : 0;
-  } else {
-    h24 = pm ? hour12 + 12 : hour12;
-  }
-  return `${String(h24).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-}
+const ITEM_H = 32;
 
-function TimeStepper({
-  onUp,
-  onDown,
+function ScrollColumn({
+  items,
+  selected,
+  onSelect,
   label,
-  displayValue,
 }: {
-  onUp: () => void;
-  onDown: () => void;
+  items: { value: number; label: string }[];
+  selected: number;
+  onSelect: (v: number) => void;
   label: string;
-  displayValue: string;
 }) {
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const idx = items.findIndex(i => i.value === selected);
+    if (idx < 0) return;
+    const target = idx * ITEM_H - (el.clientHeight / 2) + ITEM_H / 2;
+    el.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+  }, [selected, items]);
+
   return (
-    <div className="custom-time-stepper" role="group" aria-label={label}>
-      <button
-        type="button"
-        onClick={onUp}
-        className="custom-time-stepper__btn custom-time-stepper__btn--up"
-        aria-label={`Increase ${label}`}
+    <div className="flex flex-col items-center flex-1 min-w-0">
+      <span
+        style={{
+          fontSize: 9,
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          color: "rgba(255,255,255,0.2)",
+          marginBottom: 6,
+        }}
       >
-        <ChevronUp size={14} strokeWidth={2.5} />
-      </button>
-      <span className="custom-time-stepper__value">{displayValue}</span>
-      <button
-        type="button"
-        onClick={onDown}
-        className="custom-time-stepper__btn custom-time-stepper__btn--down"
-        aria-label={`Decrease ${label}`}
+        {label}
+      </span>
+      <div
+        ref={listRef}
+        style={{
+          height: ITEM_H * 5,
+          width: "100%",
+          overflowY: "auto",
+          scrollSnapType: "y mandatory",
+        }}
+        aria-label={label}
       >
-        <ChevronDown size={14} strokeWidth={2.5} />
-      </button>
+        {items.map(item => (
+          <div
+            key={item.value}
+            onClick={() => onSelect(item.value)}
+            style={{
+              height: ITEM_H,
+              scrollSnapAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              borderRadius: 6,
+              fontSize: 13,
+              fontWeight: item.value === selected ? 600 : 400,
+              color: item.value === selected ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.3)",
+              background: item.value === selected ? "rgba(255,255,255,0.07)" : "transparent",
+              transition: "background 0.1s, color 0.1s",
+              userSelect: "none",
+            }}
+            onMouseEnter={e => {
+              if (item.value !== selected)
+                (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.04)";
+            }}
+            onMouseLeave={e => {
+              if (item.value !== selected)
+                (e.currentTarget as HTMLDivElement).style.background = "transparent";
+            }}
+          >
+            {item.label}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 export function CustomTimeSelect({ value, onChange }: CustomTimeSelectProps) {
-  const { hour12, minute, pm } = useMemo(() => parse24h(value || "12:00"), [value]);
+  const { hour, minute } = useMemo(() => parse24h(value || "09:00"), [value]);
 
-  const incHour = useCallback(() => {
-    const next = hour12 === 12 ? 1 : hour12 + 1;
-    onChange(to24h(next, minute, pm));
-  }, [hour12, minute, pm, onChange]);
-  const decHour = useCallback(() => {
-    const next = hour12 === 1 ? 12 : hour12 - 1;
-    onChange(to24h(next, minute, pm));
-  }, [hour12, minute, pm, onChange]);
+  const hours = useMemo(
+    () => Array.from({ length: 24 }, (_, i) => ({
+      value: i,
+      label: String(i).padStart(2, "0"),
+    })),
+    []
+  );
 
-  const incMinute = useCallback(() => {
-    const next = minute === 59 ? 0 : minute + 1;
-    onChange(to24h(hour12, next, pm));
-  }, [hour12, minute, pm, onChange]);
-  const decMinute = useCallback(() => {
-    const next = minute === 0 ? 59 : minute - 1;
-    onChange(to24h(hour12, next, pm));
-  }, [hour12, minute, pm, onChange]);
+  const minutes = useMemo(
+    () => Array.from({ length: 60 }, (_, i) => ({
+      value: i,
+      label: String(i).padStart(2, "0"),
+    })),
+    []
+  );
 
-  const incPeriod = useCallback(() => onChange(to24h(hour12, minute, true)), [hour12, minute, onChange]);
-  const decPeriod = useCallback(() => onChange(to24h(hour12, minute, false)), [hour12, minute, onChange]);
+  const setHour = useCallback(
+    (h: number) => onChange(`${String(h).padStart(2, "0")}:${String(minute).padStart(2, "0")}`),
+    [minute, onChange]
+  );
+  const setMinute = useCallback(
+    (m: number) => onChange(`${String(hour).padStart(2, "0")}:${String(m).padStart(2, "0")}`),
+    [hour, onChange]
+  );
 
   return (
-    <div className="custom-time-select" data-testid="custom-time-select">
-      <TimeStepper
-        displayValue={String(hour12)}
-        label="Hour"
-        onUp={incHour}
-        onDown={decHour}
-      />
-      <TimeStepper
-        displayValue={String(minute).padStart(2, "0")}
-        label="Minute"
-        onUp={incMinute}
-        onDown={decMinute}
-      />
-      <TimeStepper
-        displayValue={pm ? "PM" : "AM"}
-        label="AM/PM"
-        onUp={incPeriod}
-        onDown={decPeriod}
-      />
+    <div
+      style={{
+        display: "flex",
+        gap: 4,
+        padding: "8px 6px",
+        borderRadius: 8,
+        background: "#161616",
+        border: "1px solid rgba(255,255,255,0.08)",
+        width: "100%",
+      }}
+    >
+      <ScrollColumn items={hours}   selected={hour}   onSelect={setHour}   label="hr"  />
+      <div style={{
+        width: 1,
+        background: "rgba(255,255,255,0.06)",
+        flexShrink: 0,
+        alignSelf: "stretch",
+        margin: "4px 0",
+      }} />
+      <ScrollColumn items={minutes} selected={minute} onSelect={setMinute} label="min" />
     </div>
   );
 }

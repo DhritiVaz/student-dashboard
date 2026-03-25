@@ -24,12 +24,11 @@ interface SidebarProps {
   onClose?: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
-  /** Unique ID for layout animation - avoids duplicate layoutId when desktop + mobile both mount */
   layoutKey?: string;
 }
 
 function getInitials(name?: string | null) {
-  if (!name || !name.trim()) return "?";
+  if (!name?.trim()) return "?";
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return "?";
   return parts.length === 1
@@ -37,7 +36,96 @@ function getInitials(name?: string | null) {
     : ((parts[0][0] ?? "") + (parts[parts.length - 1][0] ?? "")).toUpperCase() || "?";
 }
 
-export function Sidebar({ onClose, collapsed = false, onToggleCollapse, layoutKey = "default" }: SidebarProps) {
+// ── NavItem is outside Sidebar so framer-motion layoutId works correctly ──
+function NavItem({
+  label, href, icon: Icon, exact, isSettings, collapsed, onClose, reduced, layoutKey,
+}: {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  exact?: boolean;
+  isSettings?: boolean;
+  collapsed: boolean;
+  onClose?: () => void;
+  reduced: boolean;
+  layoutKey: string;
+}) {
+  return (
+    <NavLink
+      to={href}
+      end={exact}
+      onClick={onClose}
+      title={collapsed ? label : undefined}
+      className="relative flex items-center mb-[1px]"
+      style={{ height: 34 }}
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            reduced ? (
+              <span
+                className="absolute inset-0"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  borderLeft: "2px solid rgba(255,255,255,0.7)",
+                }}
+              />
+            ) : (
+              <motion.span
+                layoutId={isSettings ? `nav-pill-settings-${layoutKey}` : `nav-pill-${layoutKey}`}
+                className="absolute inset-0"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  borderLeft: "2px solid rgba(255,255,255,0.7)",
+                }}
+                transition={{ type: "spring", stiffness: 400, damping: 35 }}
+              />
+            )
+          )}
+          <span
+            className="relative flex items-center w-full h-full"
+            style={{
+              paddingLeft: collapsed ? 14 : 12,
+              paddingRight: collapsed ? 14 : 12,
+              gap: 9,
+            }}
+          >
+            <Icon
+              size={15}
+              strokeWidth={isActive ? 2 : 1.6}
+              style={{
+                color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)",
+                transition: "color 0.15s",
+                flexShrink: 0,
+              }}
+            />
+            {!collapsed && (
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: isActive ? 500 : 400,
+                  color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.45)",
+                  transition: "color 0.15s",
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.2,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {label}
+              </span>
+            )}
+          </span>
+        </>
+      )}
+    </NavLink>
+  );
+}
+
+export function Sidebar({
+  onClose, collapsed = false, onToggleCollapse, layoutKey = "default",
+}: SidebarProps) {
   const { user, refreshToken, logout } = useAuthStore();
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -49,286 +137,174 @@ export function Sidebar({ onClose, collapsed = false, onToggleCollapse, layoutKe
     finally { logout(); navigate("/login", { replace: true }); }
   }
 
-  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    [
-      "flex items-center text-[13px] font-medium group relative",
-      collapsed ? "justify-center w-10 h-10 shrink-0 rounded-lg" : "gap-3 px-3 py-2 min-h-[36px] rounded-lg",
-      reduced ? "transition-colors duration-150" : "transition-colors duration-200 ease-out",
-      isActive ? "text-white" : "text-white/45 hover:text-white/80",
-    ].join(" ");
-
-  const ActivePill = () =>
-    reduced ? (
-      <span
-        className="absolute inset-0 rounded-lg"
-        style={{ background: "rgba(255,255,255,0.08)" }}
-      />
-    ) : (
-      <motion.span
-        layoutId={`sidebar-indicator-${layoutKey}`}
-        className="absolute inset-0 rounded-lg"
-        style={{ background: "rgba(255,255,255,0.08)" }}
-        transition={{ type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-      />
-    );
-
-  const width = collapsed ? 64 : 240;
-  const animDuration = 320;
-  const animEase = "cubic-bezier(0.32, 0.72, 0, 1)";
+  const width = collapsed ? 52 : 220;
+  const ease = "cubic-bezier(0.32, 0.72, 0, 1)";
+  const dur = 280;
 
   return (
     <aside
-      className="flex flex-col h-full select-none overflow-hidden border-r border-black"
+      className="flex flex-col h-full select-none overflow-hidden"
       style={{
         width,
-        background: "#000",
         minWidth: width,
-        paddingLeft: collapsed ? 0 : 0,
-        transition: reduced ? "none" : `width ${animDuration}ms ${animEase}, padding ${animDuration}ms ${animEase}`,
+        background: "#090909",
+        borderRight: "1px solid rgba(255,255,255,0.05)",
+        transition: reduced ? "none" : `width ${dur}ms ${ease}`,
       }}
     >
-      {/* ── Brand (collapse toggle when desktop; close when mobile) ── */}
+      {/* ── Brand ── */}
       <div
-        className={`flex items-center flex-shrink-0 pt-5 pb-4 ${
-          collapsed ? "justify-center px-0" : "justify-between px-4"
-        }`}
+        className="flex items-center flex-shrink-0"
+        style={{
+          height: 44,
+          padding: "0 12px",
+          justifyContent: collapsed ? "center" : "flex-start",
+          gap: 10,
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+        }}
       >
-        <div className={`flex items-center overflow-hidden ${collapsed ? "w-10 shrink-0 justify-center" : "gap-2.5"}`}>
-          {onToggleCollapse ? (
-            <button
-              type="button"
-              onClick={onToggleCollapse}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className={`rounded-lg transition-colors duration-150 hover:bg-white/10 flex-shrink-0 flex items-center justify-center ${
-                collapsed ? "w-10 h-10" : "p-2"
-              }`}
-              style={{ color: "rgba(255,255,255,0.7)" }}
-            >
-              {collapsed ? <PanelLeft size={20} strokeWidth={1.8} /> : <PanelLeftClose size={20} strokeWidth={1.8} />}
-            </button>
-          ) : (
-            <div
-              className="w-7 h-7 rounded-[7px] flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(255,255,255,0.9)" }}
-            >
-              <span className="text-[10px] font-black tracking-tighter text-[#000]">SD</span>
-            </div>
-          )}
-          {reduced ? (
-            !collapsed && (
-              <span className="text-[14px] font-semibold text-white tracking-tight leading-none">
-                Student Dashboard
-              </span>
-            )
-          ) : (
-            <span
-              className={`text-[14px] font-semibold text-white tracking-tight leading-none whitespace-nowrap overflow-hidden ${
-                collapsed ? "opacity-0 max-w-0 min-w-0" : "opacity-100 max-w-[180px]"
-              }`}
-              style={{
-                transition: reduced ? "none" : `max-width ${animDuration}ms ${animEase}, opacity ${animDuration}ms ${animEase}`,
-              }}
-            >
-              Student Dashboard
-            </span>
-          )}
-        </div>
-        {onClose && (
+        {onToggleCollapse ? (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="flex items-center justify-center flex-shrink-0 transition-colors duration-150"
+            style={{ color: "rgba(255,255,255,0.2)", width: 22, height: 22 }}
+            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.65)")}
+            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.2)")}
+          >
+            {collapsed
+              ? <PanelLeft size={15} strokeWidth={1.6} />
+              : <PanelLeftClose size={15} strokeWidth={1.6} />
+            }
+          </button>
+        ) : (
+          <div
+            className="flex items-center justify-center flex-shrink-0"
+            style={{
+              width: 20, height: 20,
+              background: "rgba(255,255,255,0.9)",
+              borderRadius: 4,
+            }}
+          >
+            <span style={{ fontSize: 8, fontWeight: 900, color: "#000", letterSpacing: "-0.05em" }}>SD</span>
+          </div>
+        )}
+
+        {!collapsed && (
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 500,
+              color: "rgba(255,255,255,0.6)",
+              letterSpacing: "-0.02em",
+              flex: 1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Student Dashboard
+          </span>
+        )}
+
+        {onClose && !collapsed && (
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close menu"
-            className="p-1 rounded-lg transition-colors md:hidden flex-shrink-0"
-            style={{ color: "rgba(255,255,255,0.35)" }}
+            className="flex-shrink-0 md:hidden transition-colors duration-150"
+            style={{ color: "rgba(255,255,255,0.2)" }}
+            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.6)")}
+            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.2)")}
           >
-            <X size={15} aria-hidden />
+            <X size={13} />
           </button>
         )}
       </div>
 
-      {/* ── Divider ───────────────────────────────────────────────── */}
-      <div
-        className="mb-1 shrink-0"
-        style={{
-          height: 1,
-          background: "rgba(255,255,255,0.06)",
-          marginLeft: collapsed ? 12 : 16,
-          marginRight: collapsed ? 12 : 16,
-          transition: reduced ? "none" : `margin ${animDuration}ms ${animEase}`,
-        }}
-      />
-
-      {/* ── Main nav ──────────────────────────────────────────────── */}
-      <nav
-        className={`flex-1 overflow-y-auto py-2 ${
-          collapsed ? "flex flex-col items-center gap-1" : "space-y-0.5 px-2"
-        }`}
-      >
-        {mainNav.map(({ label, href, icon: Icon, exact }) => (
-          <NavLink
+      {/* ── Nav ── */}
+      <nav className="flex-1 overflow-y-auto" style={{ padding: "6px 0" }}>
+        {mainNav.map(({ label, href, icon, exact }) => (
+          <NavItem
             key={href}
-            to={href}
-            end={exact}
-            onClick={onClose}
-            className={navLinkClass}
-            title={collapsed ? label : undefined}
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && <ActivePill />}
-                <span className="flex items-center justify-center flex-shrink-0 w-6 h-6">
-                  <Icon
-                    size={16}
-                    className="transition-colors duration-150"
-                    style={{ color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)" }}
-                    strokeWidth={isActive ? 2.2 : 1.8}
-                  />
-                </span>
-                {reduced ? (
-                  !collapsed && <span className="relative">{label}</span>
-                ) : (
-                  <span
-                    className={`relative whitespace-nowrap overflow-hidden ${
-                      collapsed ? "max-w-0 opacity-0 min-w-0" : "max-w-[140px] opacity-100"
-                    }`}
-                    style={{
-                      transition: reduced ? "none" : `max-width ${animDuration}ms ${animEase}, opacity ${animDuration}ms ${animEase}`,
-                    }}
-                  >
-                    {label}
-                  </span>
-                )}
-              </>
-            )}
-          </NavLink>
+            label={label}
+            href={href}
+            icon={icon}
+            exact={exact}
+            collapsed={collapsed}
+            onClose={onClose}
+            reduced={reduced}
+            layoutKey={layoutKey}
+          />
         ))}
       </nav>
 
-      {/* ── Settings ──────────────────────────────────────────────── */}
-      <div className={`pb-2 ${!collapsed ? "px-2" : ""}`}>
-        <div
-          className="mb-2 shrink-0"
-          style={{
-            height: 1,
-            background: "rgba(255,255,255,0.06)",
-            marginLeft: collapsed ? 12 : 8,
-            marginRight: collapsed ? 12 : 8,
-            transition: reduced ? "none" : `margin ${animDuration}ms ${animEase}`,
-          }}
+      {/* ── Bottom ── */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "6px 0" }}>
+        <NavItem
+          label="Settings"
+          href="/settings"
+          icon={Settings}
+          isSettings
+          collapsed={collapsed}
+          onClose={onClose}
+          reduced={reduced}
+          layoutKey={layoutKey}
         />
-        <div className={collapsed ? "flex justify-center" : ""}>
-        <NavLink
-          to="/settings"
-          onClick={onClose}
-          className={navLinkClass}
-          title={collapsed ? "Settings" : undefined}
-        >
-          {({ isActive }) => (
-            <>
-              {isActive && <ActivePill />}
-              <span className="flex items-center justify-center flex-shrink-0 w-6 h-6">
-                <Settings
-                  size={16}
-                  className="transition-colors duration-150"
-                  style={{ color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)" }}
-                  strokeWidth={isActive ? 2.2 : 1.8}
-                />
-              </span>
-              {reduced ? (
-                !collapsed && <span className="relative">Settings</span>
-              ) : (
-                <span
-                  className={`relative whitespace-nowrap overflow-hidden ${
-                    collapsed ? "max-w-0 opacity-0 min-w-0" : "max-w-[140px] opacity-100"
-                  }`}
-                  style={{
-                    transition: reduced ? "none" : `max-width ${animDuration}ms ${animEase}, opacity ${animDuration}ms ${animEase}`,
-                  }}
-                >
-                  Settings
-                </span>
-              )}
-            </>
-          )}
-        </NavLink>
-        </div>
-      </div>
 
-      {/* ── User section (collapsed: avatar only; expanded: avatar + name + logout) ── */}
-      <div
-        className={`flex-shrink-0 py-4 ${collapsed ? "flex justify-center" : "px-4"}`}
-        style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
-      >
+        {/* User row */}
         <div
-          className={`flex items-center overflow-hidden ${
-            collapsed ? "w-10 h-10 justify-center shrink-0" : "gap-2.5"
-          }`}
+          className="flex items-center"
+          style={{
+            height: 34,
+            padding: collapsed ? "0 14px" : "0 12px",
+            gap: 9,
+            marginTop: 2,
+          }}
         >
           <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0"
-            style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
+            className="flex items-center justify-center rounded-full flex-shrink-0"
+            style={{
+              width: 22, height: 22,
+              background: "rgba(255,255,255,0.07)",
+              color: "rgba(255,255,255,0.45)",
+              fontSize: 10,
+              fontWeight: 600,
+            }}
           >
             {getInitials(user?.name)}
           </div>
 
-          {reduced ? (
-            !collapsed && (
-              <>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium truncate leading-tight" style={{ color: "rgba(255,255,255,0.85)" }}>
-                    {user?.name ?? "User"}
-                  </p>
-                  <p className="text-[11px] truncate leading-tight" style={{ color: "rgba(255,255,255,0.35)" }}>
-                    {user?.email}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  disabled={loggingOut}
-                  aria-label="Sign out"
-                  title="Sign out"
-                  className="flex-shrink-0 p-1.5 rounded-lg transition-all duration-150 disabled:opacity-40 flex items-center justify-center"
-                  style={{ color: "rgba(255,255,255,0.3)" }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
-                >
-                  <LogOut size={16} strokeWidth={1.8} />
-                </button>
-              </>
-            )
-          ) : (
+          {!collapsed && (
             <>
-            <div
-              className={`flex-1 min-w-0 overflow-hidden ${
-                collapsed ? "max-w-0 opacity-0" : "max-w-[140px] opacity-100"
-              }`}
-              style={{
-                transition: reduced ? "none" : `max-width ${animDuration}ms ${animEase}, opacity ${animDuration}ms ${animEase}`,
-              }}
-            >
-                <p className="text-[13px] font-medium truncate leading-tight" style={{ color: "rgba(255,255,255,0.85)" }}>
+              <div className="flex-1 min-w-0">
+                <p
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 400,
+                    color: "rgba(255,255,255,0.5)",
+                    letterSpacing: "-0.01em",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    lineHeight: 1,
+                  }}
+                >
                   {user?.name ?? "User"}
                 </p>
-                <p className="text-[11px] truncate leading-tight" style={{ color: "rgba(255,255,255,0.35)" }}>
-                  {user?.email}
-                </p>
               </div>
-              {!collapsed && (
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  disabled={loggingOut}
-                  aria-label="Sign out"
-                  title="Sign out"
-                  className="flex-shrink-0 p-1.5 rounded-lg transition-all duration-150 disabled:opacity-40 flex items-center justify-center"
-                  style={{ color: "rgba(255,255,255,0.3)" }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
-                >
-                  <LogOut size={16} strokeWidth={1.8} />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                aria-label="Sign out"
+                className="flex-shrink-0 flex items-center justify-center transition-colors duration-150 disabled:opacity-40"
+                style={{ color: "rgba(255,255,255,0.18)", width: 22, height: 22 }}
+                onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.55)")}
+                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.18)")}
+              >
+                <LogOut size={13} strokeWidth={1.6} />
+              </button>
             </>
           )}
         </div>

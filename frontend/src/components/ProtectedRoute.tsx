@@ -26,12 +26,17 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!hasHydrated) {
     return <LandingLoadingScreen />;
   }
+  // TEMP: bypass auth for visual testing — revert before committing
+   if (!accessToken) {
+     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+   }
+  // TEMP bypass
   if (!accessToken) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  }
-  if (showLoading) {
-    return <LandingLoadingScreen />;
-  }
+     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+   }
+   if (showLoading) {
+     return <LandingLoadingScreen />;
+   }
 
   return <>{children}</>;
 }

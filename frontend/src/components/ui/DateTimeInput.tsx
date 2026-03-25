@@ -104,6 +104,7 @@ export function DateTimeInput({ label, value, onChange, disabled, error }: DateT
         }
         className="datetime-picker-dark"
         popperClassName="datetime-picker-dark-popper"
+        popperPlacement="bottom-start"
       />
       <label
         htmlFor="datetime-input"

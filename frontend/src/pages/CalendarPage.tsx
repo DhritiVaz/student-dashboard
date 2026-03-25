@@ -112,34 +112,39 @@ function DayCell({
   onClick: () => void;
   onItemClick: (item: CalItem) => void;
 }) {
-  const today    = isToday(date);
-  const visible  = items.slice(0, 3);
+  const today   = isToday(date);
+  const visible = items.slice(0, 3);
   const overflow = items.length - 3;
 
   return (
     <div
       onClick={onClick}
-      className={`min-h-[96px] p-1.5 cursor-pointer border-r border-b border-[#f0f0f0] transition-colors duration-100 ${
-        isSelected ? "bg-[#f0f0f0]" : "hover:bg-[#fafafa]"
-      } ${!isCurrentMonth ? "opacity-40" : ""}`}
+      className="min-h-[96px] p-1.5 cursor-pointer transition-colors duration-100"
+      style={{
+        borderRight: "1px solid rgba(255,255,255,0.05)",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
+        background: isSelected ? "rgba(255,255,255,0.04)" : "transparent",
+        opacity: !isCurrentMonth ? 0.3 : 1,
+      }}
+      onMouseEnter={e => {
+        if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)";
+      }}
+      onMouseLeave={e => {
+        if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "transparent";
+      }}
     >
-      {/* Day number */}
       <div className="flex justify-end mb-1">
         <span
-          className="text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full"
+          className="text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full transition-colors duration-100"
           style={
             today
-              ? { background: "#ffffff", color: "#0a0a0a", fontWeight: 700 }
-              : isSelected
-                ? { background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.9)" }
-                : { color: "#71717a" }
+              ? { background: "rgba(255,255,255,0.9)", color: "#0a0a0a", fontWeight: 700 }
+              : { color: "rgba(255,255,255,0.4)" }
           }
         >
           {date.getDate()}
         </span>
       </div>
-
-      {/* Events */}
       <div className="space-y-0.5">
         {visible.map(item => (
           <EventPill key={`${item.type}-${item.id}`} item={item} onClick={() => onItemClick(item)} />
@@ -147,7 +152,10 @@ function DayCell({
         {overflow > 0 && (
           <button
             onClick={e => { e.stopPropagation(); onClick(); }}
-            className="text-[10px] text-[#9ca3af] hover:text-[#111] pl-1.5 transition-colors"
+            className="text-[10px] pl-1.5 transition-colors"
+            style={{ color: "rgba(255,255,255,0.3)" }}
+            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
+            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
           >
             +{overflow} more
           </button>
@@ -157,7 +165,6 @@ function DayCell({
   );
 }
 
-// ─── Day detail panel ──────────────────────────────────────────────────────────
 function DayPanel({
   date, items, onItemClick, onClose, onCreateEvent,
 }: {
@@ -170,49 +177,59 @@ function DayPanel({
   const grouped: Record<CalItemType, CalItem[]> = { event: [], assignment: [], task: [] };
   items.forEach(i => grouped[i.type].push(i));
 
-  const label = isToday(date)
+  const panelLabel = isToday(date)
     ? "Today"
     : date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
+  const groupLabels: Record<CalItemType, string> = { event: "Events", assignment: "Assignments", task: "Tasks" };
+  const groupIcons: Record<CalItemType, React.ReactNode> = {
+    event:      <Calendar size={12} style={{ color: "rgba(255,255,255,0.3)" }} />,
+    assignment: <ClipboardList size={12} style={{ color: "rgba(255,255,255,0.3)" }} />,
+    task:       <CheckSquare size={12} style={{ color: "rgba(255,255,255,0.3)" }} />,
+  };
+
   function Group({ type, list }: { type: CalItemType; list: CalItem[] }) {
     if (!list.length) return null;
-    const icons: Record<CalItemType, React.ReactNode> = {
-      event:      <Calendar size={12} className="text-[#9ca3af]" />,
-      assignment: <ClipboardList size={12} className="text-[#9ca3af]" />,
-      task:       <CheckSquare size={12} className="text-[#9ca3af]" />,
-    };
-    const labels: Record<CalItemType, string> = { event: "Events", assignment: "Assignments", task: "Tasks" };
+    const linkTo = type === "assignment" ? `/assignments` : type === "task" ? `/tasks` : undefined;
     return (
       <div>
         <div className="flex items-center gap-1.5 mb-1.5">
-          {icons[type]}
-          <span className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider">{labels[type]}</span>
+          {groupIcons[type]}
+          <span className="text-[10px] font-semibold uppercase tracking-wider"
+            style={{ color: "rgba(255,255,255,0.3)" }}>
+            {groupLabels[type]}
+          </span>
         </div>
         <div className="space-y-1">
           {list.map(item => {
             const s = getStyle(item.type, item.eventType, item.customColor);
             const dotStyle = item.customColor ? { background: item.customColor } : undefined;
-            const linkTo = type === "assignment" ? `/assignments/${item.id}` : type === "task" ? `/tasks` : undefined;
             return (
               <div key={`${item.type}-${item.id}`}
-                className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#f5f5f5] transition-colors cursor-pointer group"
+                className="flex items-center gap-2 p-2 rounded-lg transition-colors cursor-pointer group"
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.04)"}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = "transparent"}
                 onClick={() => onItemClick(item)}>
                 <span
                   className={`w-2 h-2 rounded-full flex-shrink-0 ${dotStyle ? "" : s.dot}`}
                   style={dotStyle}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-[#111] truncate">{item.title}</p>
-                  {item.time && <p className="text-[10px] text-[#9ca3af]">{item.time}</p>}
+                  <p className="text-xs font-medium truncate" style={{ color: "rgba(255,255,255,0.85)" }}>{item.title}</p>
+                  {item.time && <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>{item.time}</p>}
                   {item.courseCode && (
-                    <span className="text-[9px] font-semibold text-[#6b7280] bg-[#f5f5f5] border border-[#e5e7eb] rounded px-1 py-0.5">
+                    <span className="text-[9px] font-semibold rounded px-1 py-0.5"
+                      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
                       {item.courseCode}
                     </span>
                   )}
                 </div>
                 {linkTo && (
                   <Link to={linkTo} onClick={e => e.stopPropagation()}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[#9ca3af] hover:text-[#111]">
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ color: "rgba(255,255,255,0.3)" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
                     <ExternalLink size={11} />
                   </Link>
                 )}
@@ -225,25 +242,31 @@ function DayPanel({
   }
 
   return (
-    <div className="bg-white border border-[#e5e7eb] rounded-card overflow-hidden"
-      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#f0f0f0]">
-        <span className="text-sm font-semibold text-[#111]">{label}</span>
+    <div className="rounded-xl overflow-hidden"
+      style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+      <div className="flex items-center justify-between px-4 py-3"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>{panelLabel}</span>
         <div className="flex items-center gap-1">
           <button type="button" onClick={onCreateEvent} aria-label="Add event"
-            className="p-1 rounded text-[#9ca3af] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors"
-            title="Add event">
-            <Plus size={14} aria-hidden />
+            className="p-1 rounded-lg transition-colors"
+            style={{ color: "rgba(255,255,255,0.3)" }}
+            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
+            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+            <Plus size={14} />
           </button>
           <button type="button" onClick={onClose} aria-label="Close"
-            className="p-1 rounded text-[#9ca3af] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors">
-            <X size={14} aria-hidden />
+            className="p-1 rounded-lg transition-colors"
+            style={{ color: "rgba(255,255,255,0.3)" }}
+            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
+            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+            <X size={14} />
           </button>
         </div>
       </div>
-      <div className="p-4 space-y-4 max-h-[400px] overflow-y-auto">
+      <div className="p-4 space-y-4" style={{ maxHeight: 400 }}>
         {!items.length ? (
-          <p className="text-xs text-[#9ca3af] text-center py-4">Nothing scheduled.</p>
+          <p className="text-xs text-center py-4" style={{ color: "rgba(255,255,255,0.3)" }}>Nothing scheduled.</p>
         ) : (
           <>
             <Group type="event"      list={grouped.event} />
@@ -544,12 +567,19 @@ export default function CalendarPage() {
       {/* ── Body: grid + sidebar ──────────────────────────────────────────── */}
       <div className="flex gap-5 items-start">
         {/* Calendar grid */}
-        <div className="flex-1 min-w-0 bg-white border border-[#e5e7eb] rounded-card overflow-hidden"
-          style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div
+          className="flex-1 min-w-0 rounded-xl overflow-hidden"
+          style={{
+            background: "#111111",
+            border: "1px solid rgba(255,255,255,0.06)",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+          }}
+        >
           {/* Week header */}
-          <div className="grid grid-cols-7 border-b border-[#f0f0f0]">
+          <div className="grid grid-cols-7" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             {WEEKDAYS.map(d => (
-              <div key={d} className="py-2.5 text-center text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider">
+              <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider"
+                style={{ color: "rgba(255,255,255,0.3)" }}>
                 {d}
               </div>
             ))}

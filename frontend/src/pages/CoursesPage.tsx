@@ -32,44 +32,104 @@ function CourseCard({
   const navigate = useNavigate();
   return (
     <div
-      className="group card-hover bg-white border border-[#e5e7eb] rounded-card p-5 cursor-pointer
-                 hover:border-[#d1d5db] transition-all duration-150"
-      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+      className="group relative cursor-pointer rounded-xl p-5 transition-all duration-200"
+      style={{
+        background: "#141414",
+        border: "1px solid rgba(255,255,255,0.06)",
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.12)";
+        (e.currentTarget as HTMLDivElement).style.background = "#181818";
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.06)";
+        (e.currentTarget as HTMLDivElement).style.background = "#141414";
+      }}
       onClick={() => navigate(`/courses/${course.id}`)}
     >
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="min-w-0">
-          <p className="font-semibold text-[#111] text-sm truncate">{course.name}</p>
-          <span className="inline-block mt-1 text-[10px] font-semibold text-[#6b7280] bg-[#f5f5f5] border border-[#e5e7eb] rounded-md px-1.5 py-0.5 tracking-wide">
-            {course.code}
-          </span>
-        </div>
-        <div
-          className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-          onClick={(e) => e.stopPropagation()}
+      {/* Action buttons */}
+      <div
+        className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          onClick={onEdit}
+          aria-label="Edit course"
+          className="p-1.5 rounded-lg transition-colors duration-150"
+          style={{ color: "rgba(255,255,255,0.3)" }}
+          onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
+          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
         >
-          <button onClick={onEdit} aria-label="Edit course" className="p-1.5 rounded-lg text-[#9ca3af] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors">
-            <Pencil size={13} aria-hidden />
-          </button>
-          <button onClick={onDelete} aria-label="Delete course" className="group/btn p-1.5 rounded-lg text-[#9ca3af] hover:text-red-500 hover:bg-red-50 transition-colors">
-            <Trash2 size={13} aria-hidden className="text-inherit group-hover/btn:text-red-500" />
-          </button>
-        </div>
+          <Pencil size={12} />
+        </button>
+        <button
+          onClick={onDelete}
+          aria-label="Delete course"
+          className="p-1.5 rounded-lg transition-colors duration-150"
+          style={{ color: "rgba(255,255,255,0.3)" }}
+          onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
+          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
+        >
+          <Trash2 size={12} />
+        </button>
       </div>
 
+      {/* Course name */}
+      <p
+        className="font-semibold text-sm leading-snug mb-1 pr-14 truncate"
+        style={{ color: "rgba(255,255,255,0.9)" }}
+      >
+        {course.name}
+      </p>
+
+      {/* Code badge */}
+      <span
+        className="inline-block text-[10px] font-semibold tracking-wide rounded-md px-1.5 py-0.5 mb-3"
+        style={{
+          background: "rgba(255,255,255,0.06)",
+          color: "rgba(255,255,255,0.4)",
+          border: "1px solid rgba(255,255,255,0.08)",
+        }}
+      >
+        {course.code}
+      </span>
+
+      {/* Bottom row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs text-[#9ca3af]">
-          <span>{course.credits} {course.credits === 1 ? "credit" : "credits"}</span>
-          {(course.professor ?? course.instructor) && <span className="truncate max-w-[100px]">{course.professor ?? course.instructor}</span>}
+        <div className="flex items-center gap-2">
+          <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
+            {course.credits} {course.credits === 1 ? "credit" : "credits"}
+          </span>
+          {(course.professor ?? course.instructor) && (
+            <span
+              className="text-xs truncate max-w-[100px]"
+              style={{ color: "rgba(255,255,255,0.3)" }}
+            >
+              · {course.professor ?? course.instructor}
+            </span>
+          )}
         </div>
         {course.semester && (
-          <span className="text-[10px] font-medium text-[#9ca3af] bg-[#f5f5f5] border border-[#e5e7eb] rounded-full px-2 py-0.5">
+          <span
+            className="text-[10px] font-medium rounded-full px-2 py-0.5"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              color: "rgba(255,255,255,0.3)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
             {course.semester.name}
           </span>
         )}
       </div>
+
       {course.description && (
-        <p className="mt-2 text-xs text-[#6b7280] line-clamp-2">{course.description}</p>
+        <p
+          className="mt-2 text-xs line-clamp-2"
+          style={{ color: "rgba(255,255,255,0.3)" }}
+        >
+          {course.description}
+        </p>
       )}
     </div>
   );
@@ -113,8 +173,8 @@ export default function CoursesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-[#111] tracking-tight">Courses</h2>
-          <p className="text-sm text-[#9ca3af] mt-0.5">{filtered.length} course{filtered.length !== 1 ? "s" : ""}</p>
+          <h2 className="text-xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.9)" }}>Courses</h2>
+          <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{filtered.length} course{filtered.length !== 1 ? "s" : ""}</p>
         </div>
         <Button size="sm" onClick={() => setShowCreate(true)}>
           <Plus size={14} /> New course
