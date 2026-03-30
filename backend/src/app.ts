@@ -13,6 +13,7 @@ import { notesRouter } from "./routes/notes";
 import { tasksRouter } from "./routes/tasks";
 import { eventsRouter } from "./routes/events";
 import { searchRouter } from "./routes/search";
+import { vtopRouter } from "./routes/vtop";
 
 const app = express();
 
@@ -31,5 +32,6 @@ app.use("/api/notes", notesRouter);
 app.use("/api/tasks", tasksRouter);
 app.use("/api/events", eventsRouter);
 app.use("/api/search", searchRouter);
+app.use("/api/vtop", vtopRouter);
 
 export default app;

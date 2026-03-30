@@ -44,6 +44,9 @@ model User {
   tasks          Task[]
   calendarEvents CalendarEvent[]
   refreshTokens  RefreshToken[]
+  vtopAttendance VtopAttendance[]
+  vtopGrades     VtopGrade[]
+  vtopAcademicEvents VtopAcademicEvent[] 
 
   @@index([email])
   @@index([deletedAt])
@@ -204,4 +207,52 @@ model Task {
   @@index([dueDate])
   @@index([isCompleted])
   @@index([deletedAt])
+}
+
+model VtopAttendance {
+  id                String   @id @default(cuid())
+  userId            String
+  courseCode        String
+  courseName        String
+  courseType        String?
+  conducted         Int
+  attended          Int
+  attendancePercent Float
+  syncedAt          DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseCode])
+  @@index([userId])
+}
+
+model VtopGrade {
+  id         String   @id @default(cuid())
+  userId     String
+  courseCode String
+  courseName String
+  credits    Float?
+  grade      String?
+  gradePoint Float?
+  syncedAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseCode])
+  @@index([userId])
+}
+
+model VtopAcademicEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  eventType String   // "Holiday", "CAT - I", "Instructional Day", etc.
+  label     String   // "(Winter Vacation)", "(Working Day)", etc.
+  syncedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
 }

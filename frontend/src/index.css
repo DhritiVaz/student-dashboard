@@ -810,3 +810,93 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .landing-page { background-color: #0a0a0a !important; }
 /* Filled buttons stay white on landing (bypass dark override) */
 .landing-page .bg-white { background-color: #ffffff !important; }
+
+/* Date picker fixes */
+.datetime-picker-dark-popper {
+  z-index: 9999 !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker {
+  background: #141414 !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  font-family: inherit !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__header {
+  background: #141414 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  padding-top: 12px !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__current-month,
+.datetime-picker-dark-popper .react-datepicker__day-name {
+  color: rgba(255,255,255,0.7) !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__day {
+  color: rgba(255,255,255,0.6) !important;
+  border-radius: 6px !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__day:hover {
+  background: rgba(255,255,255,0.1) !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__day--selected {
+  background: white !important;
+  color: black !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__day--today {
+  font-weight: bold !important;
+  color: white !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__day--outside-month {
+  color: rgba(255,255,255,0.2) !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__navigation-icon::before {
+  border-color: rgba(255,255,255,0.5) !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__time-container {
+  border-left: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__input-time-container {
+  margin: 0 !important;
+  padding: 8px 12px !important;
+  border-top: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+/* Make calendar and time picker side by side */
+.datetime-picker-dark-popper .react-datepicker {
+  display: flex !important;
+  flex-direction: row !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__month-container {
+  float: none !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker__input-time-container {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 12px !important;
+  border-top: none !important;
+  border-left: 1px solid rgba(255,255,255,0.08) !important;
+  width: 120px !important;
+}
+
+.datetime-picker-dark-popper .react-datepicker-time__caption {
+  font-size: 9px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  color: rgba(255,255,255,0.3) !important;
+  margin-bottom: 8px !important;
+}

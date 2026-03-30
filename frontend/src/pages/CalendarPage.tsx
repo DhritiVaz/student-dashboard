@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Plus, X, Pencil, Trash2, Calendar, ClipboardList, CheckSquare, ExternalLink } from "lucide-react";
 import { Button } from "../components/ui/Button";
@@ -7,6 +7,7 @@ import { EventForm } from "../components/calendar/EventForm";
 import { useCourses } from "../hooks/api/courses";
 import { useAssignments } from "../hooks/api/assignments";
 import { useTasks } from "../hooks/api/tasks";
+import { useVtopAcademicEvents } from "../hooks/api/vtop";
 import {
   useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent,
   type CalendarEvent, type EventType,
@@ -20,19 +21,21 @@ const MONTHS   = ["January","February","March","April","May","June","July","Augu
 type ItemStyle = { dot: string; bg: string; text: string; border: string; label: string };
 
 const TYPE_STYLE: Record<string, ItemStyle> = {
-  class:      { dot: "bg-blue-500",   bg: "bg-blue-50",     text: "text-blue-700",    border: "border-blue-100",    label: "Class" },
-  exam:       { dot: "bg-red-500",    bg: "bg-red-50",      text: "text-red-700",     border: "border-red-100",     label: "Exam" },
-  deadline:   { dot: "bg-orange-500", bg: "bg-orange-50",   text: "text-orange-700",  border: "border-orange-100",  label: "Deadline" },
-  personal:   { dot: "bg-violet-500", bg: "bg-violet-50",   text: "text-violet-700",  border: "border-violet-100",  label: "Personal" },
-  assignment: { dot: "bg-sky-500",    bg: "bg-sky-50",      text: "text-sky-700",     border: "border-sky-100",     label: "Assignment" },
-  task:       { dot: "bg-purple-500", bg: "bg-purple-50",   text: "text-purple-700",  border: "border-purple-100",  label: "Task" },
+  class:      { dot: "bg-blue-500",    bg: "bg-blue-50",      text: "text-blue-700",    border: "border-blue-100",    label: "Class" },
+  exam:       { dot: "bg-red-500",     bg: "bg-red-50",       text: "text-red-700",     border: "border-red-100",     label: "Exam" },
+  deadline:   { dot: "bg-orange-500",  bg: "bg-orange-50",    text: "text-orange-700",  border: "border-orange-100",  label: "Deadline" },
+  personal:   { dot: "bg-violet-500",  bg: "bg-violet-50",    text: "text-violet-700",  border: "border-violet-100",  label: "Personal" },
+  assignment: { dot: "bg-sky-500",     bg: "bg-sky-50",       text: "text-sky-700",     border: "border-sky-100",     label: "Assignment" },
+  task:       { dot: "bg-purple-500",  bg: "bg-purple-50",    text: "text-purple-700",  border: "border-purple-100",  label: "Task" },
+  holiday:    { dot: "bg-emerald-500", bg: "bg-emerald-950",  text: "text-emerald-400", border: "border-emerald-900", label: "Holiday" },
+  exam_vtop:  { dot: "bg-red-500",     bg: "bg-red-950",      text: "text-red-400",     border: "border-red-900",     label: "Exam" },
 };
 
 function getStyle(type: "event" | "assignment" | "task", eventType?: EventType, customColor?: string | null): ItemStyle {
   if (type === "assignment") return TYPE_STYLE.assignment;
   if (type === "task")       return TYPE_STYLE.task;
   const base = TYPE_STYLE[eventType ?? "personal"];
-  if (customColor) return { ...base, dot: "", bg: "", text: "", border: "" }; // color override handled inline
+  if (customColor) return { ...base, dot: "", bg: "", text: "", border: "" };
   return base;
 }
 
@@ -71,7 +74,6 @@ function fmtShortDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-/** Returns all Date cells needed to fill a calendar view for a given month */
 function getCalendarCells(year: number, month: number): Date[] {
   const first = new Date(year, month, 1);
   const last  = new Date(year, month + 1, 0);
@@ -281,13 +283,12 @@ function DayPanel({
 
 // ─── Upcoming sidebar ─────────────────────────────────────────────────────────
 function UpcomingSidebar({ items, onItemClick }: { items: CalItem[]; onItemClick: (item: CalItem) => void }) {
-  const now   = new Date();
+  const now    = new Date();
   const next10 = items
     .filter(i => new Date(i.dateKey) >= new Date(dateKey(now)))
     .sort((a, b) => a.sortTime - b.sortTime)
     .slice(0, 10);
 
-  // Group by date key for display
   const byDate = new Map<string, CalItem[]>();
   next10.forEach(i => {
     if (!byDate.has(i.dateKey)) byDate.set(i.dateKey, []);
@@ -406,7 +407,7 @@ function EventDetailModal({
 
       <div className="flex items-center justify-between pt-2 border-t border-[#f0f0f0]">
         <div className="flex items-center gap-2">
-          {item.type === "event" && (
+          {item.type === "event" && item.rawEvent && (
             <>
               <Button variant="secondary" size="sm" onClick={onEdit}>
                 <Pencil size={13} /> Edit
@@ -442,8 +443,7 @@ export default function CalendarPage() {
   const [defaultDate,   setDefaultDate]   = useState<string | undefined>();
   const [showDeleteId,  setShowDeleteId]  = useState<string | null>(null);
 
-  // ── Date range for event fetching (full calendar view = includes padding days) ──
-  const cells     = useMemo(() => getCalendarCells(year, month), [year, month]);
+  const cells      = useMemo(() => getCalendarCells(year, month), [year, month]);
   const rangeStart = dateKey(cells[0]);
   const rangeEnd   = dateKey(cells[cells.length - 1]);
 
@@ -451,12 +451,14 @@ export default function CalendarPage() {
   const { data: assignments = [] } = useAssignments();
   const { data: tasks       = [] } = useTasks();
   const { data: courses }          = useCourses();
+  const { data: academicEvents, fetch: fetchAcademicEvents } = useVtopAcademicEvents();
+
+  useEffect(() => { fetchAcademicEvents(); }, []);
 
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent(editingEvent?.id ?? "");
   const deleteEvent = useDeleteEvent();
 
-  // ── Build unified item map ────────────────────────────────────────────────
   const itemsByDate = useMemo(() => {
     const map = new Map<string, CalItem[]>();
     function add(key: string, item: CalItem) {
@@ -500,15 +502,31 @@ export default function CalendarPage() {
       });
     });
 
-    // Sort each day's items by time
+    // Academic calendar events (holidays + exams only)
+    academicEvents.forEach(e => {
+      const key = e.date.slice(0, 10);
+      const isHoliday = e.eventType.toLowerCase().includes("holiday");
+      const isExam = e.eventType.toLowerCase().includes("cat") ||
+                     e.eventType.toLowerCase().includes("exam") ||
+                     e.eventType.toLowerCase().includes("fat");
+      if (!isHoliday && !isExam) return;
+      add(key, {
+        id: e.id,
+        title: e.eventType + (e.label ? ` ${e.label}` : ""),
+        dateKey: key,
+        sortTime: new Date(key).getTime(),
+        type: "event",
+        eventType: "personal" as EventType,
+        customColor: isHoliday ? "#10b981" : "#ef4444",
+      });
+    });
+
     map.forEach((v, k) => map.set(k, v.sort((a, b) => a.sortTime - b.sortTime)));
     return map;
-  }, [events, assignments, tasks]);
+  }, [events, assignments, tasks, academicEvents]);
 
-  // ── All items flat (for upcoming sidebar) ─────────────────────────────────
   const allItems = useMemo(() => [...itemsByDate.values()].flat(), [itemsByDate]);
 
-  // ── Navigation ────────────────────────────────────────────────────────────
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear(y => y - 1); }
     else setMonth(m => m - 1);
@@ -529,7 +547,6 @@ export default function CalendarPage() {
 
   return (
     <div className="p-6 sm:p-8 w-full">
-      {/* ── Header bar ────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-bold text-[#111] tracking-tight">
@@ -548,10 +565,9 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* Legend + create */}
         <div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-3">
-            {(["class","exam","deadline","personal","assignment","task"] as const).map(t => (
+            {(["class","exam","deadline","personal","assignment","task","holiday"] as const).map(t => (
               <span key={t} className="flex items-center gap-1 text-[10px] text-[#9ca3af]">
                 <span className={`w-2 h-2 rounded-full ${TYPE_STYLE[t].dot}`} />
                 {TYPE_STYLE[t].label}
@@ -564,9 +580,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* ── Body: grid + sidebar ──────────────────────────────────────────── */}
       <div className="flex gap-5 items-start">
-        {/* Calendar grid */}
         <div
           className="flex-1 min-w-0 rounded-xl overflow-hidden"
           style={{
@@ -575,7 +589,6 @@ export default function CalendarPage() {
             boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
           }}
         >
-          {/* Week header */}
           <div className="grid grid-cols-7" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             {WEEKDAYS.map(d => (
               <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider"
@@ -585,10 +598,9 @@ export default function CalendarPage() {
             ))}
           </div>
 
-          {/* Day cells */}
           <div className="grid grid-cols-7">
             {cells.map(cell => {
-              const key  = dateKey(cell);
+              const key   = dateKey(cell);
               const items = itemsByDate.get(key) ?? [];
               const inMonth = cell.getMonth() === month;
               const isSel   = selectedDate ? isSameDay(cell, selectedDate) : false;
@@ -607,7 +619,6 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* Right sidebar */}
         <div className="w-72 flex-shrink-0 hidden lg:block sticky top-6 space-y-4">
           {selectedDate ? (
             <DayPanel
@@ -626,7 +637,6 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* ── Create event modal ────────────────────────────────────────────── */}
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="New event" maxWidth={520}>
         <EventForm
           courses={courses}
@@ -636,7 +646,6 @@ export default function CalendarPage() {
         />
       </Modal>
 
-      {/* ── Edit event modal ──────────────────────────────────────────────── */}
       <Modal open={!!editingEvent} onClose={() => setEditingEvent(null)} title="Edit event" maxWidth={520}>
         {editingEvent && (
           <EventForm
@@ -652,13 +661,7 @@ export default function CalendarPage() {
         )}
       </Modal>
 
-      {/* ── Event detail modal ────────────────────────────────────────────── */}
-      <Modal
-        open={!!selectedItem}
-        onClose={() => setSelectedItem(null)}
-        title=""
-        maxWidth={440}
-      >
+      <Modal open={!!selectedItem} onClose={() => setSelectedItem(null)} title="" maxWidth={440}>
         {selectedItem && (
           <EventDetailModal
             item={selectedItem}
@@ -677,7 +680,6 @@ export default function CalendarPage() {
         )}
       </Modal>
 
-      {/* ── Delete event confirm ──────────────────────────────────────────── */}
       <Modal open={!!showDeleteId} onClose={() => setShowDeleteId(null)} title="Delete event" maxWidth={400}>
         <p className="text-sm text-[#6b7280] mb-5">Delete this event? This cannot be undone.</p>
         <div className="flex justify-end gap-2">

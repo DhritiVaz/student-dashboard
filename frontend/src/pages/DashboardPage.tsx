@@ -17,6 +17,7 @@ import { useTasks, useCreateTask } from "../hooks/api/tasks";
 import { useNotes } from "../hooks/api/notes";
 import { useEvents } from "../hooks/api/events";
 import { api } from "../lib/api";
+import VtopSync from "../components/vtop/VtopSync";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -494,6 +495,14 @@ export default function DashboardPage() {
             ))}
           </div>
         </Card>
+      </div>
+
+      {/* ── VTOP Sync ── */}
+      <div className="mt-4 rounded-xl overflow-hidden"
+        style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="p-5">
+          <VtopSync />
+        </div>
       </div>
 
       {/* Modals */}
