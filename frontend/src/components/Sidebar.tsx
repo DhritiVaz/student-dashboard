@@ -11,13 +11,13 @@ import { useState } from "react";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 
 const mainNav = [
-  { label: "Dashboard",   href: "/dashboard",   icon: LayoutDashboard, exact: true },
-  { label: "Semesters",   href: "/semesters",   icon: GraduationCap },
-  { label: "Courses",     href: "/courses",     icon: BookOpen },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true },
+  { label: "Semesters", href: "/semesters", icon: GraduationCap },
+  { label: "Courses", href: "/courses", icon: BookOpen },
   { label: "Assignments", href: "/assignments", icon: ClipboardList },
-  { label: "Notes",       href: "/notes",       icon: FileText },
-  { label: "Tasks",       href: "/tasks",       icon: CheckSquare },
-  { label: "Calendar",    href: "/calendar",    icon: Calendar },
+  { label: "Notes", href: "/notes", icon: FileText },
+  { label: "Tasks", href: "/tasks", icon: CheckSquare },
+  { label: "Calendar", href: "/calendar", icon: Calendar },
 ];
 
 interface SidebarProps {
@@ -85,20 +85,22 @@ function NavItem({
           <span
             className="relative flex items-center w-full h-full"
             style={{
-              paddingLeft: collapsed ? 14 : 12,
-              paddingRight: collapsed ? 14 : 12,
+              paddingLeft: 15,
+              paddingRight: 15,
+              justifyContent: "flex-start",
               gap: 9,
             }}
           >
-            <Icon
-              size={15}
-              strokeWidth={isActive ? 2 : 1.6}
-              style={{
-                color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)",
-                transition: "color 0.15s",
-                flexShrink: 0,
-              }}
-            />
+            <div className="flex items-center justify-center flex-shrink-0" style={{ width: 22, height: 22 }}>
+              <Icon
+                size={15}
+                strokeWidth={isActive ? 2 : 1.6}
+                style={{
+                  color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)",
+                  transition: "color 0.15s",
+                }}
+              />
+            </div>
             {!collapsed && (
               <span
                 style={{
@@ -157,9 +159,10 @@ export function Sidebar({
         className="flex items-center flex-shrink-0"
         style={{
           height: 44,
-          padding: "0 12px",
-          justifyContent: collapsed ? "center" : "flex-start",
-          gap: 10,
+          paddingLeft: 15,
+          paddingRight: 15,
+          justifyContent: "flex-start",
+          gap: 9,
           borderBottom: "1px solid rgba(255,255,255,0.05)",
         }}
       >
@@ -182,7 +185,7 @@ export function Sidebar({
           <div
             className="flex items-center justify-center flex-shrink-0"
             style={{
-              width: 20, height: 20,
+              width: 22, height: 22,
               background: "rgba(255,255,255,0.9)",
               borderRadius: 4,
             }}
@@ -257,7 +260,9 @@ export function Sidebar({
           className="flex items-center"
           style={{
             height: 34,
-            padding: collapsed ? "0 14px" : "0 12px",
+            paddingLeft: 15,
+            paddingRight: 15,
+            justifyContent: "flex-start",
             gap: 9,
             marginTop: 2,
           }}
