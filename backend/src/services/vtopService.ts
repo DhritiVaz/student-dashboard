@@ -137,16 +137,14 @@ export async function syncVtopData(userId: string, username: string, password: s
 function getDefaultSemesterSubId(): string {
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth() + 1; // 1-12
-  const shortYear = String(year).slice(2);
-  const prevShortYear = String(year - 1).slice(2);
+  const month = now.getMonth() + 1;
+  const shortYear = String(year).slice(2); // "26"
+  const prevYear = year - 1;              // 2025
 
-  // Winter semester (Jan-May): CH + prevYear + currYear + "05"
-  // Summer semester (Jun-Dec): CH + currYear + currYear + "15"
   if (month >= 1 && month <= 5) {
-    return `CH${prevShortYear}${shortYear}2605`;
+    return `CH${prevYear}${shortYear}05`;  // CH202526 05
   } else {
-    return `CH${shortYear}${shortYear}1505`;
+    return `CH${year}${shortYear}15`;
   }
 }
 
