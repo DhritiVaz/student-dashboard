@@ -47,6 +47,7 @@ model User {
   vtopAttendance VtopAttendance[]
   vtopGrades     VtopGrade[]
   vtopAcademicEvents VtopAcademicEvent[] 
+  vtopTimetable VtopTimetable[]
 
   @@index([email])
   @@index([deletedAt])
@@ -255,4 +256,23 @@ model VtopAcademicEvent {
   @@unique([userId, date])
   @@index([userId])
   @@index([date])
+}
+
+model VtopTimetable {
+  id         String   @id @default(cuid())
+  userId     String
+  courseCode String
+  courseName String
+  courseType String   // "TH", "LO", "ELA", "ETH", "SS"
+  slot       String   // "A1", "L11", etc.
+  venue      String
+  dayOfWeek  Int      // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+  startTime  String   // "08:00"
+  endTime    String   // "08:50"
+  syncedAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slot, dayOfWeek])
+  @@index([userId])
 }

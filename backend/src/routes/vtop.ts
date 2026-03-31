@@ -6,6 +6,7 @@ import {
   getAttendanceHandler,
   getGradesHandler,
   getAcademicEventsHandler,
+  getTimetableHandler,
 } from "../controllers/vtopController";
 
 export const vtopRouter = Router();
@@ -17,3 +18,4 @@ vtopRouter.post("/sync", syncVtopHandler);
 vtopRouter.get("/attendance", getAttendanceHandler);
 vtopRouter.get("/grades", getGradesHandler);
 vtopRouter.get("/academic-events", getAcademicEventsHandler);
+vtopRouter.get("/timetable", getTimetableHandler);

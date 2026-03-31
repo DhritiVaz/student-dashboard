@@ -7,21 +7,19 @@ import { EventForm } from "../components/calendar/EventForm";
 import { useCourses } from "../hooks/api/courses";
 import { useAssignments } from "../hooks/api/assignments";
 import { useTasks } from "../hooks/api/tasks";
-import { useVtopAcademicEvents } from "../hooks/api/vtop";
+import { useVtopAcademicEvents, useVtopTimetable } from "../hooks/api/vtop";
 import {
   useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent,
   type CalendarEvent, type EventType,
 } from "../hooks/api/events";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS   = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-// ─── Color system ─────────────────────────────────────────────────────────────
 type ItemStyle = { dot: string; bg: string; text: string; border: string; label: string };
 
 const TYPE_STYLE: Record<string, ItemStyle> = {
-  class:      { dot: "bg-blue-500",    bg: "bg-blue-50",      text: "text-blue-700",    border: "border-blue-100",    label: "Class" },
+  class:      { dot: "bg-blue-500",    bg: "bg-blue-950",     text: "text-blue-400",    border: "border-blue-900",    label: "Class" },
   exam:       { dot: "bg-red-500",     bg: "bg-red-50",       text: "text-red-700",     border: "border-red-100",     label: "Exam" },
   deadline:   { dot: "bg-orange-500",  bg: "bg-orange-50",    text: "text-orange-700",  border: "border-orange-100",  label: "Deadline" },
   personal:   { dot: "bg-violet-500",  bg: "bg-violet-50",    text: "text-violet-700",  border: "border-violet-100",  label: "Personal" },
@@ -34,12 +32,11 @@ const TYPE_STYLE: Record<string, ItemStyle> = {
 function getStyle(type: "event" | "assignment" | "task", eventType?: EventType, customColor?: string | null): ItemStyle {
   if (type === "assignment") return TYPE_STYLE.assignment;
   if (type === "task")       return TYPE_STYLE.task;
-  const base = TYPE_STYLE[eventType ?? "personal"];
+  const base = TYPE_STYLE[eventType ?? "personal"] ?? TYPE_STYLE.personal;
   if (customColor) return { ...base, dot: "", bg: "", text: "", border: "" };
   return base;
 }
 
-// ─── Unified calendar item ─────────────────────────────────────────────────────
 type CalItemType = "event" | "assignment" | "task";
 interface CalItem {
   id: string;
@@ -55,7 +52,6 @@ interface CalItem {
   rawEvent?: CalendarEvent;
 }
 
-// ─── Date helpers ─────────────────────────────────────────────────────────────
 function dateKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -85,7 +81,6 @@ function getCalendarCells(year: number, month: number): Date[] {
   return days;
 }
 
-// ─── Dot / pill inside calendar cell ──────────────────────────────────────────
 function EventPill({ item, onClick }: { item: CalItem; onClick: () => void }) {
   const s = getStyle(item.type, item.eventType, item.customColor);
   const dotStyle = item.customColor ? { background: item.customColor } : undefined;
@@ -94,25 +89,15 @@ function EventPill({ item, onClick }: { item: CalItem; onClick: () => void }) {
       onClick={e => { e.stopPropagation(); onClick(); }}
       className={`w-full flex items-center gap-1 text-left px-1.5 py-0.5 rounded text-[10px] truncate transition-opacity hover:opacity-80 ${s.bg} ${s.text}`}
     >
-      <span
-        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotStyle ? "" : s.dot}`}
-        style={dotStyle}
-      />
+      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotStyle ? "" : s.dot}`} style={dotStyle} />
       <span className="truncate">{item.title}</span>
     </button>
   );
 }
 
-// ─── Calendar day cell ─────────────────────────────────────────────────────────
-function DayCell({
-  date, items, isCurrentMonth, isSelected, onClick, onItemClick,
-}: {
-  date: Date;
-  items: CalItem[];
-  isCurrentMonth: boolean;
-  isSelected: boolean;
-  onClick: () => void;
-  onItemClick: (item: CalItem) => void;
+function DayCell({ date, items, isCurrentMonth, isSelected, onClick, onItemClick }: {
+  date: Date; items: CalItem[]; isCurrentMonth: boolean; isSelected: boolean;
+  onClick: () => void; onItemClick: (item: CalItem) => void;
 }) {
   const today   = isToday(date);
   const visible = items.slice(0, 3);
@@ -128,21 +113,13 @@ function DayCell({
         background: isSelected ? "rgba(255,255,255,0.04)" : "transparent",
         opacity: !isCurrentMonth ? 0.3 : 1,
       }}
-      onMouseEnter={e => {
-        if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)";
-      }}
-      onMouseLeave={e => {
-        if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "transparent";
-      }}
+      onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)"; }}
+      onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
     >
       <div className="flex justify-end mb-1">
         <span
           className="text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full transition-colors duration-100"
-          style={
-            today
-              ? { background: "rgba(255,255,255,0.9)", color: "#0a0a0a", fontWeight: 700 }
-              : { color: "rgba(255,255,255,0.4)" }
-          }
+          style={today ? { background: "rgba(255,255,255,0.9)", color: "#0a0a0a", fontWeight: 700 } : { color: "rgba(255,255,255,0.4)" }}
         >
           {date.getDate()}
         </span>
@@ -167,27 +144,17 @@ function DayCell({
   );
 }
 
-function DayPanel({
-  date, items, onItemClick, onClose, onCreateEvent,
-}: {
-  date: Date;
-  items: CalItem[];
-  onItemClick: (item: CalItem) => void;
-  onClose: () => void;
-  onCreateEvent: () => void;
+function DayPanel({ date, items, onItemClick, onClose, onCreateEvent }: {
+  date: Date; items: CalItem[]; onItemClick: (item: CalItem) => void; onClose: () => void; onCreateEvent: () => void;
 }) {
   const grouped: Record<CalItemType, CalItem[]> = { event: [], assignment: [], task: [] };
   items.forEach(i => grouped[i.type].push(i));
-
-  const panelLabel = isToday(date)
-    ? "Today"
-    : date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-
+  const panelLabel = isToday(date) ? "Today" : date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
   const groupLabels: Record<CalItemType, string> = { event: "Events", assignment: "Assignments", task: "Tasks" };
   const groupIcons: Record<CalItemType, React.ReactNode> = {
-    event:      <Calendar size={12} style={{ color: "rgba(255,255,255,0.3)" }} />,
+    event: <Calendar size={12} style={{ color: "rgba(255,255,255,0.3)" }} />,
     assignment: <ClipboardList size={12} style={{ color: "rgba(255,255,255,0.3)" }} />,
-    task:       <CheckSquare size={12} style={{ color: "rgba(255,255,255,0.3)" }} />,
+    task: <CheckSquare size={12} style={{ color: "rgba(255,255,255,0.3)" }} />,
   };
 
   function Group({ type, list }: { type: CalItemType; list: CalItem[] }) {
@@ -197,10 +164,7 @@ function DayPanel({
       <div>
         <div className="flex items-center gap-1.5 mb-1.5">
           {groupIcons[type]}
-          <span className="text-[10px] font-semibold uppercase tracking-wider"
-            style={{ color: "rgba(255,255,255,0.3)" }}>
-            {groupLabels[type]}
-          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>{groupLabels[type]}</span>
         </div>
         <div className="space-y-1">
           {list.map(item => {
@@ -212,24 +176,18 @@ function DayPanel({
                 onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.04)"}
                 onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = "transparent"}
                 onClick={() => onItemClick(item)}>
-                <span
-                  className={`w-2 h-2 rounded-full flex-shrink-0 ${dotStyle ? "" : s.dot}`}
-                  style={dotStyle}
-                />
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotStyle ? "" : s.dot}`} style={dotStyle} />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate" style={{ color: "rgba(255,255,255,0.85)" }}>{item.title}</p>
                   {item.time && <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>{item.time}</p>}
                   {item.courseCode && (
-                    <span className="text-[9px] font-semibold rounded px-1 py-0.5"
-                      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    <span className="text-[9px] font-semibold rounded px-1 py-0.5" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
                       {item.courseCode}
                     </span>
                   )}
                 </div>
                 {linkTo && (
-                  <Link to={linkTo} onClick={e => e.stopPropagation()}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ color: "rgba(255,255,255,0.3)" }}
+                  <Link to={linkTo} onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "rgba(255,255,255,0.3)" }}
                     onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
                     onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
                     <ExternalLink size={11} />
@@ -244,36 +202,28 @@ function DayPanel({
   }
 
   return (
-    <div className="rounded-xl overflow-hidden"
-      style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
-      <div className="flex items-center justify-between px-4 py-3"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>{panelLabel}</span>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={onCreateEvent} aria-label="Add event"
-            className="p-1 rounded-lg transition-colors"
-            style={{ color: "rgba(255,255,255,0.3)" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+          <button type="button" onClick={onCreateEvent} aria-label="Add event" className="p-1 rounded-lg transition-colors" style={{ color: "rgba(255,255,255,0.3)" }}
+            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")} onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
             <Plus size={14} />
           </button>
-          <button type="button" onClick={onClose} aria-label="Close"
-            className="p-1 rounded-lg transition-colors"
-            style={{ color: "rgba(255,255,255,0.3)" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+          <button type="button" onClick={onClose} aria-label="Close" className="p-1 rounded-lg transition-colors" style={{ color: "rgba(255,255,255,0.3)" }}
+            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")} onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
             <X size={14} />
           </button>
         </div>
       </div>
-      <div className="p-4 space-y-4" style={{ maxHeight: 400 }}>
+      <div className="p-4 space-y-4" style={{ maxHeight: 400, overflowY: "auto" }}>
         {!items.length ? (
           <p className="text-xs text-center py-4" style={{ color: "rgba(255,255,255,0.3)" }}>Nothing scheduled.</p>
         ) : (
           <>
-            <Group type="event"      list={grouped.event} />
+            <Group type="event" list={grouped.event} />
             <Group type="assignment" list={grouped.assignment} />
-            <Group type="task"       list={grouped.task} />
+            <Group type="task" list={grouped.task} />
           </>
         )}
       </div>
@@ -281,7 +231,6 @@ function DayPanel({
   );
 }
 
-// ─── Upcoming sidebar ─────────────────────────────────────────────────────────
 function UpcomingSidebar({ items, onItemClick }: { items: CalItem[]; onItemClick: (item: CalItem) => void }) {
   const now    = new Date();
   const next10 = items
@@ -303,8 +252,7 @@ function UpcomingSidebar({ items, onItemClick }: { items: CalItem[]; onItemClick
   }
 
   return (
-    <div className="bg-white border border-[#e5e7eb] rounded-card overflow-hidden"
-      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+    <div className="bg-white border border-[#e5e7eb] rounded-card overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
       <div className="px-4 py-3 border-b border-[#f0f0f0]">
         <span className="text-sm font-semibold text-[#111]">Upcoming</span>
       </div>
@@ -314,21 +262,15 @@ function UpcomingSidebar({ items, onItemClick }: { items: CalItem[]; onItemClick
         ) : (
           [...byDate.entries()].map(([key, dayItems]) => (
             <div key={key}>
-              <p className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider mb-1.5">
-                {dateLabel(key)}
-              </p>
+              <p className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider mb-1.5">{dateLabel(key)}</p>
               <div className="space-y-1">
                 {dayItems.map(item => {
                   const s = getStyle(item.type, item.eventType, item.customColor);
                   const dotStyle = item.customColor ? { background: item.customColor } : undefined;
                   return (
-                    <button key={`${item.type}-${item.id}`}
-                      onClick={() => onItemClick(item)}
+                    <button key={`${item.type}-${item.id}`} onClick={() => onItemClick(item)}
                       className="w-full flex items-center gap-2 p-2 rounded-lg text-left hover:bg-[#f5f5f5] transition-colors">
-                      <span
-                        className={`w-2 h-2 rounded-full flex-shrink-0 ${dotStyle ? "" : s.dot}`}
-                        style={dotStyle}
-                      />
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotStyle ? "" : s.dot}`} style={dotStyle} />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-[#111] truncate">{item.title}</p>
                         <p className="text-[10px] text-[#9ca3af]">
@@ -351,15 +293,8 @@ function UpcomingSidebar({ items, onItemClick }: { items: CalItem[]; onItemClick
   );
 }
 
-// ─── Event detail modal ────────────────────────────────────────────────────────
-function EventDetailModal({
-  item, onEdit, onDelete, onClose, deleting,
-}: {
-  item: CalItem;
-  onEdit: () => void;
-  onDelete: () => void;
-  onClose: () => void;
-  deleting: boolean;
+function EventDetailModal({ item, onEdit, onDelete, onClose, deleting }: {
+  item: CalItem; onEdit: () => void; onDelete: () => void; onClose: () => void; deleting: boolean;
 }) {
   const s = getStyle(item.type, item.eventType, item.customColor);
   const dotStyle = item.customColor ? { background: item.customColor } : undefined;
@@ -368,60 +303,38 @@ function EventDetailModal({
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-3">
-        <span
-          className={`w-3 h-3 rounded-full flex-shrink-0 mt-1 ${dotStyle ? "" : s.dot}`}
-          style={dotStyle}
-        />
+        <span className={`w-3 h-3 rounded-full flex-shrink-0 mt-1 ${dotStyle ? "" : s.dot}`} style={dotStyle} />
         <div className="flex-1 min-w-0">
           <p className="text-base font-semibold text-[#111] leading-tight">{item.title}</p>
-          <span className={`inline-block mt-1 text-[10px] font-semibold border rounded-full px-2 py-0.5 ${s.text} ${s.bg} ${s.border}`}>
-            {s.label}
-          </span>
+          <span className={`inline-block mt-1 text-[10px] font-semibold border rounded-full px-2 py-0.5 ${s.text} ${s.bg} ${s.border}`}>{s.label}</span>
         </div>
       </div>
-
+      {item.time && <p className="text-sm text-[#6b7280]">{item.time}</p>}
       {ev && (
         <div className="space-y-2 text-sm text-[#6b7280]">
           <div className="flex items-start gap-2">
             <Calendar size={14} className="text-[#9ca3af] mt-0.5 flex-shrink-0" />
-            <span>
-              {ev.isAllDay
-                ? fmtShortDate(ev.startDate)
-                : `${fmtShortDate(ev.startDate)}, ${fmtTime(ev.startDate)} – ${fmtTime(ev.endDate)}`}
-            </span>
+            <span>{ev.isAllDay ? fmtShortDate(ev.startDate) : `${fmtShortDate(ev.startDate)}, ${fmtTime(ev.startDate)} – ${fmtTime(ev.endDate)}`}</span>
           </div>
-          {ev.course && (
-            <p className="text-xs text-[#9ca3af]">{ev.course.name} ({ev.course.code})</p>
-          )}
-          {ev.description && (
-            <p className="text-sm text-[#6b7280] leading-relaxed border-t border-[#f0f0f0] pt-3">{ev.description}</p>
-          )}
+          {ev.course && <p className="text-xs text-[#9ca3af]">{ev.course.name} ({ev.course.code})</p>}
+          {ev.description && <p className="text-sm text-[#6b7280] leading-relaxed border-t border-[#f0f0f0] pt-3">{ev.description}</p>}
         </div>
       )}
-
       {item.type !== "event" && (
-        <p className="text-sm text-[#6b7280]">
-          {item.type === "assignment" ? "Assignment due" : "Task due"} — {fmtShortDate(item.dateKey)}
-        </p>
+        <p className="text-sm text-[#6b7280]">{item.type === "assignment" ? "Assignment due" : "Task due"} — {fmtShortDate(item.dateKey)}</p>
       )}
-
       <div className="flex items-center justify-between pt-2 border-t border-[#f0f0f0]">
         <div className="flex items-center gap-2">
           {item.type === "event" && item.rawEvent && (
             <>
-              <Button variant="secondary" size="sm" onClick={onEdit}>
-                <Pencil size={13} /> Edit
-              </Button>
-              <Button variant="ghost" size="sm" loading={deleting} onClick={onDelete}
-                className="text-red-500 hover:text-red-600 hover:bg-red-50">
+              <Button variant="secondary" size="sm" onClick={onEdit}><Pencil size={13} /> Edit</Button>
+              <Button variant="ghost" size="sm" loading={deleting} onClick={onDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50">
                 <Trash2 size={13} /> Delete
               </Button>
             </>
           )}
           {item.type === "assignment" && (
-            <Link to={`/assignments/${item.id}`}>
-              <Button variant="secondary" size="sm"><ExternalLink size={13} /> View assignment</Button>
-            </Link>
+            <Link to={`/assignments/${item.id}`}><Button variant="secondary" size="sm"><ExternalLink size={13} /> View assignment</Button></Link>
           )}
         </div>
         <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
@@ -430,12 +343,10 @@ function EventDetailModal({
   );
 }
 
-// ─── Main page ─────────────────────────────────────────────────────────────────
 export default function CalendarPage() {
   const today = new Date();
   const [year,  setYear]  = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
-
   const [selectedDate,  setSelectedDate]  = useState<Date | null>(null);
   const [selectedItem,  setSelectedItem]  = useState<CalItem | null>(null);
   const [editingEvent,  setEditingEvent]  = useState<CalendarEvent | null>(null);
@@ -452,8 +363,12 @@ export default function CalendarPage() {
   const { data: tasks       = [] } = useTasks();
   const { data: courses }          = useCourses();
   const { data: academicEvents, fetch: fetchAcademicEvents } = useVtopAcademicEvents();
+  const { data: timetable, fetch: fetchTimetable } = useVtopTimetable();
 
-  useEffect(() => { fetchAcademicEvents(); }, []);
+  useEffect(() => {
+    fetchAcademicEvents();
+    fetchTimetable();
+  }, []);
 
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent(editingEvent?.id ?? "");
@@ -482,33 +397,20 @@ export default function CalendarPage() {
     assignments.forEach(a => {
       if (!a.dueDate) return;
       const key = a.dueDate.slice(0, 10);
-      add(key, {
-        id: a.id, title: a.title, dateKey: key,
-        sortTime: new Date(a.dueDate).getTime(),
-        type: "assignment",
-        time: fmtTime(a.dueDate),
-        courseCode: a.course?.code,
-      });
+      add(key, { id: a.id, title: a.title, dateKey: key, sortTime: new Date(a.dueDate).getTime(), type: "assignment", time: fmtTime(a.dueDate), courseCode: a.course?.code });
     });
 
     tasks.forEach(t => {
       if (!t.dueDate || t.isCompleted) return;
       const key = t.dueDate.slice(0, 10);
-      add(key, {
-        id: t.id, title: t.title, dateKey: key,
-        sortTime: new Date(t.dueDate).getTime(),
-        type: "task",
-        courseCode: t.course?.code,
-      });
+      add(key, { id: t.id, title: t.title, dateKey: key, sortTime: new Date(t.dueDate).getTime(), type: "task", courseCode: t.course?.code });
     });
 
     // Academic calendar events (holidays + exams only)
     academicEvents.forEach(e => {
       const key = e.date.slice(0, 10);
       const isHoliday = e.eventType.toLowerCase().includes("holiday");
-      const isExam = e.eventType.toLowerCase().includes("cat") ||
-                     e.eventType.toLowerCase().includes("exam") ||
-                     e.eventType.toLowerCase().includes("fat");
+      const isExam = e.eventType.toLowerCase().includes("cat") || e.eventType.toLowerCase().includes("exam") || e.eventType.toLowerCase().includes("fat");
       if (!isHoliday && !isExam) return;
       add(key, {
         id: e.id,
@@ -521,27 +423,41 @@ export default function CalendarPage() {
       });
     });
 
+    // Timetable — recurring weekly classes for current month view
+    timetable.forEach(entry => {
+      cells.forEach(cell => {
+        if (cell.getDay() !== entry.dayOfWeek) return;
+        if (cell.getMonth() !== month) return;
+        const key = dateKey(cell);
+        const [sh, sm] = entry.startTime.split(":").map(Number);
+        add(key, {
+          id: `${entry.id}-${key}`,
+          title: `${entry.courseCode} (${entry.slot})`,
+          dateKey: key,
+          sortTime: new Date(cell).setHours(sh, sm),
+          type: "event",
+          eventType: "class" as EventType,
+          time: `${entry.startTime} – ${entry.endTime}`,
+          courseCode: entry.courseCode,
+        });
+      });
+    });
+
     map.forEach((v, k) => map.set(k, v.sort((a, b) => a.sortTime - b.sortTime)));
     return map;
-  }, [events, assignments, tasks, academicEvents]);
+  }, [events, assignments, tasks, academicEvents, timetable, cells, month]);
 
   const allItems = useMemo(() => [...itemsByDate.values()].flat(), [itemsByDate]);
 
   function prevMonth() {
-    if (month === 0) { setMonth(11); setYear(y => y - 1); }
-    else setMonth(m => m - 1);
+    if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1);
     setSelectedDate(null);
   }
   function nextMonth() {
-    if (month === 11) { setMonth(0); setYear(y => y + 1); }
-    else setMonth(m => m + 1);
+    if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1);
     setSelectedDate(null);
   }
-  function goToday() {
-    setYear(today.getFullYear());
-    setMonth(today.getMonth());
-    setSelectedDate(today);
-  }
+  function goToday() { setYear(today.getFullYear()); setMonth(today.getMonth()); setSelectedDate(today); }
 
   const selectedItems = selectedDate ? (itemsByDate.get(dateKey(selectedDate)) ?? []) : [];
 
@@ -549,22 +465,13 @@ export default function CalendarPage() {
     <div className="p-6 sm:p-8 w-full">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold text-[#111] tracking-tight">
-            {MONTHS[month]} {year}
-          </h2>
+          <h2 className="text-xl font-bold text-[#111] tracking-tight">{MONTHS[month]} {year}</h2>
           <div className="flex items-center gap-1">
-            <button type="button" onClick={prevMonth} aria-label="Previous month" className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors">
-              <ChevronLeft size={16} aria-hidden />
-            </button>
-            <button type="button" onClick={goToday} aria-label="Go to today" className="text-xs font-medium text-[#6b7280] hover:text-[#111] px-3 py-1.5 rounded-lg hover:bg-[#f5f5f5] transition-colors border border-[#e5e7eb]">
-              Today
-            </button>
-            <button type="button" onClick={nextMonth} aria-label="Next month" className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors">
-              <ChevronRight size={16} aria-hidden />
-            </button>
+            <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors"><ChevronLeft size={16} /></button>
+            <button type="button" onClick={goToday} className="text-xs font-medium text-[#6b7280] hover:text-[#111] px-3 py-1.5 rounded-lg hover:bg-[#f5f5f5] transition-colors border border-[#e5e7eb]">Today</button>
+            <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors"><ChevronRight size={16} /></button>
           </div>
         </div>
-
         <div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-3">
             {(["class","exam","deadline","personal","assignment","task","holiday"] as const).map(t => (
@@ -581,23 +488,12 @@ export default function CalendarPage() {
       </div>
 
       <div className="flex gap-5 items-start">
-        <div
-          className="flex-1 min-w-0 rounded-xl overflow-hidden"
-          style={{
-            background: "#111111",
-            border: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
-          }}
-        >
+        <div className="flex-1 min-w-0 rounded-xl overflow-hidden" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
           <div className="grid grid-cols-7" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             {WEEKDAYS.map(d => (
-              <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider"
-                style={{ color: "rgba(255,255,255,0.3)" }}>
-                {d}
-              </div>
+              <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>{d}</div>
             ))}
           </div>
-
           <div className="grid grid-cols-7">
             {cells.map(cell => {
               const key   = dateKey(cell);
@@ -605,12 +501,7 @@ export default function CalendarPage() {
               const inMonth = cell.getMonth() === month;
               const isSel   = selectedDate ? isSameDay(cell, selectedDate) : false;
               return (
-                <DayCell
-                  key={key}
-                  date={cell}
-                  items={items}
-                  isCurrentMonth={inMonth}
-                  isSelected={isSel}
+                <DayCell key={key} date={cell} items={items} isCurrentMonth={inMonth} isSelected={isSel}
                   onClick={() => setSelectedDate(isSel ? null : cell)}
                   onItemClick={item => setSelectedItem(item)}
                 />
@@ -621,15 +512,9 @@ export default function CalendarPage() {
 
         <div className="w-72 flex-shrink-0 hidden lg:block sticky top-6 space-y-4">
           {selectedDate ? (
-            <DayPanel
-              date={selectedDate}
-              items={selectedItems}
-              onItemClick={item => setSelectedItem(item)}
+            <DayPanel date={selectedDate} items={selectedItems} onItemClick={item => setSelectedItem(item)}
               onClose={() => setSelectedDate(null)}
-              onCreateEvent={() => {
-                setDefaultDate(dateKey(selectedDate));
-                setShowCreate(true);
-              }}
+              onCreateEvent={() => { setDefaultDate(dateKey(selectedDate)); setShowCreate(true); }}
             />
           ) : (
             <UpcomingSidebar items={allItems} onItemClick={item => setSelectedItem(item)} />
@@ -638,9 +523,7 @@ export default function CalendarPage() {
       </div>
 
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="New event" maxWidth={520}>
-        <EventForm
-          courses={courses}
-          defaultDate={defaultDate}
+        <EventForm courses={courses} defaultDate={defaultDate}
           onSubmit={async (p) => { await createEvent.mutateAsync(p); setShowCreate(false); }}
           onCancel={() => setShowCreate(false)}
         />
@@ -648,14 +531,8 @@ export default function CalendarPage() {
 
       <Modal open={!!editingEvent} onClose={() => setEditingEvent(null)} title="Edit event" maxWidth={520}>
         {editingEvent && (
-          <EventForm
-            initial={editingEvent}
-            courses={courses}
-            onSubmit={async (p) => {
-              await updateEvent.mutateAsync(p);
-              setEditingEvent(null);
-              setSelectedItem(null);
-            }}
+          <EventForm initial={editingEvent} courses={courses}
+            onSubmit={async (p) => { await updateEvent.mutateAsync(p); setEditingEvent(null); setSelectedItem(null); }}
             onCancel={() => setEditingEvent(null)}
           />
         )}
@@ -663,17 +540,9 @@ export default function CalendarPage() {
 
       <Modal open={!!selectedItem} onClose={() => setSelectedItem(null)} title="" maxWidth={440}>
         {selectedItem && (
-          <EventDetailModal
-            item={selectedItem}
-            onEdit={() => {
-              if (selectedItem.rawEvent) {
-                setEditingEvent(selectedItem.rawEvent);
-                setSelectedItem(null);
-              }
-            }}
-            onDelete={() => {
-              if (selectedItem.rawEvent) setShowDeleteId(selectedItem.rawEvent.id);
-            }}
+          <EventDetailModal item={selectedItem}
+            onEdit={() => { if (selectedItem.rawEvent) { setEditingEvent(selectedItem.rawEvent); setSelectedItem(null); } }}
+            onDelete={() => { if (selectedItem.rawEvent) setShowDeleteId(selectedItem.rawEvent.id); }}
             onClose={() => setSelectedItem(null)}
             deleting={deleteEvent.isPending}
           />
@@ -685,12 +554,9 @@ export default function CalendarPage() {
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={() => setShowDeleteId(null)}>Cancel</Button>
           <Button variant="danger" size="sm" loading={deleteEvent.isPending}
-            onClick={async () => {
-              if (!showDeleteId) return;
-              await deleteEvent.mutateAsync(showDeleteId);
-              setShowDeleteId(null);
-              setSelectedItem(null);
-            }}>Delete</Button>
+            onClick={async () => { if (!showDeleteId) return; await deleteEvent.mutateAsync(showDeleteId); setShowDeleteId(null); setSelectedItem(null); }}>
+            Delete
+          </Button>
         </div>
       </Modal>
     </div>

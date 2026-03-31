@@ -133,3 +133,34 @@ export function useVtopAcademicEvents() {
 
   return { data, loading, fetch };
 }
+
+export interface VtopTimetableEntry {
+  id: string;
+  courseCode: string;
+  courseName: string;
+  courseType: string;
+  slot: string;
+  venue: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+}
+
+export function useVtopTimetable() {
+  const [data, setData] = useState<VtopTimetableEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  async function fetch() {
+    setLoading(true);
+    try {
+      const res = await api.get("/vtop/timetable");
+      setData(res.data.data ?? []);
+    } catch {
+      // silent fail
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { data, loading, fetch };
+}
