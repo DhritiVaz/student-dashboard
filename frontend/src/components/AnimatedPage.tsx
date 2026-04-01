@@ -24,7 +24,7 @@ export function AnimatedPage({ children, fillHeight = true }: AnimatedPageProps)
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className={fillHeight ? "h-full" : undefined}
+      className={[fillHeight ? "h-full" : "", "w-full min-w-0"].filter(Boolean).join(" ")}
     >
       {children}
     </motion.div>

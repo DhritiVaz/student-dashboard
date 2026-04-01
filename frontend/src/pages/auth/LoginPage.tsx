@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
-import { loginApi } from "../../lib/authApi";
+import { googleLoginApi, loginApi } from "../../lib/authApi";
 import { FloatingInput } from "../../components/ui/FloatingInput";
+import { ContinueWithGoogleButton } from "../../components/auth/ContinueWithGoogleButton";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -21,6 +22,7 @@ export default function LoginPage() {
   const [status, setStatus] = useState<Status>("idle");
   const [shaking, setShaking] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   const formRef = useRef<HTMLDivElement>(null);
   const from = (location.state as { from?: string })?.from ?? "/dashboard";
@@ -59,6 +61,34 @@ export default function LoginPage() {
     }
   }
 
+  const formLocked = status === "loading" || status === "success" || googleBusy;
+
+  async function handleGoogleCredential(idToken: string) {
+    if (status === "success") return;
+    setServerError("");
+    setGoogleBusy(true);
+    try {
+      const { user, accessToken, refreshToken } = await googleLoginApi(idToken);
+      setAuth(user, accessToken, refreshToken);
+      setStatus("success");
+      await sleep(650);
+      setLeaving(true);
+      await sleep(280);
+      await new Promise((r) => setTimeout(r, 0));
+      navigate(from, { replace: true });
+    } catch (err: unknown) {
+      const res = (err as { response?: { data?: { error?: string; message?: string } } })?.response;
+      const msg =
+        res?.data?.error ??
+        res?.data?.message ??
+        (res ? "Google sign-in failed. Try again or use email." : "Connection error. Check your internet and try again.");
+      setServerError(msg);
+      triggerShake();
+    } finally {
+      setGoogleBusy(false);
+    }
+  }
+
   return (
     <div
       ref={formRef}
@@ -82,7 +112,7 @@ export default function LoginPage() {
               value={email}
               onChange={setEmail}
               autoComplete="email"
-              disabled={status === "loading" || status === "success"}
+              disabled={formLocked}
             />
           </div>
 
@@ -91,10 +121,11 @@ export default function LoginPage() {
               dark
               label="Password"
               type="password"
+              passwordToggle
               value={password}
               onChange={setPassword}
               autoComplete="current-password"
-              disabled={status === "loading" || status === "success"}
+              disabled={formLocked}
             />
           </div>
 
@@ -113,7 +144,7 @@ export default function LoginPage() {
           <div className="field-4 pt-1">
             <button
               type="submit"
-              disabled={status === "loading" || status === "success"}
+              disabled={formLocked}
               className="btn-solid btn-auth w-full flex items-center justify-center gap-2.5 rounded-[10px] font-semibold"
               style={{ padding: "11px 14px", fontSize: "15px", letterSpacing: "0.01em" }}
             >
@@ -134,6 +165,23 @@ export default function LoginPage() {
               )}
             </button>
           </div>
+
+          <div className="relative py-2">
+            <div className="absolute inset-0 flex items-center" aria-hidden>
+              <div className="w-full border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-3" style={{ background: "#0a0a0a", color: "rgba(255,255,255,0.35)" }}>
+                or continue with
+              </span>
+            </div>
+          </div>
+
+          <ContinueWithGoogleButton
+            disabled={formLocked}
+            loading={googleBusy}
+            onCredential={handleGoogleCredential}
+          />
         </div>
       </form>
 

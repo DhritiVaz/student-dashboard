@@ -14,6 +14,10 @@ import { tasksRouter } from "./routes/tasks";
 import { eventsRouter } from "./routes/events";
 import { searchRouter } from "./routes/search";
 import { vtopRouter } from "./routes/vtop";
+import { filesRouter } from "./routes/files";
+import { ensureUploadRoot } from "./services/fileService";
+
+void ensureUploadRoot();
 
 const app = express();
 
@@ -33,5 +37,6 @@ app.use("/api/tasks", tasksRouter);
 app.use("/api/events", eventsRouter);
 app.use("/api/search", searchRouter);
 app.use("/api/vtop", vtopRouter);
+app.use("/api/files", filesRouter);
 
 export default app;

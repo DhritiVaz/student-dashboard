@@ -68,6 +68,13 @@ export async function login(
     throw Object.assign(new Error("Invalid credentials"), { status: 401 });
   }
 
+  if (!user.password) {
+    throw Object.assign(
+      new Error("This account uses Google sign-in."),
+      { status: 401 }
+    );
+  }
+
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
     throw Object.assign(new Error("Invalid credentials"), { status: 401 });
@@ -123,6 +130,108 @@ export async function logout(token: string): Promise<void> {
 
 export async function logoutAll(userId: string): Promise<void> {
   await prisma.refreshToken.deleteMany({ where: { userId } });
+}
+
+/** Revoke every refresh token except the one for this device. */
+export async function logoutOtherSessions(
+  userId: string,
+  keepRefreshToken: string
+): Promise<void> {
+  await prisma.refreshToken.deleteMany({
+    where: { userId, token: { not: keepRefreshToken } },
+  });
+}
+
+export async function loginWithGoogle(idToken: string): Promise<{
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+}> {
+  const { OAuth2Client } = await import("google-auth-library");
+  const audience = process.env.GOOGLE_CLIENT_ID;
+  if (!audience?.trim()) {
+    throw Object.assign(
+      new Error(
+        "Google sign-in is not configured on the server. Set GOOGLE_CLIENT_ID in backend .env to the same OAuth 2.0 Web Client ID as VITE_GOOGLE_CLIENT_ID, then restart the API."
+      ),
+      { status: 503 }
+    );
+  }
+
+  const client = new OAuth2Client(audience);
+  let payload: {
+    sub: string;
+    email?: string;
+    email_verified?: boolean;
+    name?: string;
+    picture?: string;
+  } | undefined;
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience,
+    });
+    payload = ticket.getPayload() ?? undefined;
+  } catch {
+    throw Object.assign(new Error("Invalid Google token"), { status: 401 });
+  }
+
+  if (!payload?.email) {
+    throw Object.assign(new Error("Google account has no email"), {
+      status: 400,
+    });
+  }
+  if (payload.email_verified === false) {
+    throw Object.assign(new Error("Google email is not verified"), {
+      status: 400,
+    });
+  }
+
+  const email = payload.email;
+  const sub = payload.sub;
+  const name =
+    (payload.name && payload.name.trim()) ||
+    email.split("@")[0] ||
+    "Student";
+  const imageUrl = payload.picture ?? null;
+
+  let user = await prisma.user.findFirst({
+    where: {
+      OR: [{ googleSub: sub }, { email }],
+      deletedAt: null,
+    },
+  });
+
+  if (user) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        googleSub: sub,
+        name: user.name?.trim() ? user.name : name,
+        imageUrl: imageUrl ?? user.imageUrl,
+      },
+    });
+  } else {
+    user = await prisma.user.create({
+      data: {
+        email,
+        googleSub: sub,
+        name,
+        password: null,
+        imageUrl,
+      },
+    });
+  }
+
+  if (user.deletedAt) {
+    throw Object.assign(new Error("Account is disabled"), { status: 403 });
+  }
+
+  const accessToken = signAccessToken(user.id);
+  const refreshToken = signRefreshToken(user.id);
+  await storeRefreshToken(user.id, refreshToken);
+
+  return { user, accessToken, refreshToken };
 }
 
 // ─── Internal ─────────────────────────────────────────────────────────────────

@@ -9,3 +9,7 @@ prisma/migrations/*.sql
 
 # Vite
 frontend/.vite
+
+# User uploads (local dev)
+uploads/
+backend/uploads/

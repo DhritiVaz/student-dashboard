@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
-import { registerApi } from "../../lib/authApi";
+import { googleLoginApi, registerApi } from "../../lib/authApi";
 import { FloatingInput } from "../../components/ui/FloatingInput";
+import { ContinueWithGoogleButton } from "../../components/auth/ContinueWithGoogleButton";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -46,9 +47,10 @@ export default function RegisterPage() {
   const [status, setStatus]           = useState<Status>("idle");
   const [shaking, setShaking]         = useState(false);
   const [leaving, setLeaving]         = useState(false);
+  const [googleBusy, setGoogleBusy]   = useState(false);
 
   const strength = calcStrength(password);
-  const busy = status === "loading" || status === "success";
+  const busy = status === "loading" || status === "success" || googleBusy;
 
   async function triggerShake() {
     setShaking(true);
@@ -112,6 +114,32 @@ export default function RegisterPage() {
     }
   }
 
+  async function handleGoogleCredential(idToken: string) {
+    if (status === "success") return;
+    setServerError("");
+    setGoogleBusy(true);
+    try {
+      const { user, accessToken, refreshToken } = await googleLoginApi(idToken);
+      setAuth(user, accessToken, refreshToken);
+      setStatus("success");
+      await sleep(650);
+      setLeaving(true);
+      await sleep(280);
+      await new Promise((r) => setTimeout(r, 0));
+      navigate("/dashboard", { replace: true });
+    } catch (err: unknown) {
+      const res = (err as { response?: { data?: { error?: string; message?: string } } })?.response;
+      const msg =
+        res?.data?.error ??
+        res?.data?.message ??
+        (res ? "Google sign-in failed. Try again or register with email." : "Connection error. Check your internet and try again.");
+      setServerError(msg);
+      triggerShake();
+    } finally {
+      setGoogleBusy(false);
+    }
+  }
+
   return (
     <div
       className={`auth-form-container w-full max-w-[380px] form-enter${shaking ? " form-shake" : ""}${leaving ? " page-leave" : ""}`}
@@ -160,6 +188,7 @@ export default function RegisterPage() {
               dark
               label="Password"
               type="password"
+              passwordToggle
               value={password}
               onChange={setPassword}
               error={errors.password}
@@ -189,6 +218,7 @@ export default function RegisterPage() {
               dark
               label="Confirm password"
               type="password"
+              passwordToggle
               value={confirm}
               onChange={setConfirm}
               error={errors.confirm}
@@ -233,6 +263,23 @@ export default function RegisterPage() {
               )}
             </button>
           </div>
+
+          <div className="relative py-2">
+            <div className="absolute inset-0 flex items-center" aria-hidden>
+              <div className="w-full border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-3" style={{ background: "#0a0a0a", color: "rgba(255,255,255,0.35)" }}>
+                or continue with
+              </span>
+            </div>
+          </div>
+
+          <ContinueWithGoogleButton
+            disabled={busy}
+            loading={googleBusy}
+            onCredential={handleGoogleCredential}
+          />
         </div>
       </form>
 

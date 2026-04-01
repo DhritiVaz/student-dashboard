@@ -22,10 +22,8 @@ export function Button({
     "inline-flex items-center justify-center gap-2 font-medium transition-all duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed select-none";
 
   const variants = {
-    // NOTE: primary uses inline style (see below) to stay white-on-dark
-    // without being clobbered by the global bg-white dark-mode override
     primary:
-      "hover:shadow-[0_6px_18px_-4px_rgba(255,255,255,0.15)] active:scale-[0.97] rounded-input transition-all duration-150",
+      "btn-app-primary hover:shadow-[0_6px_18px_-4px_rgba(255,255,255,0.15)] active:scale-[0.97] rounded-input transition-all duration-150",
     secondary:
       "bg-transparent text-[#d4d4d8] border border-[#333] hover:border-[#555] hover:text-white active:scale-[0.97] rounded-input",
     ghost:
@@ -40,16 +38,11 @@ export function Button({
     lg: "px-5 py-2.5 text-sm",
   };
 
-  const primaryStyle =
-    variant === "primary"
-      ? { background: "#ffffff", color: "#0a0a0a" }
-      : undefined;
-
   return (
     <button
       disabled={disabled ?? loading}
       className={[base, variants[variant], sizes[size], fullWidth ? "w-full" : "", className].join(" ")}
-      style={{ ...primaryStyle, ...props.style }}
+      style={props.style}
       {...props}
     >
       {loading && <Spinner size="sm" />}

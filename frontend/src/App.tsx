@@ -17,10 +17,12 @@ import CourseDetailPage     from "./pages/CourseDetailPage";
 import AssignmentsPage      from "./pages/AssignmentsPage";
 import AssignmentDetailPage from "./pages/AssignmentDetailPage";
 import NotesPage            from "./pages/NotesPage";
+import FilesPage            from "./pages/FilesPage";
 import NoteEditorPage       from "./pages/NoteEditorPage";
 import TasksPage            from "./pages/TasksPage";
 import CalendarPage         from "./pages/CalendarPage";
 import SettingsPage         from "./pages/SettingsPage";
+import CgpaPage             from "./pages/CgpaPage";
 import NotFoundPage         from "./pages/NotFoundPage";
 
 export default function App() {
@@ -40,6 +42,7 @@ export default function App() {
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard"      element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
           <Route path="/attendance"     element={<AttendancePage />} />
+          <Route path="/cgpa"           element={<CgpaPage />} />
           <Route path="/semesters"      element={<SemestersPage />} />
           <Route path="/semesters/:id"  element={<SemesterDetailPage />} />
           <Route path="/courses"        element={<CoursesPage />} />
@@ -47,6 +50,7 @@ export default function App() {
           <Route path="/assignments"    element={<AssignmentsPage />} />
           <Route path="/assignments/:id" element={<AssignmentDetailPage />} />
           <Route path="/notes"          element={<NotesPage />} />
+          <Route path="/files"          element={<FilesPage />} />
           <Route path="/tasks"          element={<TasksPage />} />
           <Route path="/calendar"       element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
           <Route path="/settings"       element={<SettingsPage />} />

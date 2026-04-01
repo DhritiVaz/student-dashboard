@@ -36,6 +36,7 @@ const updateSchema = z.object({
 
 const listQuerySchema = z.object({
   semesterId: z.string().optional(),
+  code: z.string().optional(),
 });
 
 // ─── Controllers ─────────────────────────────────────────────────────────────
@@ -70,7 +71,11 @@ export async function listCoursesHandler(req: Request, res: Response) {
   }
   try {
     const { userId } = req as AuthenticatedRequest;
-    const courses = await courseService.listCourses(userId, query.data.semesterId);
+    const courses = await courseService.listCourses(
+      userId,
+      query.data.semesterId,
+      query.data.code
+    );
     return ok(res, courses);
   } catch (err) {
     const e = toAppError(err);

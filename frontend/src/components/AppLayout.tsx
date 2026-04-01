@@ -7,13 +7,18 @@ import { Sidebar } from "./Sidebar";
 import { GlobalSearch } from "./GlobalSearch";
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
+const SIDEBAR_START_COLLAPSED_KEY = "settings-sidebar-start-collapsed";
 const BG = "#0c0c0c";
 
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    try { return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true"; }
-    catch { return false; }
+    try {
+      if (localStorage.getItem(SIDEBAR_START_COLLAPSED_KEY) === "true") return true;
+      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true";
+    } catch {
+      return false;
+    }
   });
   const location = useLocation();
 
@@ -78,10 +83,12 @@ export function AppLayout() {
 
         {/* Content */}
         <main id="main-content" role="main"
-          className="flex-1 overflow-y-auto"
+          className="flex-1 min-w-0 overflow-y-auto w-full"
           style={{ background: BG }}>
           <AnimatedPage key={location.pathname}>
-            <Outlet />
+            <div className="w-full min-w-0 min-h-full box-border">
+              <Outlet />
+            </div>
           </AnimatedPage>
         </main>
       </div>

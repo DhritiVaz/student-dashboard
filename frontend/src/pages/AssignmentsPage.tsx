@@ -19,6 +19,7 @@ import {
   deriveStatus,
   type Assignment,
 } from "../hooks/api/assignments";
+import { DEMO_ASSIGNMENTS_PAGE } from "../lib/uiPlaceholders";
 
 type SortKey   = "dueDate" | "name" | "course";
 type StatusFilter = "all" | "submitted" | "pending" | "overdue";
@@ -40,6 +41,47 @@ function formatDue(iso?: string | null) {
   if (diff === -1) return "Due yesterday";
   if (diff > 0 && diff < 7) return `Due in ${diff} days`;
   return `Due ${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.getFullYear() !== today.getFullYear() ? "numeric" : undefined })}`;
+}
+
+function DemoAssignmentSamples() {
+  const sc = statusConfig("pending");
+  return (
+    <div className="space-y-2">
+      {DEMO_ASSIGNMENTS_PAGE.map((d) => (
+        <div
+          key={d.title}
+          className="flex items-center gap-4 px-5 py-4"
+          style={{
+            background: "#111111",
+            border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 10,
+          }}
+        >
+          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sc.dot}`} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium truncate" style={{ color: "rgba(255,255,255,0.85)" }}>
+                {d.title}
+              </span>
+              <span className="text-[10px] font-semibold rounded-md px-1.5 py-0.5 tracking-wide flex-shrink-0"
+                style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                {d.code}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-xs flex items-center gap-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+                <Calendar size={11} /> {d.dueLine}
+              </span>
+            </div>
+          </div>
+          <span className={`hidden sm:inline-block text-[10px] font-semibold rounded-full px-2.5 py-0.5 flex-shrink-0 ${sc.text}`}
+            style={{ border: `1px solid ${sc.border}`, background: sc.bg }}>
+            {sc.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function AssignmentRow({ assignment, onEdit, onDelete }: {
@@ -178,13 +220,16 @@ export default function AssignmentsPage() {
   const activeFilters = [courseFilter, statusFilter !== "all", dateRange !== "all", search.trim()].filter(Boolean).length;
 
   return (
-    <div className="p-6 sm:p-8 w-full">
+    <div className="p-6 sm:p-8 w-full min-w-0">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.9)" }}>Assignments</h2>
           <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
             {filtered.length} assignment{filtered.length !== 1 ? "s" : ""}
             {activeFilters > 0 && <span className="ml-1">· {activeFilters} filter{activeFilters > 1 ? "s" : ""} active</span>}
+            {!isLoading && (allAssignments?.length ?? 0) === 0 && activeFilters === 0 && (
+              <span className="ml-1" style={{ color: "rgba(255,255,255,0.22)" }}>· sample below</span>
+            )}
           </p>
         </div>
         <Button size="sm" onClick={() => setShowCreate(true)}><Plus size={14} /> New assignment</Button>
@@ -221,13 +266,15 @@ export default function AssignmentsPage() {
 
       {isLoading && <SkeletonList count={8} layout="list" cardHeight={64} />}
 
-      {!isLoading && filtered.length === 0 && (
+      {!isLoading && filtered.length === 0 && activeFilters > 0 && (
         <EmptyState
           icon={<ClipboardList size={18} strokeWidth={1.6} style={{ color: "rgba(255,255,255,0.3)" }} />}
-          title={activeFilters > 0 ? "No assignments match your filters" : "No assignments yet"}
-          description={activeFilters > 0 ? "Try adjusting your search or filters." : "Create a course first, then add assignments to it."}
+          title="No assignments match your filters"
+          description="Try adjusting your search or filters."
         />
       )}
+
+      {!isLoading && filtered.length === 0 && activeFilters === 0 && <DemoAssignmentSamples />}
 
       {!isLoading && filtered.length > 0 && (
         <div className="space-y-2">

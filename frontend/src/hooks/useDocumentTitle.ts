@@ -1,13 +1,16 @@
 import { useEffect } from "react";
 
 const TITLES: Record<string, string> = {
-  "/": "Dashboard",
+  "/": "Home",
+  "/dashboard": "Dashboard",
   "/semesters": "Semesters",
   "/courses": "Courses",
   "/assignments": "Assignments",
   "/notes": "Notes",
+  "/files": "Files",
   "/tasks": "Tasks",
   "/calendar": "Calendar",
+  "/cgpa": "CGPA",
   "/settings": "Settings",
   "/login": "Sign in",
   "/register": "Create account",

@@ -1,10 +1,22 @@
-import dotenv from "dotenv";
+import fs from "fs";
 import path from "path";
+import dotenv from "dotenv";
 
-// Force development .env only
-dotenv.config({
-  path: path.resolve(__dirname, "../../../.env"),
-});
+/** Resolve backend/.env for both `tsx src/index.ts` and compiled `dist/.../index.js`. */
+function resolveBackendEnvPath(): string {
+  const candidates = [
+    path.resolve(__dirname, "../.env"),
+    path.resolve(__dirname, "../../../.env"),
+    path.resolve(process.cwd(), ".env"),
+    path.resolve(process.cwd(), "backend", ".env"),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return candidates[0];
+}
+
+dotenv.config({ path: resolveBackendEnvPath() });
 
 import app from "./app";
 

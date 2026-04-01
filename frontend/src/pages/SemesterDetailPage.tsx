@@ -93,7 +93,7 @@ export default function SemesterDetailPage() {
 
   if (loadingSemester) {
     return (
-      <div className="p-6 sm:p-8 w-full space-y-6">
+      <div className="p-6 sm:p-8 w-full min-w-0 space-y-6">
         <div className="skeleton h-8 w-48 rounded-lg" />
         <SkeletonList count={6} layout="grid" cardHeight={112} />
       </div>
@@ -105,7 +105,7 @@ export default function SemesterDetailPage() {
   }
 
   return (
-    <div className="p-6 sm:p-8 w-full">
+    <div className="p-6 sm:p-8 w-full min-w-0">
       {/* Back */}
       <button
         onClick={() => navigate("/semesters")}

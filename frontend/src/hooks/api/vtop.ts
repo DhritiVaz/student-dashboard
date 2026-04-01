@@ -16,9 +16,41 @@ export interface VtopGradeRecord {
   id: string;
   courseCode: string;
   courseName: string;
+  semesterLabel: string | null;
   credits: number | null;
   grade: string | null;
   gradePoint: number | null;
+  faculty?: string | null;
+  slot?: string | null;
+  category?: string | null;
+  syncedAt: string;
+}
+
+export interface VtopGradesSummary {
+  cgpa: number | null;
+  /** CGPA printed on VTOP grade history when parsed */
+  cgpaFromPortal?: number | null;
+  /** CGPA from Σ(credits × grade points) / Σ credits */
+  cgpaComputed?: number | null;
+  totalCredits: number;
+  totalWeightedScore: number;
+  semesters: {
+    semesterLabel: string | null;
+    totalCredits: number;
+    weightedScore: number;
+    gpa: number | null;
+    gpaFromPortal?: number | null;
+    gpaComputed?: number | null;
+    courses: VtopGradeRecord[];
+  }[];
+}
+
+export interface VtopMarkRecord {
+  id: string;
+  courseCode: string;
+  component: string;
+  scored: number | null;
+  maxScore: number | null;
   syncedAt: string;
 }
 
@@ -62,7 +94,8 @@ export function useVtopSync() {
       const res = await api.post("/vtop/sync", { username, password, captchaStr });
       return res.data;
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? "Sync failed";
+      const msg =
+        err?.response?.data?.error ?? err?.response?.data?.message ?? "Sync failed";
       setError(msg);
       throw new Error(msg);
     } finally {
@@ -113,6 +146,49 @@ export function useVtopGrades() {
   }
 
   return { data, loading, error, fetch };
+}
+
+export function useVtopGradesSummary() {
+  const [data, setData] = useState<VtopGradesSummary | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function fetch() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get("/vtop/grades/summary");
+      setData(res.data.data ?? null);
+    } catch (err: unknown) {
+      setError(
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ?? "Failed to load summary"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { data, loading, error, fetch };
+}
+
+export function useVtopMarks() {
+  const [data, setData] = useState<VtopMarkRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  async function fetch() {
+    setLoading(true);
+    try {
+      const res = await api.get("/vtop/marks");
+      setData(res.data.data ?? []);
+    } catch {
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { data, loading, fetch };
 }
 
 export function useVtopAcademicEvents() {

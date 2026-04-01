@@ -28,19 +28,19 @@ export function LandingNavbar() {
           Student Dashboard
         </Link>
 
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-4">
           <Link
             to="/login"
-            className="px-4 py-2 rounded-input text-sm font-medium text-white border border-white/20 hover:border-white/50 hover:bg-white/5 transition-all duration-150"
+            className="text-sm font-medium text-white/55 hover:text-white transition-colors duration-150"
           >
-            Login
+            Log in
           </Link>
           <Link
             to="/register"
-            className="px-4 py-2 rounded-input text-sm font-medium bg-white transition-all duration-150"
+            className="px-4 py-2 rounded-input text-sm font-semibold bg-white transition-all duration-150"
             style={{ color: '#0a0a0a' }}
           >
-            Get Started
+            Get started
           </Link>
         </div>
 
@@ -63,21 +63,21 @@ export function LandingNavbar() {
             transition={{ duration: 0.2 }}
             className="md:hidden overflow-hidden border-t border-white/10 bg-[#0a0a0a]"
           >
-            <div className="px-4 py-4 flex flex-col gap-2">
-              <Link
-                to="/login"
-                className="px-4 py-3 rounded-input text-white border border-white/20 hover:bg-white/5"
-                onClick={() => setMobileOpen(false)}
-              >
-                Login
-              </Link>
+            <div className="px-4 py-4 flex flex-col gap-3">
               <Link
                 to="/register"
-                className="px-4 py-3 rounded-input font-medium text-center bg-white"
+                className="px-4 py-3 rounded-input font-semibold text-center bg-white"
                 style={{ color: '#0a0a0a' }}
                 onClick={() => setMobileOpen(false)}
               >
-                Get Started
+                Get started
+              </Link>
+              <Link
+                to="/login"
+                className="px-4 py-3 rounded-input text-sm font-medium text-center text-white/70 hover:text-white hover:bg-white/5"
+                onClick={() => setMobileOpen(false)}
+              >
+                Log in
               </Link>
             </div>
           </motion.div>

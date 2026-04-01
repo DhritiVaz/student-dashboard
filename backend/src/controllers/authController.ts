@@ -23,6 +23,10 @@ const logoutSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
+const googleSchema = z.object({
+  idToken: z.string().min(1),
+});
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function safeUser(user: {
@@ -111,4 +115,23 @@ export async function logoutHandler(req: Request, res: Response) {
 
   await authService.logout(parsed.data.refreshToken);
   return res.json({ data: { message: "Logged out successfully" } });
+}
+
+export async function googleHandler(req: Request, res: Response) {
+  const parsed = googleSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten().fieldErrors });
+  }
+
+  try {
+    const { user, accessToken, refreshToken } = await authService.loginWithGoogle(
+      parsed.data.idToken
+    );
+    return res.json({
+      data: { user: safeUser(user), accessToken, refreshToken },
+    });
+  } catch (err: unknown) {
+    const e = err as { status?: number; message: string };
+    return res.status(e.status ?? 500).json({ error: e.message });
+  }
 }

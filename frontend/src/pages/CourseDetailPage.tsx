@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { Button } from "../components/ui/Button";
@@ -7,14 +7,16 @@ import { CourseForm } from "../components/courses/CourseForm";
 import { PlaceholderPage } from "../components/PlaceholderPage";
 import { useCourse, useCourseGpa, useUpdateCourse, useDeleteCourse } from "../hooks/api/courses";
 import { useSemesters } from "../hooks/api/semesters";
-import { ClipboardList, FileText, Calendar, Settings } from "lucide-react";
+import { ClipboardList, FileText, Calendar, Settings, BarChart2 } from "lucide-react";
+import { useVtopMarks } from "../hooks/api/vtop";
 
-type Tab = "assignments" | "notes" | "events" | "settings";
+type Tab = "assignments" | "notes" | "events" | "marks" | "settings";
 
 const tabs: { key: Tab; label: string }[] = [
   { key: "assignments", label: "Assignments" },
   { key: "notes",       label: "Notes" },
   { key: "events",      label: "Events" },
+  { key: "marks",       label: "Marks (VTOP)" },
   { key: "settings",    label: "Settings" },
 ];
 
@@ -32,10 +34,15 @@ export default function CourseDetailPage() {
   const [activeTab, setActiveTab] = useState<Tab>("assignments");
   const [showEdit, setShowEdit]   = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const { data: vtopMarks, fetch: fetchMarks, loading: marksLoading } = useVtopMarks();
+
+  useEffect(() => {
+    if (activeTab === "marks") fetchMarks();
+  }, [activeTab, fetchMarks]);
 
   if (isLoading) {
     return (
-      <div className="p-6 sm:p-8 w-full space-y-4">
+      <div className="p-6 sm:p-8 w-full min-w-0 space-y-4">
         <div className="h-8 bg-[#f0f0f0] rounded-lg w-56 animate-pulse" />
         <div className="h-4 bg-[#f0f0f0] rounded w-32 animate-pulse" />
         <div className="h-40 bg-[#f0f0f0] rounded-card animate-pulse mt-6" />
@@ -50,7 +57,7 @@ export default function CourseDetailPage() {
   const gpa = gpaData?.gpa != null ? gpaData.gpa.toFixed(2) : "—";
 
   return (
-    <div className="p-6 sm:p-8 w-full">
+    <div className="p-6 sm:p-8 w-full min-w-0">
       {/* Back */}
       <button
         onClick={() => navigate(-1)}
@@ -130,6 +137,49 @@ export default function CourseDetailPage() {
       )}
       {activeTab === "events" && (
         <PlaceholderPage title="Events" description="Lectures, exams, and deadlines for this course." icon={Calendar} />
+      )}
+      {activeTab === "marks" && (
+        <div className="bg-white border border-[#e5e7eb] rounded-card overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+          <div className="px-5 py-3 border-b border-[#e5e7eb] flex items-center gap-2">
+            <BarChart2 size={14} className="text-[#9ca3af]" />
+            <span className="text-sm font-semibold text-[#111]">VTOP marks</span>
+            <span className="text-xs text-[#9ca3af] ml-auto">{course.code}</span>
+          </div>
+          {marksLoading ? (
+            <p className="p-6 text-sm text-[#9ca3af]">Loading…</p>
+          ) : (() => {
+            const rows = vtopMarks.filter(
+              (m) => m.courseCode.replace(/\s/g, "").toUpperCase() === course.code.replace(/\s/g, "").toUpperCase()
+            );
+            if (rows.length === 0) {
+              return (
+                <p className="p-6 text-sm text-[#9ca3af]">
+                  No mark rows synced for this course. Run VTOP sync; marks appear when the portal exposes them.
+                </p>
+              );
+            }
+            return (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#e5e7eb]">
+                    <th className="text-left px-5 py-2 text-xs font-medium text-[#9ca3af]">Component</th>
+                    <th className="text-right px-5 py-2 text-xs font-medium text-[#9ca3af]">Scored</th>
+                    <th className="text-right px-5 py-2 text-xs font-medium text-[#9ca3af]">Max</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((m) => (
+                    <tr key={m.id} className="border-b border-[#f0f0f0]">
+                      <td className="px-5 py-2 text-[#111]">{m.component}</td>
+                      <td className="px-5 py-2 text-right text-[#111]">{m.scored ?? "—"}</td>
+                      <td className="px-5 py-2 text-right text-[#6b7280]">{m.maxScore ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            );
+          })()}
+        </div>
       )}
       {activeTab === "settings" && (
         <PlaceholderPage title="Course settings" description="Update course info or remove it from this semester." icon={Settings} />

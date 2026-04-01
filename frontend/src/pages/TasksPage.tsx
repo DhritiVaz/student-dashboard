@@ -13,6 +13,7 @@ import {
   useTasks, useCreateTask, useUpdateTask, useToggleTask, useDeleteTask,
   type Task, type Priority,
 } from "../hooks/api/tasks";
+import { DEMO_TASKS_PAGE } from "../lib/uiPlaceholders";
 
 type GroupBy = "all" | "priority" | "course" | "completed";
 type SortKey = "dueDate" | "priority" | "createdAt";
@@ -165,6 +166,37 @@ function Section({ title, count, defaultOpen = true, children, accent }: {
         <span className="text-xs ml-1" style={{ color: "rgba(255,255,255,0.25)" }}>{count}</span>
       </button>
       {open && <div className="space-y-1.5">{children}</div>}
+    </div>
+  );
+}
+
+function DemoTaskSamples() {
+  return (
+    <div className="space-y-1.5">
+      {DEMO_TASKS_PAGE.map((d) => (
+        <div
+          key={d.title}
+          className="flex items-start gap-3 px-4 py-3"
+          style={{
+            borderRadius: 10,
+            border: "1px solid rgba(255,255,255,0.06)",
+            background: "#111111",
+          }}
+        >
+          <Circle size={18} strokeWidth={1.8} className="flex-shrink-0 mt-0.5" style={{ color: "rgba(255,255,255,0.2)" }} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.85)" }}>{d.title}</span>
+              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${priorityDot(d.priority)}`} title={PRIORITY_LABEL[d.priority]} />
+            </div>
+          </div>
+          {d.dueLabel && (
+            <span className="text-[10px] font-medium border rounded-full px-2 py-0.5 flex-shrink-0 whitespace-nowrap text-orange-400 bg-orange-500/10 border-orange-500/20">
+              {d.dueLabel}
+            </span>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -336,7 +368,7 @@ export default function TasksPage() {
   const activeFilters = [priorityFilter, courseFilter, search.trim()].filter(Boolean).length;
 
   return (
-    <div className="p-6 sm:p-8 w-full">
+    <div className="p-6 sm:p-8 w-full min-w-0">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.9)" }}>Tasks</h2>
@@ -344,6 +376,9 @@ export default function TasksPage() {
             {pending.length} pending
             {completed.length > 0 && <span className="ml-1">· {completed.length} done</span>}
             {activeFilters > 0 && <span className="ml-1">· {activeFilters} filter{activeFilters > 1 ? "s" : ""}</span>}
+            {!isLoading && (tasks?.length ?? 0) === 0 && (
+              <span className="ml-1" style={{ color: "rgba(255,255,255,0.22)" }}>· sample below</span>
+            )}
           </p>
         </div>
         <Button size="sm" onClick={() => setShowCreate(true)}><Plus size={14} /> New task</Button>
@@ -385,7 +420,13 @@ export default function TasksPage() {
         )}
       </div>
 
-      {isLoading ? <SkeletonList count={8} layout="list" cardHeight={56} /> : renderList()}
+      {isLoading ? (
+        <SkeletonList count={8} layout="list" cardHeight={56} />
+      ) : (tasks?.length ?? 0) === 0 ? (
+        <DemoTaskSamples />
+      ) : (
+        renderList()
+      )}
 
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="New task">
         <TaskForm courses={courses}

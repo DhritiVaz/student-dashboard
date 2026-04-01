@@ -1,24 +1,25 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQueries } from "@tanstack/react-query";
 import {
-  Plus, ArrowRight, BookOpen, ClipboardList, FileText,
-  CalendarDays, CheckSquare, Clock, Layers, BarChart2,
+  ArrowRight, ClipboardList,
+  CalendarDays, Clock, Layers, BarChart2, GraduationCap,
+  FileText, CheckSquare,
 } from "lucide-react";
 import { useAuthStore } from "../stores/authStore";
-import { Modal } from "../components/ui/Modal";
 import { SkeletonCard } from "../components/ui/Skeleton";
-import { AssignmentForm } from "../components/assignments/AssignmentForm";
-import { TaskForm } from "../components/tasks/TaskForm";
 import { useSemesters } from "../hooks/api/semesters";
-import { useCourses, courseKeys, type CourseGpa } from "../hooks/api/courses";
-import { useAssignments, useCreateAssignment, deriveStatus } from "../hooks/api/assignments";
-import { useTasks, useCreateTask } from "../hooks/api/tasks";
+import { useCourses } from "../hooks/api/courses";
+import { useAssignments, deriveStatus } from "../hooks/api/assignments";
+import { useTasks } from "../hooks/api/tasks";
 import { useNotes } from "../hooks/api/notes";
 import { useEvents } from "../hooks/api/events";
-import { useVtopAttendance } from "../hooks/api/vtop";
-import { api } from "../lib/api";
+import { useVtopAttendance, useVtopGrades } from "../hooks/api/vtop";
 import VtopSync from "../components/vtop/VtopSync";
+import {
+  DEMO_DASHBOARD_DEADLINES,
+  DEMO_DASHBOARD_NOTES,
+  DEMO_DASHBOARD_TASKS,
+} from "../lib/uiPlaceholders";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -131,7 +132,7 @@ function MiniCalendar({ activeDays }: { activeDays: Set<string> }) {
           const tod      = isToday(cell);
           const hasItems = activeDays.has(key);
           return (
-            <button key={key} onClick={() => navigate("/calendar")}
+            <button key={key} type="button" onClick={() => navigate("/calendar")}
               className="flex flex-col items-center justify-center rounded-md transition-all"
               style={{ opacity: !inMonth ? 0.25 : 1 }}
               onMouseEnter={e => !tod && ((e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)")}
@@ -178,7 +179,6 @@ function Card({ title, icon, action, children, fillBody }: {
 }
 
 export default function DashboardPage() {
-  const navigate  = useNavigate();
   const { user }  = useAuthStore();
   const firstName = user?.name?.split(" ")[0] ?? "there";
 
@@ -186,14 +186,28 @@ export default function DashboardPage() {
   const { data: allCourses,  isLoading: loadingC } = useCourses();
   const { data: assignments, isLoading: loadingA } = useAssignments();
   const { data: tasks,       isLoading: loadingT } = useTasks();
-  const { data: notes,       isLoading: loadingN } = useNotes();
+  const { data: notes,      isLoading: loadingN } = useNotes();
 
   const { data: attendance, fetch: fetchAttendance } = useVtopAttendance();
-  useEffect(() => { fetchAttendance(); }, []);
+  const { data: grades, fetch: fetchGrades, loading: loadingGrades } = useVtopGrades();
+  useEffect(() => { fetchAttendance(); fetchGrades(); }, []);
 
   const overallAttendance = attendance?.length
     ? attendance.reduce((s, r) => s + r.attendancePercent, 0) / attendance.length
     : null;
+
+  const cgpa = useMemo(() => {
+    if (!grades?.length) return null;
+    let pts = 0;
+    let cr = 0;
+    for (const g of grades) {
+      if (g.credits != null && g.gradePoint != null && !Number.isNaN(g.credits) && !Number.isNaN(g.gradePoint)) {
+        pts += g.credits * g.gradePoint;
+        cr += g.credits;
+      }
+    }
+    return cr > 0 ? pts / cr : null;
+  }, [grades]);
 
   const today      = new Date();
   const monthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`;
@@ -215,27 +229,7 @@ export default function DashboardPage() {
     [allCourses, currentSemester]
   );
 
-  const gpaResults = useQueries({
-    queries: semesterCourses.map(c => ({
-      queryKey: courseKeys.gpa(c.id),
-      queryFn: async () => {
-        const { data } = await api.get<{ data: CourseGpa }>(`/courses/${c.id}/gpa`);
-        return data.data;
-      },
-      enabled: !!c.id,
-    })),
-  });
-
   const now = Date.now();
-
-  const weekStart = new Date(today); weekStart.setDate(today.getDate() - today.getDay()); weekStart.setHours(0,0,0,0);
-  const weekEnd   = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
-
-  const tasksThisWeek     = useMemo(() =>
-    tasks?.filter(t => t.dueDate && new Date(t.dueDate) >= weekStart && new Date(t.dueDate) <= weekEnd) ?? [],
-    [tasks]
-  );
-  const completedThisWeek = tasksThisWeek.filter(t => t.isCompleted).length;
 
   const dueSoonCount = useMemo(() => {
     const cutoff = new Date(now + 7 * 86400000);
@@ -259,13 +253,8 @@ export default function DashboardPage() {
       if (due < today || due > cutoff) return;
       items.push({ id: t.id, title: t.title, type: "task", dueDate: t.dueDate, courseCode: t.course?.code, link: `/tasks` });
     });
-    return items.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).slice(0, 7);
+    return items.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).slice(0, 8);
   }, [assignments, tasks, now]);
-
-  const recentNotes = useMemo(() =>
-    [...(notes ?? [])].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 4),
-    [notes]
-  );
 
   const activeDays = useMemo(() => {
     const set = new Set<string>();
@@ -275,11 +264,25 @@ export default function DashboardPage() {
     return set;
   }, [events, assignments, tasks]);
 
-  const [showNewAssignment, setShowNewAssignment] = useState(false);
-  const [showNewTask,       setShowNewTask]       = useState(false);
-  const createAssignment = useCreateAssignment();
-  const createTask       = useCreateTask();
-  const loadingAll       = loadingS || loadingC || loadingA || loadingT;
+  const recentNotes = useMemo(() => {
+    if (!notes?.length) return [];
+    return [...notes]
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 4);
+  }, [notes]);
+
+  const pendingTasksPreview = useMemo(() => {
+    let list = tasks?.filter(t => !t.isCompleted) ?? [];
+    list = [...list].sort((a, b) => {
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    });
+    return list.slice(0, 4);
+  }, [tasks]);
+
+  const loadingAll = loadingS || loadingC || loadingA || loadingT;
 
   const actionLinkStyle = {
     fontSize: 12,
@@ -291,9 +294,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="p-6 sm:p-8 w-full max-w-6xl mx-auto">
+    <div className="p-6 sm:p-8 w-full min-w-0">
 
-      {/* ── Greeting ── */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight mb-1" style={{ color: "rgba(255,255,255,0.95)" }}>
           {getGreeting()}, {firstName}
@@ -305,7 +307,6 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard
           icon={<Layers size={13} style={{ color: "rgba(255,255,255,0.5)" }} strokeWidth={1.8} />}
@@ -320,11 +321,13 @@ export default function DashboardPage() {
           to="/attendance"
           accent="rgba(74,222,128,0.12)" />
         <StatCard
-          icon={<CheckSquare size={13} style={{ color: "#34d399" }} strokeWidth={1.8} />}
-          label="Tasks" value={loadingT ? null : `${completedThisWeek}/${tasksThisWeek.length}`}
-          sub={tasksThisWeek.length > 0 ? "done this week" : "No tasks this week"}
-          loading={loadingT} to="/tasks"
-          accent="rgba(52,211,153,0.12)" />
+          icon={<GraduationCap size={13} style={{ color: "#a78bfa" }} strokeWidth={1.8} />}
+          label="CGPA"
+          value={cgpa != null ? cgpa.toFixed(2) : "—"}
+          sub={cgpa != null ? "From VTOP grade history" : "Sync VTOP to see"}
+          loading={loadingGrades}
+          to="/cgpa"
+          accent="rgba(167,139,250,0.12)" />
         <StatCard
           icon={<Clock size={13} style={{ color: "#fb923c" }} strokeWidth={1.8} />}
           label="Due Soon" value={loadingAll ? null : String(dueSoonCount)}
@@ -333,10 +336,7 @@ export default function DashboardPage() {
           accent="rgba(251,146,60,0.12)" />
       </div>
 
-      {/* ── Main 2-col grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-
-        {/* Upcoming Deadlines */}
         <Card title="Upcoming Deadlines"
           icon={<ClipboardList size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}
           action={
@@ -351,10 +351,28 @@ export default function DashboardPage() {
               {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} height={36} />)}
             </div>
           ) : upcomingDeadlines.length === 0 ? (
-            <div className="py-10 text-center">
-              <p className="text-sm font-medium mb-0.5" style={{ color: "#34d399" }}>All caught up!</p>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>Nothing due in the next 2 weeks.</p>
-            </div>
+            <>
+              {DEMO_DASHBOARD_DEADLINES.map((row, i) => (
+                <Link key={row.title} to="/assignments"
+                  className="flex items-center gap-3 px-4 py-2.5 transition-colors"
+                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
+                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{row.title}</span>
+                      <span className="text-[10px] font-medium rounded px-1.5 py-0.5 flex-shrink-0"
+                        style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        {row.code}
+                      </span>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-medium border rounded-full px-2 py-0.5 flex-shrink-0 whitespace-nowrap ${row.cls}`}>
+                    {row.pill}
+                  </span>
+                </Link>
+              ))}
+            </>
           ) : (
             upcomingDeadlines.map((item, i) => {
               const due = relDue(item.dueDate);
@@ -384,57 +402,6 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        {/* Recent Notes */}
-        <Card title="Recent Notes"
-          icon={<FileText size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}
-          action={
-            <Link to="/notes" style={actionLinkStyle}
-              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.7)"}
-              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.3)"}>
-              All <ArrowRight size={11} />
-            </Link>
-          }>
-          {loadingN ? (
-            <div className="p-4 space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} height={36} />)}
-            </div>
-          ) : recentNotes.length === 0 ? (
-            <div className="py-10 text-center">
-              <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.3)" }}>No notes yet.</p>
-              <button onClick={() => navigate("/notes")} className="text-xs transition-colors"
-                style={{ color: "rgba(255,255,255,0.4)" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-                onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}>
-                Create your first note →
-              </button>
-            </div>
-          ) : (
-            recentNotes.map((note, i) => {
-              const diffMs   = Date.now() - new Date(note.updatedAt).getTime();
-              const diffMin  = Math.floor(diffMs / 60000);
-              const modLabel = diffMin < 60 ? `${diffMin || 1}m ago`
-                : diffMin < 1440 ? `${Math.floor(diffMin / 60)}h ago`
-                : new Date(note.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-              return (
-                <Link key={note.id} to={`/notes/${note.id}`}
-                  className="flex items-center gap-3 px-4 py-2.5 transition-colors"
-                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
-                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
-                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{note.title || "Untitled"}</p>
-                    {note.course && <span className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.3)" }}>{note.course.code}</span>}
-                  </div>
-                  <span className="text-[11px] flex-shrink-0" style={{ color: "rgba(255,255,255,0.2)" }}>{modLabel}</span>
-                </Link>
-              );
-            })
-          )}
-        </Card>
-      </div>
-
-      {/* ── Bottom row ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card fillBody
           title={new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
           icon={<CalendarDays size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}
@@ -449,54 +416,141 @@ export default function DashboardPage() {
             <MiniCalendar activeDays={activeDays} />
           </div>
         </Card>
+      </div>
 
-        <Card title="Quick Actions"
-          icon={<Plus size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}>
-          <div className="p-4 grid grid-cols-2 gap-2">
-            {[
-              { label: "Assignment", sub: "Add a deadline", icon: <ClipboardList size={13} style={{ color: "#38bdf8" }} />, accent: "rgba(56,189,248,0.1)", accentBorder: "rgba(56,189,248,0.2)", onClick: () => setShowNewAssignment(true) },
-              { label: "Note", sub: "Write something", icon: <FileText size={13} style={{ color: "#a78bfa" }} />, accent: "rgba(167,139,250,0.1)", accentBorder: "rgba(167,139,250,0.2)", onClick: () => navigate("/notes") },
-              { label: "Task", sub: "Add to your list", icon: <CheckSquare size={13} style={{ color: "#34d399" }} />, accent: "rgba(52,211,153,0.1)", accentBorder: "rgba(52,211,153,0.2)", onClick: () => setShowNewTask(true) },
-              { label: "Calendar", sub: "View events", icon: <CalendarDays size={13} style={{ color: "#fb923c" }} />, accent: "rgba(251,146,60,0.1)", accentBorder: "rgba(251,146,60,0.2)", onClick: () => navigate("/calendar") },
-            ].map(({ label, sub, icon, accent, accentBorder, onClick }) => (
-              <button key={label} onClick={onClick}
-                className="flex items-center gap-3 rounded-lg px-3 py-3 text-left transition-all duration-150"
-                style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.07)" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#1f1f1f"; (e.currentTarget as HTMLButtonElement).style.border = "1px solid rgba(255,255,255,0.12)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#1a1a1a"; (e.currentTarget as HTMLButtonElement).style.border = "1px solid rgba(255,255,255,0.07)"; }}>
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: accent, border: `1px solid ${accentBorder}` }}>
-                  {icon}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <Card title="Notes"
+          icon={<FileText size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}
+          action={
+            <Link to="/notes" style={actionLinkStyle}
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.7)"}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.3)"}>
+              All <ArrowRight size={11} />
+            </Link>
+          }>
+          {loadingN ? (
+            <div className="p-4 space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} height={36} />)}
+            </div>
+          ) : recentNotes.length === 0 ? (
+            <>
+              {DEMO_DASHBOARD_NOTES.map((row, i) => (
+                <Link key={row.title} to="/notes"
+                  className="flex items-center gap-3 px-4 py-2.5 transition-colors"
+                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
+                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[13px] truncate block" style={{ color: "rgba(255,255,255,0.8)" }}>
+                      {row.title}
+                    </span>
+                    <span className="text-[10px] font-medium rounded px-1.5 py-0.5 mt-0.5 inline-block"
+                      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      {row.code}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </>
+          ) : (
+            recentNotes.map((n, i) => (
+              <Link key={n.id} to={`/notes/${n.id}`}
+                className="flex items-center gap-3 px-4 py-2.5 transition-colors"
+                style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
+                onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
+                onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[13px] truncate block" style={{ color: "rgba(255,255,255,0.8)" }}>
+                    {n.title || "Untitled"}
+                  </span>
+                  {n.course?.code && (
+                    <span className="text-[10px] font-medium rounded px-1.5 py-0.5 mt-0.5 inline-block"
+                      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      {n.course.code}
+                    </span>
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[13px] font-medium leading-none mb-0.5" style={{ color: "rgba(255,255,255,0.8)" }}>{label}</p>
-                  <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.3)" }}>{sub}</p>
-                </div>
-              </button>
-            ))}
-          </div>
+              </Link>
+            ))
+          )}
+        </Card>
+
+        <Card title="Tasks"
+          icon={<CheckSquare size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}
+          action={
+            <Link to="/tasks" style={actionLinkStyle}
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.7)"}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.3)"}>
+              All <ArrowRight size={11} />
+            </Link>
+          }>
+          {loadingT ? (
+            <div className="p-4 space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} height={36} />)}
+            </div>
+          ) : pendingTasksPreview.length === 0 ? (
+            <>
+              {DEMO_DASHBOARD_TASKS.map((row, i) => (
+                <Link key={row.title} to="/tasks"
+                  className="flex items-center gap-3 px-4 py-2.5 transition-colors"
+                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
+                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[13px] truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{row.title}</span>
+                      {row.code && (
+                        <span className="text-[10px] font-medium rounded px-1.5 py-0.5 flex-shrink-0"
+                          style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                          {row.code}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-medium border rounded-full px-2 py-0.5 flex-shrink-0 whitespace-nowrap text-zinc-500 bg-zinc-500/10 border-zinc-500/20">
+                    {row.due}
+                  </span>
+                </Link>
+              ))}
+            </>
+          ) : (
+            pendingTasksPreview.map((t, i) => {
+              const due = t.dueDate ? relDue(t.dueDate) : null;
+              return (
+                <Link key={t.id} to="/tasks"
+                  className="flex items-center gap-3 px-4 py-2.5 transition-colors"
+                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
+                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[13px] truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{t.title}</span>
+                      {t.course?.code && (
+                        <span className="text-[10px] font-medium rounded px-1.5 py-0.5 flex-shrink-0"
+                          style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                          {t.course.code}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {due && (
+                    <span className={`text-[10px] font-medium border rounded-full px-2 py-0.5 flex-shrink-0 whitespace-nowrap ${due.cls}`}>
+                      {due.label}
+                    </span>
+                  )}
+                </Link>
+              );
+            })
+          )}
         </Card>
       </div>
 
-      {/* ── VTOP Sync ── */}
       <div className="mt-4 rounded-xl overflow-hidden"
         style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}>
         <div className="p-5">
-          <VtopSync />
+          <VtopSync variant="dashboard" />
         </div>
       </div>
-
-      {/* Modals */}
-      <Modal open={showNewAssignment} onClose={() => setShowNewAssignment(false)} title="New assignment">
-        <AssignmentForm courses={allCourses}
-          onSubmit={async (p) => { await createAssignment.mutateAsync(p); setShowNewAssignment(false); }}
-          onCancel={() => setShowNewAssignment(false)} />
-      </Modal>
-      <Modal open={showNewTask} onClose={() => setShowNewTask(false)} title="New task">
-        <TaskForm courses={allCourses}
-          onSubmit={async (p) => { await createTask.mutateAsync(p); setShowNewTask(false); }}
-          onCancel={() => setShowNewTask(false)} />
-      </Modal>
     </div>
   );
 }

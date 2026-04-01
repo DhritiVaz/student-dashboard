@@ -6,11 +6,15 @@ const productLinks = [
   { to: "#", label: "Pricing" },
 ];
 
-const accountLinks = [
-  { to: "/login", label: "Login" },
-  { to: "/register", label: "Register" },
-  { to: "/dashboard", label: "Dashboard" },
-];
+const accountLine = (
+  <p className="text-sm text-[#9ca3af] leading-relaxed">
+    <Link to="/login" className="hover:text-white transition-colors">Sign in</Link>
+    <span className="text-[#4b5563] mx-2">·</span>
+    <Link to="/register" className="hover:text-white transition-colors">Get started</Link>
+    <span className="text-[#4b5563] mx-2">·</span>
+    <Link to="/dashboard" className="hover:text-white transition-colors">App</Link>
+  </p>
+);
 
 const legalLinks = [
   { to: "#", label: "Privacy" },
@@ -29,7 +33,7 @@ export function LandingFooter() {
             <p className="text-sm text-[#9ca3af] max-w-[200px]">
               Your academic life, beautifully organized.
             </p>
-            <p className="text-sm text-[#6b7280] mt-6">© 2025 Student Dashboard</p>
+            <p className="text-sm text-[#6b7280] mt-6">© 2026 Student Dashboard</p>
           </div>
 
           <div>
@@ -50,18 +54,7 @@ export function LandingFooter() {
 
           <div>
             <h4 className="font-semibold text-white mb-4">Account</h4>
-            <ul className="space-y-2">
-              {accountLinks.map((l) => (
-                <li key={l.label}>
-                  <Link
-                    to={l.to}
-                    className="text-[#9ca3af] hover:text-white transition-colors duration-200"
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {accountLine}
           </div>
 
           <div>

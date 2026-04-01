@@ -4,6 +4,10 @@ import {
   syncVtopData,
   getVtopAttendance,
   getVtopGrades,
+  getVtopGradesSummary,
+  getVtopCgpa,
+  getVtopSemesterGrades,
+  getVtopMarks,
   getVtopAcademicEvents,
   getVtopTimetable,
 } from "../services/vtopService";
@@ -44,6 +48,46 @@ export async function getGradesHandler(req: Request, res: Response) {
   try {
     const userId = (req as any).userId;
     const data = await getVtopGrades(userId);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getGradesSummaryHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId;
+    const data = await getVtopGradesSummary(userId);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getCgpaHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId;
+    const data = await getVtopCgpa(userId);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getSemesterGradesHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId;
+    const data = await getVtopSemesterGrades(userId);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getMarksHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId;
+    const data = await getVtopMarks(userId);
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

@@ -169,7 +169,7 @@ export default function CoursesPage() {
   const deletingCourse = allCourses?.find(c => c.id === deletingId);
 
   return (
-    <div className="p-6 sm:p-8 w-full">
+    <div className="p-6 sm:p-8 w-full min-w-0">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

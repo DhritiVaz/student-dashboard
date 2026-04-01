@@ -57,7 +57,7 @@ export function LandingHero() {
             className="px-8 py-4 rounded-input font-semibold transition-all duration-150"
             style={{ color: '#0a0a0a', background: 'white' }}
           >
-            Start for Free →
+            Get started
           </Link>
           <a
             href="#features"

@@ -32,13 +32,15 @@ enum CalendarEventType {
 // ─── Core Models ──────────────────────────────────────────────────────────────
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  password  String
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id         String    @id @default(cuid())
+  email      String    @unique
+  password   String? // null for Google-only accounts
+  name       String
+  googleSub  String?   @unique
+  imageUrl   String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
 
   semesters      Semester[]
   tasks          Task[]
@@ -48,6 +50,10 @@ model User {
   vtopGrades     VtopGrade[]
   vtopAcademicEvents VtopAcademicEvent[] 
   vtopTimetable VtopTimetable[]
+  vtopMarks     VtopMark[]
+  vtopStudentMetrics VtopStudentMetrics?
+  vtopSemesterMetrics VtopSemesterMetrics[]
+  studentFiles      StudentFile[]
 
   @@index([email])
   @@index([deletedAt])
@@ -101,8 +107,33 @@ model Course {
   notes          Note[]
   calendarEvents CalendarEvent[]
   tasks          Task[]
+  studentFiles   StudentFile[]
 
   @@index([semesterId])
+  @@index([deletedAt])
+}
+
+/// User-uploaded documents (PDFs, slides, etc.) with optional course link.
+model StudentFile {
+  id           String    @id @default(cuid())
+  userId       String
+  title        String
+  description  String?
+  storedName   String
+  originalName String
+  mimeType     String?
+  sizeBytes    Int
+  courseId     String?
+  category     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([courseId])
   @@index([deletedAt])
 }
 
@@ -228,19 +259,63 @@ model VtopAttendance {
 }
 
 model VtopGrade {
+  id            String   @id @default(cuid())
+  userId        String
+  semesterLabel String   @default("") // normalized section title from grade history; "" rare, use "Unknown" when missing
+  courseCode    String
+  courseName    String
+  credits       Float?
+  grade         String?
+  gradePoint    Float?
+  faculty       String?
+  slot          String?
+  category      String? // e.g. programme / university elective when present in table
+  syncedAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, semesterLabel, courseCode])
+  @@index([userId])
+  @@index([userId, semesterLabel])
+}
+
+model VtopStudentMetrics {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  cgpaFromPortal Float?
+  syncedAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VtopSemesterMetrics {
+  id             String   @id @default(cuid())
+  userId         String
+  semesterLabel  String
+  gpaFromPortal  Float?
+  sortIndex      Int      @default(0)
+  syncedAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, semesterLabel])
+  @@index([userId])
+}
+
+model VtopMark {
   id         String   @id @default(cuid())
   userId     String
   courseCode String
-  courseName String
-  credits    Float?
-  grade      String?
-  gradePoint Float?
+  component  String // e.g. "CAT-I", "Internal"
+  scored     Float?
+  maxScore   Float?
   syncedAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, courseCode])
+  @@unique([userId, courseCode, component])
   @@index([userId])
+  @@index([userId, courseCode])
 }
 
 model VtopAcademicEvent {
@@ -259,20 +334,25 @@ model VtopAcademicEvent {
 }
 
 model VtopTimetable {
-  id         String   @id @default(cuid())
-  userId     String
-  courseCode String
-  courseName String
-  courseType String   // "TH", "LO", "ELA", "ETH", "SS"
-  slot       String   // "A1", "L11", etc.
-  venue      String
-  dayOfWeek  Int      // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
-  startTime  String   // "08:00"
-  endTime    String   // "08:50"
-  syncedAt   DateTime @default(now())
+  id             String   @id @default(cuid())
+  userId         String
+  // VTOP semester dropdown value (e.g. CH20252605) for this timetable fetch
+  semesterSubId  String   @default("")
+  // Human label from the same dropdown (e.g. Winter Semester 2025-26)
+  semesterLabel  String?
+  courseCode     String
+  courseName     String
+  courseType     String   // "TH", "LO", "ELA", "ETH", "SS"
+  slot           String   // "A1", "L11", etc.
+  venue          String
+  dayOfWeek      Int      // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+  startTime      String   // "08:00"
+  endTime        String   // "08:50"
+  syncedAt       DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, slot, dayOfWeek])
+  @@unique([userId, semesterSubId, slot, dayOfWeek])
   @@index([userId])
+  @@index([userId, semesterSubId])
 }

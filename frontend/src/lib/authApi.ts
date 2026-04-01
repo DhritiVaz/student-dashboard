@@ -1,5 +1,8 @@
 import { api } from "./api";
-import type { LoginResponse, RegisterRequest } from "@student-dashboard/shared";
+import type {
+  LoginResponse,
+  RegisterRequest,
+} from "@student-dashboard/shared";
 
 export async function loginApi(email: string, password: string) {
   const { data } = await api.post<{ data: LoginResponse }>("/auth/login", {
@@ -24,4 +27,11 @@ export async function registerApi(
 
 export async function logoutApi(refreshToken: string) {
   await api.post("/auth/logout", { refreshToken });
+}
+
+export async function googleLoginApi(idToken: string) {
+  const { data } = await api.post<{ data: LoginResponse }>("/auth/google", {
+    idToken,
+  });
+  return data.data;
 }

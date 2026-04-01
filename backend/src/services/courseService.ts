@@ -78,12 +78,18 @@ export async function createCourse(userId: string, input: CreateCourseInput) {
  * curl "http://localhost:4000/api/courses?semesterId=<id>" \
  *   -H "Authorization: Bearer <token>"
  */
-export async function listCourses(userId: string, semesterId?: string) {
+export async function listCourses(userId: string, semesterId?: string, code?: string) {
+  const codeTrim = code?.trim();
   return prisma.course.findMany({
     where: {
       deletedAt: null,
       semester: { userId, deletedAt: null },
       ...(semesterId ? { semesterId } : {}),
+      ...(codeTrim
+        ? {
+            code: { equals: codeTrim, mode: "insensitive" as const },
+          }
+        : {}),
     },
     orderBy: [{ semesterId: "asc" }, { name: "asc" }],
     include: {

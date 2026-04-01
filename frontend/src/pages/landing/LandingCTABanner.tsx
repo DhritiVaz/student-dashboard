@@ -15,17 +15,19 @@ export function LandingCTABanner() {
           Ready to take control of your academics?
         </h2>
         <p className="text-white/80 text-lg mb-8">
-          Start organizing your academic life today.
+          Same tools as above—pick up where the hero left off.
         </p>
         <Link
           to="/register"
           className="inline-block px-10 py-4 rounded-input font-semibold transition-all duration-150"
           style={{ color: '#0a0a0a', background: 'white' }}
         >
-          Get Started Free →
+          Get started
         </Link>
-        <p className="text-white/60 text-sm mt-6">
-          No credit card required · Free forever
+        <p className="text-white/45 text-sm mt-6">
+          <Link to="/login" className="underline underline-offset-2 hover:text-white/70">Already use the app? Sign in</Link>
+          <span className="text-white/25 mx-2">·</span>
+          No credit card · Free
         </p>
       </motion.div>
     </section>

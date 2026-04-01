@@ -25,9 +25,15 @@ export function AuthLayout() {
       <BrandingPanel />
 
       {/* Right panel — dark grey to match main site */}
-      <div className="auth-form-panel flex-1 flex items-center justify-center p-6 overflow-y-auto" style={{ background: "#0e0e0e" }}>
+      <div
+        className="auth-form-panel flex-1 flex items-center justify-center p-6 sm:p-8 overflow-y-auto"
+        style={{ background: "#0e0e0e" }}
+      >
         <AnimatedPage key={location.pathname} fillHeight={false}>
-          <Outlet />
+          {/* motion.div is w-full; center the form inside the right panel (was left-aligned) */}
+          <div className="w-full flex justify-center">
+            <Outlet />
+          </div>
         </AnimatedPage>
       </div>
     </div>

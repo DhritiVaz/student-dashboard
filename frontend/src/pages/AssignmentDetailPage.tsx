@@ -138,7 +138,7 @@ export default function AssignmentDetailPage() {
   const [deletingGradeId, setDeletingGradeId]     = useState<string | null>(null);
 
   if (loadingA) return (
-    <div className="p-6 sm:p-8 w-full">
+    <div className="p-6 sm:p-8 w-full min-w-0">
       <div className="w-24 h-5 bg-[#f0f0f0] rounded animate-pulse mb-8" />
       <div className="h-40 bg-[#f0f0f0] rounded-card animate-pulse mb-4" />
       <div className="h-48 bg-[#f0f0f0] rounded-card animate-pulse" />
@@ -146,7 +146,7 @@ export default function AssignmentDetailPage() {
   );
 
   if (!assignment) return (
-    <div className="p-6 sm:p-8 w-full">
+    <div className="p-6 sm:p-8 w-full min-w-0">
       <div className="flex items-center gap-3 text-sm text-[#9ca3af] mb-8">
         <AlertCircle size={16} />
         <span>Assignment not found.</span>
@@ -169,7 +169,7 @@ export default function AssignmentDetailPage() {
     : null;
 
   return (
-    <div className="p-6 sm:p-8 w-full">
+    <div className="p-6 sm:p-8 w-full min-w-0">
       {/* Back link */}
       <button
         onClick={() => navigate(-1)}

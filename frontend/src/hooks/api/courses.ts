@@ -58,6 +58,20 @@ export function useCourses(semesterId?: string) {
   });
 }
 
+export function useCoursesByCode(code: string | undefined) {
+  const c = code?.trim();
+  return useQuery({
+    queryKey: ["courses", "byCode", c ?? ""] as const,
+    queryFn: async () => {
+      const { data } = await api.get<{ data: Course[] }>(
+        `/courses?code=${encodeURIComponent(c!)}`
+      );
+      return data?.data ?? [];
+    },
+    enabled: !!c,
+  });
+}
+
 export function useCourse(id: string) {
   return useQuery({
     queryKey: courseKeys.detail(id),

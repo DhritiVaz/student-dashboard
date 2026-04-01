@@ -5,6 +5,7 @@ import {
   loginHandler,
   refreshHandler,
   logoutHandler,
+  googleHandler,
 } from "../controllers/authController";
 
 export const authRouter = Router();
@@ -20,5 +21,6 @@ const loginLimiter = rateLimit({
 // Public auth routes
 authRouter.post("/register", registerHandler);
 authRouter.post("/login", loginLimiter, loginHandler);
+authRouter.post("/google", loginLimiter, googleHandler);
 authRouter.post("/refresh", refreshHandler);
 authRouter.post("/logout", logoutHandler);

@@ -2,6 +2,17 @@ import axios, { AxiosRequestConfig } from "axios";
 import { useAuthStore } from "../stores/authStore";
 import { useToastStore } from "../stores/toastStore";
 
+/**
+ * Base URL for all `/api/*` requests. Normalizes `VITE_API_URL` so both
+ * `http://localhost:4000` and `http://localhost:4000/api` work (avoids 404 on `/files` etc.).
+ */
+export function getApiBaseUrl(): string {
+  const raw = (import.meta.env.VITE_API_URL ?? "").trim().replace(/\/$/, "");
+  if (!raw) return "/api";
+  if (raw.endsWith("/api")) return raw;
+  return `${raw}/api`;
+}
+
 export function toErrorString(raw: unknown): string {
   if (typeof raw === "string") return raw;
   if (raw && typeof raw === "object" && !Array.isArray(raw)) {
@@ -42,7 +53,7 @@ function handleApiError(error: unknown) {
 }
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "/api",
+  baseURL: getApiBaseUrl(),
   headers: { "Content-Type": "application/json" },
 });
 
@@ -67,8 +78,11 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original: (AxiosRequestConfig & { _retry?: boolean }) | undefined = error?.config;
+    const url = original?.url ? String(original.url) : "";
     const isAuthEndpoint =
-      original?.url && (String(original.url).includes("/auth/login") || String(original.url).includes("/auth/register"));
+      url.includes("/auth/login") ||
+      url.includes("/auth/register") ||
+      url.includes("/auth/google");
 
     // 401 on login/register = invalid credentials; reject and let form show error (no redirect)
     if (isAuthEndpoint && error.response?.status === 401) {
@@ -115,10 +129,7 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const { data } = await axios.post(
-        `${import.meta.env.VITE_API_URL ?? "/api"}/auth/refresh`,
-        { refreshToken }
-      );
+      const { data } = await axios.post(`${getApiBaseUrl()}/auth/refresh`, { refreshToken });
       const { accessToken: newAccess, refreshToken: newRefresh } = data.data;
       setTokens(newAccess, newRefresh);
       processQueue(newAccess);

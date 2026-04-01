@@ -1,99 +1,37 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, CheckCircle, AlertCircle, Eye, EyeOff, Wifi, Calculator } from "lucide-react";
 import { useVtopSync, useFetchCaptcha, useVtopAttendance, useVtopGrades, VtopAttendanceRecord, VtopGradeRecord } from "../../hooks/api/vtop";
+import { AttendanceCalculator } from "../attendance/AttendanceCalculator";
 
-// ─── Attendance Calculator ────────────────────────────────────────────────────
-function AttendanceCalculator({ attendance }: { attendance: VtopAttendanceRecord[] }) {
-  const TARGET = 75;
+export type VtopSyncVariant = "dashboard" | "full" | "syncAndGrades";
 
-  if (attendance.length === 0) {
-    return <div className="p-6 text-center text-neutral-500 text-sm">No attendance data yet. Sync to calculate.</div>;
-  }
-
-  return (
-    <div className="divide-y divide-neutral-800/50">
-      {attendance.map((row) => {
-        const { attended, conducted, attendancePercent, courseCode, courseName, courseType } = row;
-
-
-        // Classes needed to reach 75% if below
-        const needToAttend = attendancePercent < TARGET
-          ? Math.ceil((TARGET / 100 * conducted - attended) / (1 - TARGET / 100))
-          : 0;
-
-        // Safe to bunk X more future classes
-        // If we bunk X more: attended/(conducted+X) >= 0.75
-        // X <= attended/0.75 - conducted
-        const safeBunk = Math.max(0, Math.floor(attended / (TARGET / 100) - conducted));
-
-        const isGood = attendancePercent >= TARGET;
-        const isWarning = attendancePercent >= 65 && attendancePercent < TARGET;
-
-        return (
-          <div key={row.id} className="px-4 py-4">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <div className="text-white font-medium text-sm">{courseCode}</div>
-                <div className="text-neutral-500 text-xs">{courseName}</div>
-                {courseType && <div className="text-neutral-600 text-xs">{courseType}</div>}
-              </div>
-              <span className={`text-lg font-bold ${
-                isGood ? "text-green-400" : isWarning ? "text-yellow-400" : "text-red-400"
-              }`}>
-                {attendancePercent.toFixed(1)}%
-              </span>
-            </div>
-
-            {/* Progress bar */}
-            <div className="w-full bg-neutral-800 rounded-full h-1.5 mb-3">
-              <div
-                className={`h-1.5 rounded-full transition-all ${
-                  isGood ? "bg-green-400" : isWarning ? "bg-yellow-400" : "bg-red-400"
-                }`}
-                style={{ width: `${Math.min(attendancePercent, 100)}%` }}
-              />
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <div className="bg-[#0c0c0c] rounded-lg px-3 py-2 text-center">
-                <div className="text-neutral-500 mb-0.5">Attended</div>
-                <div className="text-white font-semibold">{attended}/{conducted}</div>
-              </div>
-
-              {isGood ? (
-                <div className="bg-green-400/10 border border-green-400/20 rounded-lg px-3 py-2 text-center">
-                  <div className="text-green-400/70 mb-0.5">Can bunk</div>
-                  <div className="text-green-400 font-semibold">{safeBunk} more</div>
-                </div>
-              ) : (
-                <div className="bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2 text-center">
-                  <div className="text-red-400/70 mb-0.5">Need to attend</div>
-                  <div className="text-red-400 font-semibold">{needToAttend} more</div>
-                </div>
-              )}
-
-              <div className="bg-[#0c0c0c] rounded-lg px-3 py-2 text-center">
-                <div className="text-neutral-500 mb-0.5">Target</div>
-                <div className="text-neutral-300 font-semibold">{TARGET}%</div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+const VTOP_USERNAME_KEY = "vtop-remember-username";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function VtopSync() {
-  const [username, setUsername] = useState("");
+export default function VtopSync({ variant = "full" }: { variant?: VtopSyncVariant }) {
+  const [rememberUsername, setRememberUsername] = useState(() => {
+    try {
+      return localStorage.getItem(VTOP_USERNAME_KEY) !== null;
+    } catch {
+      return false;
+    }
+  });
+  const [username, setUsername] = useState(() => {
+    try {
+      return localStorage.getItem(VTOP_USERNAME_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  });
   const [password, setPassword] = useState("");
   const [captchaStr, setCaptchaStr] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
-  const [activeTab, setActiveTab] = useState<"attendance" | "calculator" | "grades">("attendance");
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"attendance" | "calculator" | "grades">(() =>
+    variant === "syncAndGrades" ? "grades" : "attendance"
+  );
   const [captchaImage, setCaptchaImage] = useState<string | null>(null);
   const [loadingCaptcha, setLoadingCaptcha] = useState(false);
 
@@ -125,15 +63,33 @@ export default function VtopSync() {
     }
   }
 
+  const persistUsername = useCallback(() => {
+    try {
+      if (rememberUsername && username.trim()) {
+        localStorage.setItem(VTOP_USERNAME_KEY, username.trim().toUpperCase());
+      } else {
+        localStorage.removeItem(VTOP_USERNAME_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [rememberUsername, username]);
+
   async function handleSync(hasCaptcha = true) {
     if (!username.trim() || !password.trim()) return;
     if (hasCaptcha && !captchaStr.trim()) return;
 
     try {
-      await sync(username, password, hasCaptcha ? captchaStr : undefined);
+      const res = await sync(username, password, hasCaptcha ? captchaStr : undefined);
+      const detail =
+        res && typeof res === "object" && "data" in res && res.data && typeof res.data === "object"
+          ? (res.data as { message?: string }).message
+          : null;
+      setSyncMessage(detail ?? null);
+      persistUsername();
       setSyncSuccess(true);
-      setUsername("");
       setPassword("");
+      if (!rememberUsername) setUsername("");
       setCaptchaStr("");
       setCaptchaImage(null);
       await fetchAttendance();
@@ -147,13 +103,21 @@ export default function VtopSync() {
   const hasSyncedData = attendance.length > 0 || grades.length > 0;
   const lastSynced = attendance[0]?.syncedAt
     ? new Date(attendance[0].syncedAt).toLocaleString()
-    : null;
+    : grades[0]?.syncedAt
+      ? new Date(grades[0].syncedAt).toLocaleString()
+      : null;
 
-  const tabs = [
-    { key: "attendance", label: "Attendance" },
-    { key: "calculator", label: "Calculator" },
-    { key: "grades", label: "Grades" },
-  ] as const;
+  const showDataSection =
+    variant !== "dashboard" && hasSyncedData && (variant === "full" || variant === "syncAndGrades");
+
+  const tabs =
+    variant === "syncAndGrades"
+      ? ([{ key: "grades", label: "Grades" }] as const)
+      : ([
+          { key: "attendance", label: "Attendance" },
+          { key: "calculator", label: "Calculator" },
+          { key: "grades", label: "Grades" },
+        ] as const);
 
   return (
     <div className="space-y-6">
@@ -183,10 +147,29 @@ export default function VtopSync() {
               value={username}
               onChange={e => setUsername(e.target.value.toUpperCase())}
               placeholder="e.g. 24BCE1723"
+              autoComplete="username"
               className="w-full bg-[#0c0c0c] border border-neutral-800 rounded-lg px-3 py-2
                          text-sm text-white placeholder-neutral-600
                          focus:outline-none focus:border-neutral-600 transition-colors"
             />
+            <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rememberUsername}
+                onChange={e => {
+                  const on = e.target.checked;
+                  setRememberUsername(on);
+                  try {
+                    if (!on) localStorage.removeItem(VTOP_USERNAME_KEY);
+                    else if (username.trim()) localStorage.setItem(VTOP_USERNAME_KEY, username.trim());
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+                className="rounded border-neutral-600"
+              />
+              <span className="text-xs text-neutral-500">Remember username on this device</span>
+            </label>
           </div>
 
           <div>
@@ -264,7 +247,14 @@ export default function VtopSync() {
               className="flex items-center gap-2 text-green-400 text-sm bg-green-400/10 border border-green-400/20 rounded-lg px-3 py-2"
             >
               <CheckCircle size={14} />
-              Sync successful! Data updated.
+              <span>
+                Sync successful.
+                {syncMessage ? (
+                  <span className="block mt-1 text-neutral-300 font-normal">{syncMessage}</span>
+                ) : (
+                  " Data updated."
+                )}
+              </span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -305,26 +295,29 @@ export default function VtopSync() {
         )}
       </div>
 
-      {/* Data Tabs */}
-      {hasSyncedData && (
+      {/* Data Tabs (hidden on dashboard; on syncAndGrades only grades) */}
+      {showDataSection && (
         <div className="space-y-4">
-          <div className="flex gap-1 bg-[#141414] border border-neutral-800 rounded-lg p-1 w-fit">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                  activeTab === tab.key ? "bg-white text-black" : "text-neutral-400 hover:text-white"
-                }`}
-              >
-                {tab.key === "calculator" && <Calculator size={12} />}
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {tabs.length > 1 && (
+            <div className="flex gap-1 bg-[#141414] border border-neutral-800 rounded-lg p-1 w-fit">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                    activeTab === tab.key ? "bg-white text-black" : "text-neutral-400 hover:text-white"
+                  }`}
+                >
+                  {tab.key === "calculator" && <Calculator size={12} />}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Attendance Tab */}
-          {activeTab === "attendance" && (
+          {variant === "full" && activeTab === "attendance" && (
             <div className="bg-[#141414] border border-neutral-800 rounded-xl overflow-hidden">
               {loadingAttendance ? (
                 <div className="p-6 text-center text-neutral-500 text-sm">Loading...</div>
@@ -369,19 +362,19 @@ export default function VtopSync() {
           )}
 
           {/* Calculator Tab */}
-          {activeTab === "calculator" && (
+          {variant === "full" && activeTab === "calculator" && (
             <div className="bg-[#141414] border border-neutral-800 rounded-xl overflow-hidden">
               <div className="px-4 py-3 border-b border-neutral-800 flex items-center gap-2">
                 <Calculator size={13} className="text-neutral-400" />
                 <span className="text-xs font-semibold text-neutral-300">Attendance Calculator</span>
                 <span className="text-xs text-neutral-600 ml-auto">Target: 75%</span>
               </div>
-              <AttendanceCalculator attendance={attendance} />
+              <AttendanceCalculator attendance={attendance} variant="vtop" />
             </div>
           )}
 
           {/* Grades Tab */}
-          {activeTab === "grades" && (
+          {(variant === "syncAndGrades" || activeTab === "grades") && (
             <div className="bg-[#141414] border border-neutral-800 rounded-xl overflow-hidden">
               {loadingGrades ? (
                 <div className="p-6 text-center text-neutral-500 text-sm">Loading...</div>
@@ -392,9 +385,11 @@ export default function VtopSync() {
                   <thead>
                     <tr className="border-b border-neutral-800">
                       <th className="text-left px-4 py-3 text-xs text-neutral-500 font-medium">Course</th>
-                      <th className="text-right px-4 py-3 text-xs text-neutral-500 font-medium">Credits</th>
-                      <th className="text-right px-4 py-3 text-xs text-neutral-500 font-medium">Grade</th>
-                      <th className="text-right px-4 py-3 text-xs text-neutral-500 font-medium">Points</th>
+                      <th className="text-left px-4 py-3 text-xs text-neutral-500 font-medium hidden sm:table-cell max-w-[140px]">Semester</th>
+                      <th className="text-left px-4 py-3 text-xs text-neutral-500 font-medium hidden md:table-cell">Details</th>
+                      <th className="text-right px-4 py-3 text-xs text-neutral-500 font-medium">Cr</th>
+                      <th className="text-right px-4 py-3 text-xs text-neutral-500 font-medium">Gr</th>
+                      <th className="text-right px-4 py-3 text-xs text-neutral-500 font-medium">Pt</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -403,6 +398,12 @@ export default function VtopSync() {
                         <td className="px-4 py-3">
                           <div className="text-white font-medium">{row.courseCode}</div>
                           <div className="text-neutral-500 text-xs">{row.courseName}</div>
+                        </td>
+                        <td className="px-4 py-3 text-neutral-500 text-xs max-w-[140px] truncate hidden sm:table-cell" title={row.semesterLabel ?? undefined}>
+                          {row.semesterLabel || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-neutral-600 text-xs hidden md:table-cell max-w-[200px]">
+                          {[row.faculty, row.slot].filter(Boolean).join(" · ") || row.category || "—"}
                         </td>
                         <td className="px-4 py-3 text-right text-neutral-300">{row.credits ?? "—"}</td>
                         <td className="px-4 py-3 text-right font-semibold text-white">{row.grade ?? "—"}</td>

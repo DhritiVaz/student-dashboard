@@ -8,7 +8,7 @@ interface PlaceholderPageProps {
 
 export function PlaceholderPage({ title, description, icon: Icon }: PlaceholderPageProps) {
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-8 w-full min-w-0">
       <div
         className="bg-white border border-[#e5e7eb] rounded-card px-8 py-14 flex flex-col items-center text-center"
         style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}

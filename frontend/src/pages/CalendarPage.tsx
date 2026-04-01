@@ -1,13 +1,15 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Plus, X, Pencil, Trash2, Calendar, ClipboardList, CheckSquare, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Pencil, Trash2, Calendar, ClipboardList, CheckSquare, ExternalLink, Grid3X3 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { EventForm } from "../components/calendar/EventForm";
 import { useCourses } from "../hooks/api/courses";
+import { useSemesters } from "../hooks/api/semesters";
 import { useAssignments } from "../hooks/api/assignments";
 import { useTasks } from "../hooks/api/tasks";
-import { useVtopAcademicEvents, useVtopTimetable } from "../hooks/api/vtop";
+import { useVtopAcademicEvents, useVtopTimetable, type VtopTimetableEntry } from "../hooks/api/vtop";
+import type { Course } from "../hooks/api/courses";
 import {
   useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent,
   type CalendarEvent, type EventType,
@@ -15,6 +17,20 @@ import {
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS   = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function parseTimeToMinutes(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
+}
+
+/** e.g. 08:00 + 08:50 → "8–8:50"; 09:50 + 10:40 → "9:50–10:40" */
+function formatCompactTimeRange(start: string, end: string): string {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  const left = sm === 0 ? String(sh) : `${sh}:${String(sm).padStart(2, "0")}`;
+  const right = em === 0 ? String(eh) : `${eh}:${String(em).padStart(2, "0")}`;
+  return `${left}–${right}`;
+}
 
 type ItemStyle = { dot: string; bg: string; text: string; border: string; label: string };
 
@@ -49,6 +65,7 @@ interface CalItem {
   time?: string;
   isAllDay?: boolean;
   courseCode?: string;
+  courseId?: string;
   rawEvent?: CalendarEvent;
 }
 
@@ -309,7 +326,12 @@ function EventDetailModal({ item, onEdit, onDelete, onClose, deleting }: {
       )}
       {item.type !== "event" && <p className="text-sm text-[#6b7280]">{item.type === "assignment" ? "Assignment due" : "Task due"} — {fmtShortDate(item.dateKey)}</p>}
       <div className="flex items-center justify-between pt-2 border-t border-[#f0f0f0]">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {item.courseId && (
+            <Link to={`/courses/${item.courseId}`}>
+              <Button variant="secondary" size="sm"><ExternalLink size={13} /> Course page</Button>
+            </Link>
+          )}
           {item.type === "event" && item.rawEvent && (
             <>
               <Button variant="secondary" size="sm" onClick={onEdit}><Pencil size={13} /> Edit</Button>
@@ -320,6 +342,92 @@ function EventDetailModal({ item, onEdit, onDelete, onClose, deleting }: {
         </div>
         <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
       </div>
+    </div>
+  );
+}
+
+function TimetableGrid({ entries, courses }: { entries: VtopTimetableEntry[]; courses: Course[] | undefined }) {
+  const codeToId = useMemo(() => {
+    const m = new Map<string, string>();
+    (courses ?? []).forEach((c) => {
+      if (c.code) m.set(c.code.replace(/\s/g, "").toUpperCase(), c.id);
+    });
+    return m;
+  }, [courses]);
+
+  const timeRows = useMemo(() => {
+    const byKey = new Map<string, { startTime: string; endTime: string }>();
+    for (const e of entries) {
+      const k = `${e.startTime}\t${e.endTime}`;
+      if (!byKey.has(k)) byKey.set(k, { startTime: e.startTime, endTime: e.endTime });
+    }
+    return [...byKey.values()].sort(
+      (a, b) =>
+        parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime) ||
+        parseTimeToMinutes(a.endTime) - parseTimeToMinutes(b.endTime)
+    );
+  }, [entries]);
+  const days = [1, 2, 3, 4, 5, 6];
+  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  if (!entries.length) {
+    return (
+      <p className="text-sm py-16 text-center rounded-xl" style={{ color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        No timetable synced yet. Run VTOP sync from the dashboard.
+      </p>
+    );
+  }
+
+  return (
+    <div className="rounded-xl overflow-auto" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+      <table className="w-full text-xs min-w-[720px]">
+        <thead>
+          <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <th className="text-left p-3 font-semibold sticky left-0 z-10" style={{ background: "#111", color: "rgba(255,255,255,0.35)" }}>Time</th>
+            {days.map((d, i) => (
+              <th key={d} className="p-3 text-center font-semibold border-l border-white/5" style={{ color: "rgba(255,255,255,0.55)" }}>
+                {labels[i]}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {timeRows.map(({ startTime, endTime }) => {
+            const rowKey = `${startTime}-${endTime}`;
+            const timeLabel = formatCompactTimeRange(startTime, endTime);
+            return (
+            <tr key={rowKey} style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              <td className="p-3 font-mono text-[11px] sticky left-0 z-10 whitespace-nowrap" style={{ background: "#111", color: "rgba(255,255,255,0.4)" }}>{timeLabel}</td>
+              {days.map((day) => {
+                const hits = entries.filter(
+                  (e) => e.startTime === startTime && e.endTime === endTime && e.dayOfWeek === day
+                );
+                return (
+                  <td key={`${rowKey}-${day}`} className="p-1.5 align-top border-l border-white/5 min-w-[108px]">
+                    {hits.map((h) => {
+                      const cid = codeToId.get(h.courseCode.replace(/\s/g, "").toUpperCase());
+                      const inner = (
+                        <div className="rounded-lg p-2" style={{ background: "rgba(255,255,255,0.04)" }}>
+                          <div className="font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>{h.courseCode}</div>
+                          <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>{h.courseType} · {h.venue}</div>
+                        </div>
+                      );
+                      return cid ? (
+                        <Link key={h.id} to={`/courses/${cid}`} className="block mb-1 hover:opacity-90">
+                          {inner}
+                        </Link>
+                      ) : (
+                        <div key={h.id} className="mb-1">{inner}</div>
+                      );
+                    })}
+                  </td>
+                );
+              })}
+            </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -335,6 +443,7 @@ export default function CalendarPage() {
   const [defaultDate,   setDefaultDate]   = useState<string | undefined>();
   const [showDeleteId,  setShowDeleteId]  = useState<string | null>(null);
   const [showTimetable, setShowTimetable] = useState(true);
+  const [mainView, setMainView] = useState<"calendar" | "timetable">("calendar");
 
   const cells      = useMemo(() => getCalendarCells(year, month), [year, month]);
   const rangeStart = dateKey(cells[0]);
@@ -343,11 +452,46 @@ export default function CalendarPage() {
   const { data: events      = [] } = useEvents(rangeStart, rangeEnd);
   const { data: assignments = [] } = useAssignments();
   const { data: tasks       = [] } = useTasks();
+  const { data: semesters }        = useSemesters();
   const { data: courses }          = useCourses();
   const { data: academicEvents, fetch: fetchAcademicEvents } = useVtopAcademicEvents();
   const { data: timetable, fetch: fetchTimetable } = useVtopTimetable();
 
   useEffect(() => { fetchAcademicEvents(); fetchTimetable(); }, []);
+
+  const currentSemester = useMemo(() => {
+    const day = new Date();
+    if (!semesters?.length) return null;
+    const active = semesters.find(s => {
+      const start = s.startDate ? new Date(s.startDate) : null;
+      const end   = s.endDate ? new Date(s.endDate) : null;
+      return start != null && end != null && day >= start && day <= end;
+    });
+    return active ?? [...semesters].sort((a, b) => b.year - a.year)[0];
+  }, [semesters]);
+
+  /** Courses in the active semester — used for timetable + calendar filtering. */
+  const semesterCourseIds = useMemo(() => {
+    if (!currentSemester) return null;
+    return new Set((courses ?? []).filter(c => c.semesterId === currentSemester.id).map(c => c.id));
+  }, [currentSemester, courses]);
+
+  const coursesInSemester = useMemo(() => {
+    const list = courses ?? [];
+    if (!currentSemester) return list;
+    return list.filter(c => c.semesterId === currentSemester.id);
+  }, [currentSemester, courses]);
+
+  const timetableInSemester = useMemo(() => {
+    if (!currentSemester) return timetable;
+    const codes = new Set(
+      (courses ?? [])
+        .filter(c => c.semesterId === currentSemester.id)
+        .map(c => c.code.replace(/\s/g, "").toUpperCase())
+    );
+    if (codes.size === 0) return [];
+    return timetable.filter(e => codes.has(e.courseCode.replace(/\s/g, "").toUpperCase()));
+  }, [timetable, currentSemester, courses]);
 
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent(editingEvent?.id ?? "");
@@ -360,21 +504,54 @@ export default function CalendarPage() {
       map.get(key)!.push(item);
     }
 
+    const applySemester = currentSemester != null && semesterCourseIds != null;
+    const semStart = currentSemester?.startDate ? new Date(currentSemester.startDate) : null;
+    const semEnd   = currentSemester?.endDate ? new Date(currentSemester.endDate) : null;
+    if (semStart) semStart.setHours(0, 0, 0, 0);
+    if (semEnd) semEnd.setHours(0, 0, 0, 0);
+
+    function inSemesterWallClock(iso: string): boolean {
+      if (!applySemester || !semStart || !semEnd) return true;
+      const d = new Date(iso.slice(0, 10));
+      d.setHours(0, 0, 0, 0);
+      return d >= semStart && d <= semEnd;
+    }
+
+    const codeToId = new Map<string, string>();
+    coursesInSemester.forEach((c) => {
+      if (c.code) codeToId.set(c.code.replace(/\s/g, "").toUpperCase(), c.id);
+    });
+
     events.forEach(e => {
+      if (applySemester) {
+        if (e.courseId) {
+          if (!semesterCourseIds!.has(e.courseId)) return;
+        } else if (!inSemesterWallClock(e.startDate)) {
+          return;
+        }
+      }
       const key = e.startDate.slice(0, 10);
-      add(key, { id: e.id, title: e.title, dateKey: key, sortTime: new Date(e.startDate).getTime(), type: "event", eventType: e.eventType, customColor: e.color, isAllDay: e.isAllDay, time: e.isAllDay ? undefined : fmtTime(e.startDate), courseCode: e.course?.code, rawEvent: e });
+      add(key, { id: e.id, title: e.title, dateKey: key, sortTime: new Date(e.startDate).getTime(), type: "event", eventType: e.eventType, customColor: e.color, isAllDay: e.isAllDay, time: e.isAllDay ? undefined : fmtTime(e.startDate), courseCode: e.course?.code, courseId: e.course?.id, rawEvent: e });
     });
 
     assignments.forEach(a => {
+      if (applySemester && !semesterCourseIds!.has(a.courseId)) return;
       if (!a.dueDate) return;
       const key = a.dueDate.slice(0, 10);
-      add(key, { id: a.id, title: a.title, dateKey: key, sortTime: new Date(a.dueDate).getTime(), type: "assignment", time: fmtTime(a.dueDate), courseCode: a.course?.code });
+      add(key, { id: a.id, title: a.title, dateKey: key, sortTime: new Date(a.dueDate).getTime(), type: "assignment", time: fmtTime(a.dueDate), courseCode: a.course?.code, courseId: a.course?.id });
     });
 
     tasks.forEach(t => {
       if (!t.dueDate || t.isCompleted) return;
+      if (applySemester) {
+        if (t.courseId) {
+          if (!semesterCourseIds!.has(t.courseId)) return;
+        } else if (!inSemesterWallClock(t.dueDate)) {
+          return;
+        }
+      }
       const key = t.dueDate.slice(0, 10);
-      add(key, { id: t.id, title: t.title, dateKey: key, sortTime: new Date(t.dueDate).getTime(), type: "task", courseCode: t.course?.code });
+      add(key, { id: t.id, title: t.title, dateKey: key, sortTime: new Date(t.dueDate).getTime(), type: "task", courseCode: t.course?.code, courseId: t.course?.id });
     });
 
     academicEvents.forEach(e => {
@@ -382,24 +559,36 @@ export default function CalendarPage() {
       const isHoliday = e.eventType.toLowerCase().includes("holiday");
       const isExam = e.eventType.toLowerCase().includes("cat") || e.eventType.toLowerCase().includes("exam") || e.eventType.toLowerCase().includes("fat");
       if (!isHoliday && !isExam) return;
+      if (applySemester && !inSemesterWallClock(e.date)) return;
       add(key, { id: e.id, title: e.eventType + (e.label ? ` ${e.label}` : ""), dateKey: key, sortTime: new Date(key).getTime(), type: "event", eventType: "personal" as EventType, customColor: isHoliday ? "#10b981" : "#ef4444" });
     });
 
     if (showTimetable) {
-      timetable.forEach(entry => {
+      timetableInSemester.forEach(entry => {
         cells.forEach(cell => {
           if (cell.getDay() !== entry.dayOfWeek) return;
           if (cell.getMonth() !== month) return;
           const key = dateKey(cell);
           const [sh, sm] = entry.startTime.split(":").map(Number);
-          add(key, { id: `${entry.id}-${key}`, title: `${entry.courseCode} (${entry.slot})`, dateKey: key, sortTime: new Date(cell).setHours(sh, sm), type: "event", eventType: "class" as EventType, time: `${entry.startTime} – ${entry.endTime}`, courseCode: entry.courseCode });
+          const cid = codeToId.get(entry.courseCode.replace(/\s/g, "").toUpperCase());
+          add(key, {
+            id: `${entry.id}-${key}`,
+            title: `${entry.courseCode} · ${formatCompactTimeRange(entry.startTime, entry.endTime)}`,
+            dateKey: key,
+            sortTime: new Date(cell).setHours(sh, sm),
+            type: "event",
+            eventType: "class" as EventType,
+            time: `${entry.startTime} – ${entry.endTime}`,
+            courseCode: entry.courseCode,
+            courseId: cid,
+          });
         });
       });
     }
 
     map.forEach((v, k) => map.set(k, v.sort((a, b) => a.sortTime - b.sortTime)));
     return map;
-  }, [events, assignments, tasks, academicEvents, timetable, cells, month, showTimetable]);
+  }, [events, assignments, tasks, academicEvents, timetableInSemester, cells, month, showTimetable, coursesInSemester, currentSemester, semesterCourseIds]);
 
   const allItems = useMemo(() => [...itemsByDate.values()].flat(), [itemsByDate]);
 
@@ -410,29 +599,55 @@ export default function CalendarPage() {
   const selectedItems = selectedDate ? (itemsByDate.get(dateKey(selectedDate)) ?? []) : [];
 
   return (
-    <div className="p-6 sm:p-8 w-full">
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold text-[#111] tracking-tight">{MONTHS[month]} {year}</h2>
-          <div className="flex items-center gap-1">
-            <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors"><ChevronLeft size={16} /></button>
-            <button type="button" onClick={goToday} className="text-xs font-medium text-[#6b7280] hover:text-[#111] px-3 py-1.5 rounded-lg hover:bg-[#f5f5f5] transition-colors border border-[#e5e7eb]">Today</button>
-            <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors"><ChevronRight size={16} /></button>
+    <div className="p-6 sm:p-8 w-full min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex rounded-lg p-0.5 border border-[#e5e7eb] bg-[#fafafa]">
+            <button
+              type="button"
+              onClick={() => setMainView("calendar")}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                mainView === "calendar" ? "bg-white text-[#111] shadow-sm" : "text-[#6b7280] hover:text-[#111]"
+              }`}
+            >
+              Calendar
+            </button>
+            <button
+              type="button"
+              onClick={() => setMainView("timetable")}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
+                mainView === "timetable" ? "bg-white text-[#111] shadow-sm" : "text-[#6b7280] hover:text-[#111]"
+              }`}
+            >
+              <Grid3X3 size={12} /> Timetable
+            </button>
           </div>
+          {mainView === "calendar" && (
+            <>
+              <h2 className="text-xl font-bold text-[#111] tracking-tight">{MONTHS[month]} {year}</h2>
+              <div className="flex items-center gap-1">
+                <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors"><ChevronLeft size={16} /></button>
+                <button type="button" onClick={goToday} className="text-xs font-medium text-[#6b7280] hover:text-[#111] px-3 py-1.5 rounded-lg hover:bg-[#f5f5f5] transition-colors border border-[#e5e7eb]">Today</button>
+                <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors"><ChevronRight size={16} /></button>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Timetable toggle */}
-          <button
-            onClick={() => setShowTimetable(t => !t)}
-            className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-              showTimetable
-                ? "bg-blue-500/20 border-blue-500/40 text-blue-400"
-                : "border-neutral-700 text-neutral-500 hover:text-white hover:border-neutral-500"
-            }`}
-          >
-            {showTimetable ? "Hide Classes" : "Show Classes"}
-          </button>
+          {mainView === "calendar" && (
+            <button
+              type="button"
+              onClick={() => setShowTimetable((t) => !t)}
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                showTimetable
+                  ? "bg-blue-500/20 border-blue-500/40 text-blue-400"
+                  : "border-neutral-700 text-neutral-500 hover:text-white hover:border-neutral-500"
+              }`}
+            >
+              {showTimetable ? "Hide Classes" : "Show Classes"}
+            </button>
+          )}
 
           <div className="hidden md:flex items-center gap-3">
             {(["class","exam","deadline","personal","assignment","task","holiday"] as const).map(t => (
@@ -449,39 +664,43 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="flex gap-5 items-start">
-        <div className="flex-1 min-w-0 rounded-xl overflow-hidden" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
-          <div className="grid grid-cols-7" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            {WEEKDAYS.map(d => <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>{d}</div>)}
+      {mainView === "timetable" ? (
+        <TimetableGrid entries={timetableInSemester} courses={coursesInSemester} />
+      ) : (
+        <div className="flex gap-5 items-start">
+          <div className="flex-1 min-w-0 rounded-xl overflow-hidden" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+            <div className="grid grid-cols-7" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              {WEEKDAYS.map(d => <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>{d}</div>)}
+            </div>
+            <div className="grid grid-cols-7">
+              {cells.map(cell => {
+                const key   = dateKey(cell);
+                const items = itemsByDate.get(key) ?? [];
+                const inMonth = cell.getMonth() === month;
+                const isSel   = selectedDate ? isSameDay(cell, selectedDate) : false;
+                return <DayCell key={key} date={cell} items={items} isCurrentMonth={inMonth} isSelected={isSel} onClick={() => setSelectedDate(isSel ? null : cell)} onItemClick={item => setSelectedItem(item)} />;
+              })}
+            </div>
           </div>
-          <div className="grid grid-cols-7">
-            {cells.map(cell => {
-              const key   = dateKey(cell);
-              const items = itemsByDate.get(key) ?? [];
-              const inMonth = cell.getMonth() === month;
-              const isSel   = selectedDate ? isSameDay(cell, selectedDate) : false;
-              return <DayCell key={key} date={cell} items={items} isCurrentMonth={inMonth} isSelected={isSel} onClick={() => setSelectedDate(isSel ? null : cell)} onItemClick={item => setSelectedItem(item)} />;
-            })}
-          </div>
-        </div>
 
-        <div className="w-72 flex-shrink-0 hidden lg:block sticky top-6 space-y-4">
-          {selectedDate ? (
-            <DayPanel date={selectedDate} items={selectedItems} onItemClick={item => setSelectedItem(item)} onClose={() => setSelectedDate(null)}
-              onCreateEvent={() => { setDefaultDate(dateKey(selectedDate)); setShowCreate(true); }}
-            />
-          ) : (
-            <UpcomingSidebar items={allItems} onItemClick={item => setSelectedItem(item)} />
-          )}
+          <div className="w-72 flex-shrink-0 hidden lg:block sticky top-6 space-y-4">
+            {selectedDate ? (
+              <DayPanel date={selectedDate} items={selectedItems} onItemClick={item => setSelectedItem(item)} onClose={() => setSelectedDate(null)}
+                onCreateEvent={() => { setDefaultDate(dateKey(selectedDate)); setShowCreate(true); }}
+              />
+            ) : (
+              <UpcomingSidebar items={allItems} onItemClick={item => setSelectedItem(item)} />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="New event" maxWidth={520}>
-        <EventForm courses={courses} defaultDate={defaultDate} onSubmit={async (p) => { await createEvent.mutateAsync(p); setShowCreate(false); }} onCancel={() => setShowCreate(false)} />
+        <EventForm courses={coursesInSemester.length > 0 ? coursesInSemester : (courses ?? [])} defaultDate={defaultDate} onSubmit={async (p) => { await createEvent.mutateAsync(p); setShowCreate(false); }} onCancel={() => setShowCreate(false)} />
       </Modal>
 
       <Modal open={!!editingEvent} onClose={() => setEditingEvent(null)} title="Edit event" maxWidth={520}>
-        {editingEvent && <EventForm initial={editingEvent} courses={courses} onSubmit={async (p) => { await updateEvent.mutateAsync(p); setEditingEvent(null); setSelectedItem(null); }} onCancel={() => setEditingEvent(null)} />}
+        {editingEvent && <EventForm initial={editingEvent} courses={coursesInSemester.length > 0 ? coursesInSemester : (courses ?? [])} onSubmit={async (p) => { await updateEvent.mutateAsync(p); setEditingEvent(null); setSelectedItem(null); }} onCancel={() => setEditingEvent(null)} />}
       </Modal>
 
       <Modal open={!!selectedItem} onClose={() => setSelectedItem(null)} title="" maxWidth={440}>
