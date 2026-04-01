@@ -4,6 +4,7 @@ import {
   LayoutDashboard, BookOpen, GraduationCap,
   ClipboardList, FileText, CheckSquare, Calendar,
   Settings, X, LogOut, PanelLeftClose, PanelLeft,
+  BarChart2,
 } from "lucide-react";
 import { useAuthStore } from "../stores/authStore";
 import { logoutApi } from "../lib/authApi";
@@ -11,13 +12,14 @@ import { useState } from "react";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 
 const mainNav = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true },
-  { label: "Semesters", href: "/semesters", icon: GraduationCap },
-  { label: "Courses", href: "/courses", icon: BookOpen },
-  { label: "Assignments", href: "/assignments", icon: ClipboardList },
-  { label: "Notes", href: "/notes", icon: FileText },
-  { label: "Tasks", href: "/tasks", icon: CheckSquare },
-  { label: "Calendar", href: "/calendar", icon: Calendar },
+  { label: "Dashboard",  href: "/dashboard",  icon: LayoutDashboard, exact: true },
+  { label: "Attendance", href: "/attendance", icon: BarChart2 },
+  { label: "Semesters",  href: "/semesters",  icon: GraduationCap },
+  { label: "Courses",    href: "/courses",    icon: BookOpen },
+  { label: "Assignments",href: "/assignments",icon: ClipboardList },
+  { label: "Notes",      href: "/notes",      icon: FileText },
+  { label: "Tasks",      href: "/tasks",      icon: CheckSquare },
+  { label: "Calendar",   href: "/calendar",   icon: Calendar },
 ];
 
 interface SidebarProps {
@@ -36,7 +38,6 @@ function getInitials(name?: string | null) {
     : ((parts[0][0] ?? "") + (parts[parts.length - 1][0] ?? "")).toUpperCase() || "?";
 }
 
-// ── NavItem is outside Sidebar so framer-motion layoutId works correctly ──
 function NavItem({
   label, href, icon: Icon, exact, isSettings, collapsed, onClose, reduced, layoutKey,
 }: {
@@ -65,31 +66,20 @@ function NavItem({
             reduced ? (
               <span
                 className="absolute inset-0"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  borderLeft: "2px solid rgba(255,255,255,0.7)",
-                }}
+                style={{ background: "rgba(255,255,255,0.06)", borderLeft: "2px solid rgba(255,255,255,0.7)" }}
               />
             ) : (
               <motion.span
                 layoutId={isSettings ? `nav-pill-settings-${layoutKey}` : `nav-pill-${layoutKey}`}
                 className="absolute inset-0"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  borderLeft: "2px solid rgba(255,255,255,0.7)",
-                }}
+                style={{ background: "rgba(255,255,255,0.06)", borderLeft: "2px solid rgba(255,255,255,0.7)" }}
                 transition={{ type: "spring", stiffness: 400, damping: 35 }}
               />
             )
           )}
           <span
             className="relative flex items-center w-full h-full"
-            style={{
-              paddingLeft: 15,
-              paddingRight: 15,
-              justifyContent: "flex-start",
-              gap: 9,
-            }}
+            style={{ paddingLeft: 15, paddingRight: 15, justifyContent: "flex-start", gap: 9 }}
           >
             <div className="flex items-center justify-center flex-shrink-0" style={{ width: 22, height: 22 }}>
               <Icon
@@ -157,14 +147,7 @@ export function Sidebar({
       {/* ── Brand ── */}
       <div
         className="flex items-center flex-shrink-0"
-        style={{
-          height: 44,
-          paddingLeft: 15,
-          paddingRight: 15,
-          justifyContent: "flex-start",
-          gap: 9,
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-        }}
+        style={{ height: 44, paddingLeft: 15, paddingRight: 15, justifyContent: "flex-start", gap: 9, borderBottom: "1px solid rgba(255,255,255,0.05)" }}
       >
         {onToggleCollapse ? (
           <button
@@ -176,37 +159,19 @@ export function Sidebar({
             onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.65)")}
             onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.2)")}
           >
-            {collapsed
-              ? <PanelLeft size={15} strokeWidth={1.6} />
-              : <PanelLeftClose size={15} strokeWidth={1.6} />
-            }
+            {collapsed ? <PanelLeft size={15} strokeWidth={1.6} /> : <PanelLeftClose size={15} strokeWidth={1.6} />}
           </button>
         ) : (
           <div
             className="flex items-center justify-center flex-shrink-0"
-            style={{
-              width: 22, height: 22,
-              background: "rgba(255,255,255,0.9)",
-              borderRadius: 4,
-            }}
+            style={{ width: 22, height: 22, background: "rgba(255,255,255,0.9)", borderRadius: 4 }}
           >
             <span style={{ fontSize: 8, fontWeight: 900, color: "#000", letterSpacing: "-0.05em" }}>SD</span>
           </div>
         )}
 
         {!collapsed && (
-          <span
-            style={{
-              fontSize: 13,
-              fontWeight: 500,
-              color: "rgba(255,255,255,0.6)",
-              letterSpacing: "-0.02em",
-              flex: 1,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <span style={{ fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.6)", letterSpacing: "-0.02em", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             Student Dashboard
           </span>
         )}
@@ -254,28 +219,13 @@ export function Sidebar({
           reduced={reduced}
           layoutKey={layoutKey}
         />
-
-        {/* User row */}
         <div
           className="flex items-center"
-          style={{
-            height: 34,
-            paddingLeft: 15,
-            paddingRight: 15,
-            justifyContent: "flex-start",
-            gap: 9,
-            marginTop: 2,
-          }}
+          style={{ height: 34, paddingLeft: 15, paddingRight: 15, justifyContent: "flex-start", gap: 9, marginTop: 2 }}
         >
           <div
             className="flex items-center justify-center rounded-full flex-shrink-0"
-            style={{
-              width: 22, height: 22,
-              background: "rgba(255,255,255,0.07)",
-              color: "rgba(255,255,255,0.45)",
-              fontSize: 10,
-              fontWeight: 600,
-            }}
+            style={{ width: 22, height: 22, background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.45)", fontSize: 10, fontWeight: 600 }}
           >
             {getInitials(user?.name)}
           </div>
@@ -283,18 +233,7 @@ export function Sidebar({
           {!collapsed && (
             <>
               <div className="flex-1 min-w-0">
-                <p
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 400,
-                    color: "rgba(255,255,255,0.5)",
-                    letterSpacing: "-0.01em",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    lineHeight: 1,
-                  }}
-                >
+                <p style={{ fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.5)", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1 }}>
                   {user?.name ?? "User"}
                 </p>
               </div>

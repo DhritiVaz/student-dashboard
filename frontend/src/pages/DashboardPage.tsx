@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueries } from "@tanstack/react-query";
 import {
   Plus, ArrowRight, BookOpen, ClipboardList, FileText,
-  CalendarDays, CheckSquare, Clock, Layers,
+  CalendarDays, CheckSquare, Clock, Layers, BarChart2,
 } from "lucide-react";
 import { useAuthStore } from "../stores/authStore";
 import { Modal } from "../components/ui/Modal";
@@ -16,6 +16,7 @@ import { useAssignments, useCreateAssignment, deriveStatus } from "../hooks/api/
 import { useTasks, useCreateTask } from "../hooks/api/tasks";
 import { useNotes } from "../hooks/api/notes";
 import { useEvents } from "../hooks/api/events";
+import { useVtopAttendance } from "../hooks/api/vtop";
 import { api } from "../lib/api";
 import VtopSync from "../components/vtop/VtopSync";
 
@@ -58,7 +59,6 @@ function relDue(iso: string): { label: string; cls: string } {
   return { label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), cls: "text-zinc-500 bg-zinc-500/10 border-zinc-500/20" };
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({ icon, label, value, sub, loading, to, accent }: {
   icon: React.ReactNode; label: string; value: string | null;
   sub: string; loading?: boolean; to?: string; accent?: string;
@@ -107,7 +107,6 @@ function StatCard({ icon, label, value, sub, loading, to, accent }: {
   return <div>{inner}</div>;
 }
 
-// ─── Mini Calendar ────────────────────────────────────────────────────────────
 const MINI_WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
 function MiniCalendar({ activeDays }: { activeDays: Set<string> }) {
@@ -155,15 +154,13 @@ function MiniCalendar({ activeDays }: { activeDays: Set<string> }) {
   );
 }
 
-// ─── Card wrapper ─────────────────────────────────────────────────────────────
-function Card({ title, icon, action, children, fillBody, noPad }: {
+function Card({ title, icon, action, children, fillBody }: {
   title: string; icon: React.ReactNode; action?: React.ReactNode;
-  children: React.ReactNode; fillBody?: boolean; noPad?: boolean;
+  children: React.ReactNode; fillBody?: boolean;
 }) {
   return (
     <div className="flex flex-col min-h-0 rounded-xl overflow-hidden"
       style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}>
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 flex-shrink-0"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div className="flex items-center gap-2">
@@ -174,13 +171,12 @@ function Card({ title, icon, action, children, fillBody, noPad }: {
       </div>
       {fillBody
         ? <div className="flex-1 flex flex-col min-h-0 overflow-hidden">{children}</div>
-        : <div className={noPad ? "" : ""}>{children}</div>
+        : <div>{children}</div>
       }
     </div>
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const navigate  = useNavigate();
   const { user }  = useAuthStore();
@@ -191,6 +187,13 @@ export default function DashboardPage() {
   const { data: assignments, isLoading: loadingA } = useAssignments();
   const { data: tasks,       isLoading: loadingT } = useTasks();
   const { data: notes,       isLoading: loadingN } = useNotes();
+
+  const { data: attendance, fetch: fetchAttendance } = useVtopAttendance();
+  useEffect(() => { fetchAttendance(); }, []);
+
+  const overallAttendance = attendance?.length
+    ? attendance.reduce((s, r) => s + r.attendancePercent, 0) / attendance.length
+    : null;
 
   const today      = new Date();
   const monthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`;
@@ -223,18 +226,7 @@ export default function DashboardPage() {
     })),
   });
 
-  const overallGpa = useMemo(() => {
-    const valid = gpaResults
-      .map((q, i) => ({ gpa: q.data?.gpa, credits: semesterCourses[i]?.credits }))
-      .filter((e): e is { gpa: number; credits: number } => e.gpa != null && e.credits != null);
-    if (!valid.length) return null;
-    const totalCredits = valid.reduce((s, e) => s + e.credits, 0);
-    const weightedSum  = valid.reduce((s, e) => s + e.gpa * e.credits, 0);
-    return totalCredits > 0 ? weightedSum / totalCredits : null;
-  }, [gpaResults, semesterCourses]);
-
-  const gpaLoading = gpaResults.some(q => q.isLoading) || loadingC || loadingS;
-  const now        = Date.now();
+  const now = Date.now();
 
   const weekStart = new Date(today); weekStart.setDate(today.getDate() - today.getDay()); weekStart.setHours(0,0,0,0);
   const weekEnd   = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6); weekEnd.setHours(23,59,59,999);
@@ -321,11 +313,12 @@ export default function DashboardPage() {
           sub={currentSemester ? `${semesterCourses.length} courses` : "Create one to start"}
           loading={loadingS || loadingC} to="/semesters" />
         <StatCard
-          icon={<BookOpen size={13} style={{ color: "#60a5fa" }} strokeWidth={1.8} />}
-          label="GPA" value={overallGpa != null ? overallGpa.toFixed(2) : "—"}
-          sub={overallGpa != null ? "Weighted average" : "No grades yet"}
-          loading={gpaLoading} to="/courses"
-          accent="rgba(96,165,250,0.12)" />
+          icon={<BarChart2 size={13} style={{ color: "#4ade80" }} strokeWidth={1.8} />}
+          label="Attendance"
+          value={overallAttendance != null ? `${overallAttendance.toFixed(1)}%` : "—"}
+          sub={overallAttendance != null ? "Overall average" : "Sync VTOP to see"}
+          to="/attendance"
+          accent="rgba(74,222,128,0.12)" />
         <StatCard
           icon={<CheckSquare size={13} style={{ color: "#34d399" }} strokeWidth={1.8} />}
           label="Tasks" value={loadingT ? null : `${completedThisWeek}/${tasksThisWeek.length}`}
@@ -430,10 +423,7 @@ export default function DashboardPage() {
                   onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{note.title || "Untitled"}</p>
-                    {note.course && (
-                      <span className="text-[10px] font-medium"
-                        style={{ color: "rgba(255,255,255,0.3)" }}>{note.course.code}</span>
-                    )}
+                    {note.course && <span className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.3)" }}>{note.course.code}</span>}
                   </div>
                   <span className="text-[11px] flex-shrink-0" style={{ color: "rgba(255,255,255,0.2)" }}>{modLabel}</span>
                 </Link>
@@ -445,8 +435,6 @@ export default function DashboardPage() {
 
       {/* ── Bottom row ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        {/* Mini Calendar */}
         <Card fillBody
           title={new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
           icon={<CalendarDays size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}
@@ -462,7 +450,6 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* Quick Actions */}
         <Card title="Quick Actions"
           icon={<Plus size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}>
           <div className="p-4 grid grid-cols-2 gap-2">
@@ -475,14 +462,8 @@ export default function DashboardPage() {
               <button key={label} onClick={onClick}
                 className="flex items-center gap-3 rounded-lg px-3 py-3 text-left transition-all duration-150"
                 style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.07)" }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "#1f1f1f";
-                  (e.currentTarget as HTMLButtonElement).style.border = "1px solid rgba(255,255,255,0.12)";
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "#1a1a1a";
-                  (e.currentTarget as HTMLButtonElement).style.border = "1px solid rgba(255,255,255,0.07)";
-                }}>
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "#1f1f1f"; (e.currentTarget as HTMLButtonElement).style.border = "1px solid rgba(255,255,255,0.12)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "#1a1a1a"; (e.currentTarget as HTMLButtonElement).style.border = "1px solid rgba(255,255,255,0.07)"; }}>
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                   style={{ background: accent, border: `1px solid ${accentBorder}` }}>
                   {icon}

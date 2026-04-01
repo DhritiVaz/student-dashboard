@@ -118,7 +118,7 @@ function DayCell({ date, items, isCurrentMonth, isSelected, onClick, onItemClick
     >
       <div className="flex justify-end mb-1">
         <span
-          className="text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full transition-colors duration-100"
+          className="text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full"
           style={today ? { background: "rgba(255,255,255,0.9)", color: "#0a0a0a", fontWeight: 700 } : { color: "rgba(255,255,255,0.4)" }}
         >
           {date.getDate()}
@@ -129,9 +129,8 @@ function DayCell({ date, items, isCurrentMonth, isSelected, onClick, onItemClick
           <EventPill key={`${item.type}-${item.id}`} item={item} onClick={() => onItemClick(item)} />
         ))}
         {overflow > 0 && (
-          <button
-            onClick={e => { e.stopPropagation(); onClick(); }}
-            className="text-[10px] pl-1.5 transition-colors"
+          <button onClick={e => { e.stopPropagation(); onClick(); }}
+            className="text-[10px] pl-1.5"
             style={{ color: "rgba(255,255,255,0.3)" }}
             onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
             onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
@@ -187,9 +186,7 @@ function DayPanel({ date, items, onItemClick, onClose, onCreateEvent }: {
                   )}
                 </div>
                 {linkTo && (
-                  <Link to={linkTo} onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "rgba(255,255,255,0.3)" }}
-                    onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-                    onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+                  <Link to={linkTo} onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "rgba(255,255,255,0.3)" }}>
                     <ExternalLink size={11} />
                   </Link>
                 )}
@@ -206,11 +203,11 @@ function DayPanel({ date, items, onItemClick, onClose, onCreateEvent }: {
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>{panelLabel}</span>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={onCreateEvent} aria-label="Add event" className="p-1 rounded-lg transition-colors" style={{ color: "rgba(255,255,255,0.3)" }}
+          <button type="button" onClick={onCreateEvent} className="p-1 rounded-lg" style={{ color: "rgba(255,255,255,0.3)" }}
             onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")} onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
             <Plus size={14} />
           </button>
-          <button type="button" onClick={onClose} aria-label="Close" className="p-1 rounded-lg transition-colors" style={{ color: "rgba(255,255,255,0.3)" }}
+          <button type="button" onClick={onClose} className="p-1 rounded-lg" style={{ color: "rgba(255,255,255,0.3)" }}
             onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")} onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
             <X size={14} />
           </button>
@@ -237,12 +234,8 @@ function UpcomingSidebar({ items, onItemClick }: { items: CalItem[]; onItemClick
     .filter(i => new Date(i.dateKey) >= new Date(dateKey(now)))
     .sort((a, b) => a.sortTime - b.sortTime)
     .slice(0, 10);
-
   const byDate = new Map<string, CalItem[]>();
-  next10.forEach(i => {
-    if (!byDate.has(i.dateKey)) byDate.set(i.dateKey, []);
-    byDate.get(i.dateKey)!.push(i);
-  });
+  next10.forEach(i => { if (!byDate.has(i.dateKey)) byDate.set(i.dateKey, []); byDate.get(i.dateKey)!.push(i); });
 
   function dateLabel(key: string) {
     const d = new Date(key + "T00:00:00");
@@ -273,14 +266,9 @@ function UpcomingSidebar({ items, onItemClick }: { items: CalItem[]; onItemClick
                       <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotStyle ? "" : s.dot}`} style={dotStyle} />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-[#111] truncate">{item.title}</p>
-                        <p className="text-[10px] text-[#9ca3af]">
-                          {item.time ?? (item.isAllDay ? "All day" : "")}
-                          {item.courseCode && ` · ${item.courseCode}`}
-                        </p>
+                        <p className="text-[10px] text-[#9ca3af]">{item.time ?? (item.isAllDay ? "All day" : "")}{item.courseCode && ` · ${item.courseCode}`}</p>
                       </div>
-                      <span className={`text-[9px] font-semibold border rounded-full px-1.5 py-0.5 flex-shrink-0 ${s.text} ${s.bg} ${s.border}`}>
-                        {s.label}
-                      </span>
+                      <span className={`text-[9px] font-semibold border rounded-full px-1.5 py-0.5 flex-shrink-0 ${s.text} ${s.bg} ${s.border}`}>{s.label}</span>
                     </button>
                   );
                 })}
@@ -299,7 +287,6 @@ function EventDetailModal({ item, onEdit, onDelete, onClose, deleting }: {
   const s = getStyle(item.type, item.eventType, item.customColor);
   const dotStyle = item.customColor ? { background: item.customColor } : undefined;
   const ev = item.rawEvent;
-
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-3">
@@ -320,22 +307,16 @@ function EventDetailModal({ item, onEdit, onDelete, onClose, deleting }: {
           {ev.description && <p className="text-sm text-[#6b7280] leading-relaxed border-t border-[#f0f0f0] pt-3">{ev.description}</p>}
         </div>
       )}
-      {item.type !== "event" && (
-        <p className="text-sm text-[#6b7280]">{item.type === "assignment" ? "Assignment due" : "Task due"} — {fmtShortDate(item.dateKey)}</p>
-      )}
+      {item.type !== "event" && <p className="text-sm text-[#6b7280]">{item.type === "assignment" ? "Assignment due" : "Task due"} — {fmtShortDate(item.dateKey)}</p>}
       <div className="flex items-center justify-between pt-2 border-t border-[#f0f0f0]">
         <div className="flex items-center gap-2">
           {item.type === "event" && item.rawEvent && (
             <>
               <Button variant="secondary" size="sm" onClick={onEdit}><Pencil size={13} /> Edit</Button>
-              <Button variant="ghost" size="sm" loading={deleting} onClick={onDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50">
-                <Trash2 size={13} /> Delete
-              </Button>
+              <Button variant="ghost" size="sm" loading={deleting} onClick={onDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50"><Trash2 size={13} /> Delete</Button>
             </>
           )}
-          {item.type === "assignment" && (
-            <Link to={`/assignments/${item.id}`}><Button variant="secondary" size="sm"><ExternalLink size={13} /> View assignment</Button></Link>
-          )}
+          {item.type === "assignment" && <Link to={`/assignments/${item.id}`}><Button variant="secondary" size="sm"><ExternalLink size={13} /> View assignment</Button></Link>}
         </div>
         <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
       </div>
@@ -353,6 +334,7 @@ export default function CalendarPage() {
   const [showCreate,    setShowCreate]    = useState(false);
   const [defaultDate,   setDefaultDate]   = useState<string | undefined>();
   const [showDeleteId,  setShowDeleteId]  = useState<string | null>(null);
+  const [showTimetable, setShowTimetable] = useState(true);
 
   const cells      = useMemo(() => getCalendarCells(year, month), [year, month]);
   const rangeStart = dateKey(cells[0]);
@@ -365,10 +347,7 @@ export default function CalendarPage() {
   const { data: academicEvents, fetch: fetchAcademicEvents } = useVtopAcademicEvents();
   const { data: timetable, fetch: fetchTimetable } = useVtopTimetable();
 
-  useEffect(() => {
-    fetchAcademicEvents();
-    fetchTimetable();
-  }, []);
+  useEffect(() => { fetchAcademicEvents(); fetchTimetable(); }, []);
 
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent(editingEvent?.id ?? "");
@@ -383,15 +362,7 @@ export default function CalendarPage() {
 
     events.forEach(e => {
       const key = e.startDate.slice(0, 10);
-      add(key, {
-        id: e.id, title: e.title, dateKey: key,
-        sortTime: new Date(e.startDate).getTime(),
-        type: "event", eventType: e.eventType, customColor: e.color,
-        isAllDay: e.isAllDay,
-        time: e.isAllDay ? undefined : fmtTime(e.startDate),
-        courseCode: e.course?.code,
-        rawEvent: e,
-      });
+      add(key, { id: e.id, title: e.title, dateKey: key, sortTime: new Date(e.startDate).getTime(), type: "event", eventType: e.eventType, customColor: e.color, isAllDay: e.isAllDay, time: e.isAllDay ? undefined : fmtTime(e.startDate), courseCode: e.course?.code, rawEvent: e });
     });
 
     assignments.forEach(a => {
@@ -406,57 +377,34 @@ export default function CalendarPage() {
       add(key, { id: t.id, title: t.title, dateKey: key, sortTime: new Date(t.dueDate).getTime(), type: "task", courseCode: t.course?.code });
     });
 
-    // Academic calendar events (holidays + exams only)
     academicEvents.forEach(e => {
       const key = e.date.slice(0, 10);
       const isHoliday = e.eventType.toLowerCase().includes("holiday");
       const isExam = e.eventType.toLowerCase().includes("cat") || e.eventType.toLowerCase().includes("exam") || e.eventType.toLowerCase().includes("fat");
       if (!isHoliday && !isExam) return;
-      add(key, {
-        id: e.id,
-        title: e.eventType + (e.label ? ` ${e.label}` : ""),
-        dateKey: key,
-        sortTime: new Date(key).getTime(),
-        type: "event",
-        eventType: "personal" as EventType,
-        customColor: isHoliday ? "#10b981" : "#ef4444",
-      });
+      add(key, { id: e.id, title: e.eventType + (e.label ? ` ${e.label}` : ""), dateKey: key, sortTime: new Date(key).getTime(), type: "event", eventType: "personal" as EventType, customColor: isHoliday ? "#10b981" : "#ef4444" });
     });
 
-    // Timetable — recurring weekly classes for current month view
-    timetable.forEach(entry => {
-      cells.forEach(cell => {
-        if (cell.getDay() !== entry.dayOfWeek) return;
-        if (cell.getMonth() !== month) return;
-        const key = dateKey(cell);
-        const [sh, sm] = entry.startTime.split(":").map(Number);
-        add(key, {
-          id: `${entry.id}-${key}`,
-          title: `${entry.courseCode} (${entry.slot})`,
-          dateKey: key,
-          sortTime: new Date(cell).setHours(sh, sm),
-          type: "event",
-          eventType: "class" as EventType,
-          time: `${entry.startTime} – ${entry.endTime}`,
-          courseCode: entry.courseCode,
+    if (showTimetable) {
+      timetable.forEach(entry => {
+        cells.forEach(cell => {
+          if (cell.getDay() !== entry.dayOfWeek) return;
+          if (cell.getMonth() !== month) return;
+          const key = dateKey(cell);
+          const [sh, sm] = entry.startTime.split(":").map(Number);
+          add(key, { id: `${entry.id}-${key}`, title: `${entry.courseCode} (${entry.slot})`, dateKey: key, sortTime: new Date(cell).setHours(sh, sm), type: "event", eventType: "class" as EventType, time: `${entry.startTime} – ${entry.endTime}`, courseCode: entry.courseCode });
         });
       });
-    });
+    }
 
     map.forEach((v, k) => map.set(k, v.sort((a, b) => a.sortTime - b.sortTime)));
     return map;
-  }, [events, assignments, tasks, academicEvents, timetable, cells, month]);
+  }, [events, assignments, tasks, academicEvents, timetable, cells, month, showTimetable]);
 
   const allItems = useMemo(() => [...itemsByDate.values()].flat(), [itemsByDate]);
 
-  function prevMonth() {
-    if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1);
-    setSelectedDate(null);
-  }
-  function nextMonth() {
-    if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1);
-    setSelectedDate(null);
-  }
+  function prevMonth() { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); setSelectedDate(null); }
+  function nextMonth() { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); setSelectedDate(null); }
   function goToday() { setYear(today.getFullYear()); setMonth(today.getMonth()); setSelectedDate(today); }
 
   const selectedItems = selectedDate ? (itemsByDate.get(dateKey(selectedDate)) ?? []) : [];
@@ -472,7 +420,20 @@ export default function CalendarPage() {
             <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors"><ChevronRight size={16} /></button>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-3">
+          {/* Timetable toggle */}
+          <button
+            onClick={() => setShowTimetable(t => !t)}
+            className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+              showTimetable
+                ? "bg-blue-500/20 border-blue-500/40 text-blue-400"
+                : "border-neutral-700 text-neutral-500 hover:text-white hover:border-neutral-500"
+            }`}
+          >
+            {showTimetable ? "Hide Classes" : "Show Classes"}
+          </button>
+
           <div className="hidden md:flex items-center gap-3">
             {(["class","exam","deadline","personal","assignment","task","holiday"] as const).map(t => (
               <span key={t} className="flex items-center gap-1 text-[10px] text-[#9ca3af]">
@@ -481,6 +442,7 @@ export default function CalendarPage() {
               </span>
             ))}
           </div>
+
           <Button size="sm" onClick={() => { setDefaultDate(undefined); setShowCreate(true); }}>
             <Plus size={14} /> New event
           </Button>
@@ -490,9 +452,7 @@ export default function CalendarPage() {
       <div className="flex gap-5 items-start">
         <div className="flex-1 min-w-0 rounded-xl overflow-hidden" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
           <div className="grid grid-cols-7" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            {WEEKDAYS.map(d => (
-              <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>{d}</div>
-            ))}
+            {WEEKDAYS.map(d => <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>{d}</div>)}
           </div>
           <div className="grid grid-cols-7">
             {cells.map(cell => {
@@ -500,20 +460,14 @@ export default function CalendarPage() {
               const items = itemsByDate.get(key) ?? [];
               const inMonth = cell.getMonth() === month;
               const isSel   = selectedDate ? isSameDay(cell, selectedDate) : false;
-              return (
-                <DayCell key={key} date={cell} items={items} isCurrentMonth={inMonth} isSelected={isSel}
-                  onClick={() => setSelectedDate(isSel ? null : cell)}
-                  onItemClick={item => setSelectedItem(item)}
-                />
-              );
+              return <DayCell key={key} date={cell} items={items} isCurrentMonth={inMonth} isSelected={isSel} onClick={() => setSelectedDate(isSel ? null : cell)} onItemClick={item => setSelectedItem(item)} />;
             })}
           </div>
         </div>
 
         <div className="w-72 flex-shrink-0 hidden lg:block sticky top-6 space-y-4">
           {selectedDate ? (
-            <DayPanel date={selectedDate} items={selectedItems} onItemClick={item => setSelectedItem(item)}
-              onClose={() => setSelectedDate(null)}
+            <DayPanel date={selectedDate} items={selectedItems} onItemClick={item => setSelectedItem(item)} onClose={() => setSelectedDate(null)}
               onCreateEvent={() => { setDefaultDate(dateKey(selectedDate)); setShowCreate(true); }}
             />
           ) : (
@@ -523,19 +477,11 @@ export default function CalendarPage() {
       </div>
 
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="New event" maxWidth={520}>
-        <EventForm courses={courses} defaultDate={defaultDate}
-          onSubmit={async (p) => { await createEvent.mutateAsync(p); setShowCreate(false); }}
-          onCancel={() => setShowCreate(false)}
-        />
+        <EventForm courses={courses} defaultDate={defaultDate} onSubmit={async (p) => { await createEvent.mutateAsync(p); setShowCreate(false); }} onCancel={() => setShowCreate(false)} />
       </Modal>
 
       <Modal open={!!editingEvent} onClose={() => setEditingEvent(null)} title="Edit event" maxWidth={520}>
-        {editingEvent && (
-          <EventForm initial={editingEvent} courses={courses}
-            onSubmit={async (p) => { await updateEvent.mutateAsync(p); setEditingEvent(null); setSelectedItem(null); }}
-            onCancel={() => setEditingEvent(null)}
-          />
-        )}
+        {editingEvent && <EventForm initial={editingEvent} courses={courses} onSubmit={async (p) => { await updateEvent.mutateAsync(p); setEditingEvent(null); setSelectedItem(null); }} onCancel={() => setEditingEvent(null)} />}
       </Modal>
 
       <Modal open={!!selectedItem} onClose={() => setSelectedItem(null)} title="" maxWidth={440}>
@@ -543,8 +489,7 @@ export default function CalendarPage() {
           <EventDetailModal item={selectedItem}
             onEdit={() => { if (selectedItem.rawEvent) { setEditingEvent(selectedItem.rawEvent); setSelectedItem(null); } }}
             onDelete={() => { if (selectedItem.rawEvent) setShowDeleteId(selectedItem.rawEvent.id); }}
-            onClose={() => setSelectedItem(null)}
-            deleting={deleteEvent.isPending}
+            onClose={() => setSelectedItem(null)} deleting={deleteEvent.isPending}
           />
         )}
       </Modal>
