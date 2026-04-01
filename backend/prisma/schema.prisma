@@ -250,6 +250,7 @@ model VtopAttendance {
   conducted         Int
   attended          Int
   attendancePercent Float
+  semesterLabel     String?   // ← ADD THIS
   syncedAt          DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

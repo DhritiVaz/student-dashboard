@@ -22,7 +22,6 @@ const TIMEOUT = 60000;
 interface VtopSession { browser: any; page: any; createdAt: number; }
 const sessions = new Map<string, VtopSession>();
 
-/** Captcha on VTOP is bound to this browser tab; keep alive long enough to type + sync. */
 const CAPTCHA_BROWSER_TTL_MS = 25 * 60 * 1000;
 
 function clearSession(userId: string) {
@@ -108,7 +107,7 @@ export async function syncVtopData(userId: string, username: string, password: s
     const captchaTrimmed = captchaStr?.trim();
     if (captchaTrimmed && !reusedCaptchaBrowser) {
       throw new Error(
-        "VTOP captcha only works for the same browser session that showed the image. Click “Connect VTOP” again, enter the new captcha, then “Sync Now” (do not wait longer than ~25 minutes)."
+        'VTOP captcha only works for the same browser session that showed the image. Click "Connect VTOP" again, enter the new captcha, then "Sync Now" (do not wait longer than ~25 minutes).'
       );
     }
 
@@ -140,32 +139,37 @@ export async function syncVtopData(userId: string, username: string, password: s
     if (authFailureHints.test(bodyText)) {
       if (/captcha|mismatch|wrong/i.test(bodyText)) {
         throw new Error(
-          "VTOP rejected the login (often wrong or expired captcha). Click “Refresh Captcha”, enter it again, and sync immediately."
+          'VTOP rejected the login (often wrong or expired captcha). Click "Refresh Captcha", enter it again, and sync immediately.'
         );
       }
       throw new Error("Invalid VTOP credentials or login blocked. Check username, password, and captcha.");
     }
     if (onLoginUrl) {
       throw new Error(
-        "VTOP kept you on the login page. Refresh captcha, try again, or click “Connect VTOP” if your session expired."
+        'VTOP kept you on the login page. Refresh captcha, try again, or click "Connect VTOP" if your session expired.'
       );
     }
 
     await gotoAuthenticatedVtopShell(page);
     const authorizedID = await readAuthorizedIdFromPage(page, username.trim().toUpperCase());
 
-    // Detect semester ID dynamically
     const semesterSubId = getDefaultSemesterSubId();
     console.log("Using semesterSubId:", semesterSubId, "authorizedID:", authorizedID);
 
     const semesterOptions = await discoverVtopSemesterOptions(page, authorizedID, semesterSubId);
     console.log(
-      "[VTOP] Semester dropdown / fallback options:",
+      "[VTOP] Semester dropdown options:",
       semesterOptions.length,
-      semesterOptions.map((o) => o.value).join(", ")
+      semesterOptions.map((o) => `${o.value} = "${o.label}"`).join(", ")
     );
 
-    const attendanceCount = await scrapeAttendance(page, userId, authorizedID, semesterSubId);
+    // Derive human label for the current semester
+    const currentSemOption = semesterOptions.find(o => o.value === semesterSubId);
+    const currentSemLabel = currentSemOption
+      ? normVtopSemesterLabel(currentSemOption.label)
+      : semesterSubId;
+
+    const attendanceCount = await scrapeAttendance(page, userId, authorizedID, semesterSubId, currentSemLabel);
     const timetableCount = await scrapeTimetable(page, userId, authorizedID, semesterOptions, semesterSubId);
     const gradesCount = await scrapeGrades(page, userId, authorizedID, semesterOptions, semesterSubId);
     await applyTimetableSemesterFallback(userId);
@@ -201,11 +205,11 @@ function getDefaultSemesterSubId(): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
-  const shortYear = String(year).slice(2); // "26"
-  const prevYear = year - 1;              // 2025
+  const shortYear = String(year).slice(2);
+  const prevYear = year - 1;
 
   if (month >= 1 && month <= 5) {
-    return `CH${prevYear}${shortYear}05`;  // CH202526 05
+    return `CH${prevYear}${shortYear}05`;
   } else {
     return `CH${year}${shortYear}15`;
   }
@@ -266,7 +270,13 @@ async function fetchWithSession(page: any, url: string, body: URLSearchParams, c
   }, url, body.toString(), cookieStr);
 }
 
-async function scrapeAttendance(page: any, userId: string, authorizedID: string, semesterSubId: string): Promise<number> {
+async function scrapeAttendance(
+  page: any,
+  userId: string,
+  authorizedID: string,
+  semesterSubId: string,
+  semesterLabel: string
+): Promise<number> {
   try {
     const { csrf, cookieStr } = await getCsrfAndCookies(page);
     const body = new URLSearchParams({ _csrf: csrf, semesterSubId, authorizedID, x: new Date().toUTCString() });
@@ -298,6 +308,7 @@ async function scrapeAttendance(page: any, userId: string, authorizedID: string,
           attended: r.attended,
           conducted: r.conducted,
           attendancePercent: r.attendancePercent,
+          semesterLabel,
           syncedAt: new Date(),
         },
         create: {
@@ -308,15 +319,15 @@ async function scrapeAttendance(page: any, userId: string, authorizedID: string,
           attended: r.attended,
           conducted: r.conducted,
           attendancePercent: r.attendancePercent,
+          semesterLabel,
         },
       });
     }
-    console.log("Attendance synced:", rows.length);
+    console.log("Attendance synced:", rows.length, "semesterLabel:", semesterLabel);
     return rows.length;
   } catch (err) { console.error("Attendance scrape failed:", err); return 0; }
 }
 
-/** Semester IDs to try for grade history (current from calendar + recent terms). */
 function buildSemSubIdCandidates(primary: string): string[] {
   const set = new Set<string>();
   const add = (s: string) => {
@@ -383,7 +394,6 @@ async function persistVtopGradeMetrics(userId: string, parsed: ParsedGradeHistor
   }
 }
 
-/** VTOP CC (vtopcc.vit.ac.in): grade history lives under examinations/, not processViewStudentGradeHistory. */
 const EXAM_GRADE_HISTORY_PATH = "examinations/examGradeView/StudentGradeHistory";
 const EXAM_MARK_VIEW_PATH = "examinations/StudentMarkView";
 
@@ -403,7 +413,6 @@ function buildExamVerifyMenuBody(csrf: string, authorizedID: string): URLSearchP
   });
 }
 
-/** POST to a path under VTOP_BASE (e.g. examinations/... or processView...). */
 async function postVtopForm(
   page: any,
   pathUnderVtop: string,
@@ -476,6 +485,39 @@ async function fetchTimetableHtmlString(
   );
 }
 
+async function readTimetableDropdownFromPage(page: any): Promise<VtopSemesterOption[]> {
+  try {
+    await page.goto(`${VTOP_BASE}/content`, { waitUntil: "domcontentloaded" });
+    await new Promise(r => setTimeout(r, 1500));
+
+    await page.evaluate(() => {
+      const links = Array.from(document.querySelectorAll("a"));
+      const tt = links.find(a => /time\s*table/i.test(a.textContent ?? ""));
+      if (tt) (tt as HTMLElement).click();
+    });
+    await new Promise(r => setTimeout(r, 2000));
+
+    const options = await page.evaluate(() => {
+      const selects = Array.from(document.querySelectorAll("select"));
+      for (const sel of selects) {
+        const opts = Array.from(sel.options).filter(
+          o => o.value?.trim() && !/^(choose|select|--)/i.test(o.text.trim())
+        );
+        if (opts.length >= 1) {
+          return opts.map(o => ({ value: o.value.trim(), label: o.text.trim() }));
+        }
+      }
+      return [];
+    });
+
+    console.log("[VTOP] readTimetableDropdownFromPage found:", options.length, "options");
+    return options as VtopSemesterOption[];
+  } catch (err) {
+    console.warn("[VTOP] readTimetableDropdownFromPage failed:", err);
+    return [];
+  }
+}
+
 async function discoverVtopSemesterOptions(
   page: any,
   authorizedID: string,
@@ -484,6 +526,7 @@ async function discoverVtopSemesterOptions(
   const { csrf, cookieStr } = await getCsrfAndCookies(page);
   const map = new Map<string, string>();
 
+  // Try grade history HTML for dropdown options
   for (const mode of ["bare", "ajax"] as const) {
     const b = buildExamVerifyMenuBody(csrf, authorizedID);
     const h = await postVtopForm(page, EXAM_GRADE_HISTORY_PATH, b, cookieStr, mode);
@@ -493,6 +536,7 @@ async function discoverVtopSemesterOptions(
     }
   }
 
+  // Try timetable POST response HTML
   try {
     const tHtml = await fetchTimetableHtmlString(page, csrf, cookieStr, authorizedID, primarySemesterSubId);
     if (tHtml && tHtml.length > 500) {
@@ -504,13 +548,32 @@ async function discoverVtopSemesterOptions(
     /* ignore */
   }
 
+  // Check if any labels are still raw IDs (value === label) — if so, enrich from live DOM
+  const hasRawLabels = [...map.entries()].some(([v, l]) => v === l);
+  if (map.size === 0 || hasRawLabels) {
+    const fromPage = await readTimetableDropdownFromPage(page);
+    if (fromPage.length > 0) {
+      for (const o of fromPage) {
+        map.set(o.value, o.label);
+      }
+    }
+  }
+
+  // Last resort: use candidate IDs (no human labels, but at least we try)
   if (map.size === 0) {
     for (const id of buildSemSubIdCandidates(primarySemesterSubId)) {
       map.set(id, id);
     }
   }
 
-  return [...map.entries()].map(([value, label]) => ({ value, label }));
+  // FIX: Filter out entries where the label is still a raw CH ID — these were never
+  // resolved to a human-readable name and would create junk semester entries.
+  const resolved = [...map.entries()].filter(([, label]) => !/^CH\d{8,}/i.test(label));
+
+  // If filtering removed everything (extreme fallback case), keep all entries
+  const finalEntries = resolved.length > 0 ? resolved : [...map.entries()];
+
+  return finalEntries.map(([value, label]) => ({ value, label }));
 }
 
 async function fetchExamGradeHistoryForSemester(
@@ -546,41 +609,81 @@ async function fetchExamGradeHistoryForSemester(
 }
 
 async function applyTimetableSemesterFallback(userId: string): Promise<void> {
-  const tt = await prisma.vtopTimetable.findMany({
-    where: { userId, semesterLabel: { not: null } },
+  const timetable = await prisma.vtopTimetable.findMany({
+    where: { userId },
   });
-  const codeToSem = new Map<string, string>();
-  for (const t of tt) {
-    const lbl = normVtopSemesterLabel(t.semesterLabel ?? "");
-    if (lbl === "Unknown") continue;
-    if (!codeToSem.has(t.courseCode)) codeToSem.set(t.courseCode, lbl);
+  console.log("---- TIMETABLE CODES ----");
+  for (const t of timetable.slice(0, 10)) {
+    console.log("TT:", `"${t.courseCode}"`, "|", t.semesterLabel);
   }
-  if (codeToSem.size === 0) return;
 
-  const grades = await prisma.vtopGrade.findMany({ where: { userId } });
-  for (const g of grades) {
-    const cur = normVtopSemesterLabel(g.semesterLabel);
-    if (cur !== "Unknown") continue;
-    const target = codeToSem.get(g.courseCode);
-    if (!target || target === "Unknown") continue;
+  const courseToSemester = new Map<string, string>();
 
-    const duplicate = await prisma.vtopGrade.findFirst({
-      where: {
-        userId,
-        courseCode: g.courseCode,
-        semesterLabel: target,
-        NOT: { id: g.id },
-      },
-    });
-    if (duplicate) {
-      await prisma.vtopGrade.delete({ where: { id: g.id } });
-      continue;
+  // Build mapping from timetable
+  for (const t of timetable) {
+    if (!t.semesterLabel) continue;
+
+    const label = normVtopSemesterLabel(t.semesterLabel);
+    if (label === "Unknown") continue;
+
+    const normCode = normalizeCode(t.courseCode);
+
+    if (!courseToSemester.has(normCode)) {
+      courseToSemester.set(normCode, label);
     }
-    await prisma.vtopGrade.update({
-      where: { id: g.id },
-      data: { semesterLabel: target },
-    });
   }
+
+  console.log("Mapped timetable courses:", courseToSemester.size);
+
+  const grades = await prisma.vtopGrade.findMany({
+    where: { userId },
+  });
+  console.log("---- GRADE CODES ----");
+for (const g of grades.slice(0, 10)) {
+  console.log("GR:", `"${g.courseCode}"`, "|", g.semesterLabel);
+}
+
+  for (const g of grades) {
+    const current = normVtopSemesterLabel(g.semesterLabel);
+
+    const normCode = normalizeCode(g.courseCode);
+const mappedSemester = courseToSemester.get(normCode);
+
+console.log(
+  "MATCH CHECK:",
+  g.courseCode,
+  "→",
+  normCode,
+  "→",
+  mappedSemester
+);
+
+    if (!mappedSemester) continue;
+
+    // AFTER
+const duplicate = await prisma.vtopGrade.findFirst({
+  where: {
+    userId,
+    courseCode: g.courseCode,
+    semesterLabel: mappedSemester,
+    NOT: { id: g.id },
+  },
+});
+
+if (duplicate) {
+  // Already have a proper row for this course+semester, delete the Unknown one
+  await prisma.vtopGrade.delete({ where: { id: g.id } });
+} else {
+  await prisma.vtopGrade.update({
+    where: { id: g.id },
+    data: { semesterLabel: mappedSemester },
+  });
+}
+
+    
+  }
+
+  console.log("[FIX] Semester mapping applied from timetable");
 }
 
 async function refreshVtopGradeMetricsFromDb(userId: string): Promise<void> {
@@ -617,10 +720,6 @@ async function refreshVtopGradeMetricsFromDb(userId: string): Promise<void> {
   await persistVtopGradeMetrics(userId, parsed);
 }
 
-/**
- * Grade history: VTOP CC uses examinations/examGradeView/StudentGradeHistory (verifyMenu + nocache).
- * Legacy processView* kept as fallback when semester-scoped params are used or exam fails.
- */
 async function fetchGradeHistoryHtml(
   page: any,
   authorizedID: string,
@@ -762,20 +861,37 @@ async function scrapeGrades(
       if (p.rows.length > 0) widestHtml = htmlForLog;
     };
 
-    for (const opt of semesterOptions) {
-      try {
-        const h = await fetchExamGradeHistoryForSemester(page, authorizedID, opt.value, csrf, cookieStr);
-        const p = parseGradeHtml(h);
-        if (p) ingest(p, opt.label, h);
-        if (p?.rows.length) {
-          console.log("[VTOP] Grades (semester dropdown)", opt.value, "→", p.rows.length, "rows");
+    // FIX: VTOP returns the full grade history regardless of which semesterSubId is passed.
+    // Fetching once is sufficient — looping per-semester duplicates identical rows and causes
+    // junk semester entries when the raw CH IDs are used as labels.
+    const singleFetchHtml = await fetchExamGradeHistoryForSemester(
+      page, authorizedID, primarySemesterSubId, csrf, cookieStr
+    );
+    const singleParsed = parseGradeHtml(singleFetchHtml);
+    if (singleParsed) {
+      ingest(singleParsed, null, singleFetchHtml);
+      console.log("[VTOP] Grades (single fetch):", singleParsed.rows.length, "rows");
+    }
+
+    // Only fall back to per-semester fetching if the single fetch returned nothing
+    if (mergedRows.length === 0) {
+      console.log("[VTOP] Single fetch returned 0 rows, trying per-semester fallback...");
+      for (const opt of semesterOptions) {
+        try {
+          const h = await fetchExamGradeHistoryForSemester(page, authorizedID, opt.value, csrf, cookieStr);
+          const p = parseGradeHtml(h);
+          if (p) ingest(p, opt.label, h);
+          if (p?.rows.length) {
+            console.log("[VTOP] Grades (semester fallback)", opt.value, `"${opt.label}"`, "→", p.rows.length, "rows");
+          }
+          await new Promise((r) => setTimeout(r, 200));
+        } catch {
+          continue;
         }
-        await new Promise((r) => setTimeout(r, 200));
-      } catch {
-        continue;
       }
     }
 
+    // Last resort: try legacy paths with candidate semester IDs
     if (mergedRows.length === 0) {
       const semIds = buildSemSubIdCandidates(primarySemesterSubId);
       const attempts: (Record<string, string> | undefined)[] = [undefined];
@@ -863,21 +979,84 @@ function hashCourseColor(code: string): string {
   return `hsl(${hue} 52% 42%)`;
 }
 
+function normalizeCode(code: string): string {
+  return code
+    .replace(/\s+/g, "")
+    .replace(/[^A-Z0-9]/gi, "")
+    .toUpperCase()
+    .replace(/[PL]$/, "");
+}
+
 export async function syncSemestersAndCoursesFromVtop(
   userId: string
 ): Promise<{ semesters: number; courses: number }> {
   try {
+    // FIX: Delete any junk semesters with raw CH IDs left over from previous syncs
+    const allSemesters = await prisma.semester.findMany({ where: { userId } });
+    const junkIds = allSemesters
+      .filter(s => /^CH\d{8,}/i.test(s.name))
+      .map(s => s.id);
+    if (junkIds.length > 0) {
+      console.log("[VTOP] Cleaning up", junkIds.length, "junk semester(s) with raw CH IDs");
+      await prisma.course.deleteMany({ where: { semesterId: { in: junkIds } } });
+      const semesters = await prisma.semester.findMany({
+  where: {
+    userId,
+    name: {
+      startsWith: "CH",
+    },
+  },
+});
+
+await prisma.semester.deleteMany({
+  where: {
+    id: {
+      in: semesters
+        .filter(s => /^CH[0-9]{8}$/.test(s.name))
+        .map(s => s.id),
+    },
+  },
+});
+    }
+
     const grades = await prisma.vtopGrade.findMany({
       where: { userId },
       orderBy: [{ semesterLabel: "asc" }, { courseCode: "asc" }],
     });
+
+    // Group grade rows by semester label, skipping raw CH IDs
     const groups = new Map<string, typeof grades>();
     for (const g of grades) {
-      const key = (g.semesterLabel?.trim() || "Grade history").slice(0, 120);
+      let key = (g.semesterLabel?.trim() || "").slice(0, 120);
+      // ❌ junk labels
+if (
+  !key ||
+  /^CH\d+/i.test(key) ||
+  /^reg\.?no\.?$/i.test(key) ||
+  /^course/i.test(key) ||
+  key.length < 5
+) {
+  key = "Unknown Semester";
+}
+
+// 🚫 Reject garbage labels
+if (
+  !key ||
+  /^CH\d+/i.test(key) ||           // raw IDs
+  /^reg\.?no\.?$/i.test(key) ||    // Reg.No
+  /^course/i.test(key) ||          // Course headers
+  key.length < 5                   // too short = junk
+) {
+  key = "Unknown Semester";
+}
+      if (/^CH\d{8,}/i.test(key)) {
+        console.warn("[VTOP] Skipping raw semester ID in grade grouping:", key);
+        continue;
+      }
+      if (!groups.has(key)) groups.set(key, []);
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(g);
     }
-    if (groups.size === 0) return { semesters: 0, courses: 0 };
 
     const tt = await prisma.vtopTimetable.findMany({ where: { userId } });
     const ttByCode = new Map<string, { venue: string; slot: string; courseType: string }[]>();
@@ -890,26 +1069,110 @@ export async function syncSemestersAndCoursesFromVtop(
     const att = await prisma.vtopAttendance.findMany({ where: { userId } });
     const attByCode = new Map(att.map((a) => [a.courseCode, a]));
 
+    // Add attendance-only courses (current semester) that have no grade entry yet
+    for (const a of att) {
+      const semKey = (a.semesterLabel?.trim() || "Current Semester").slice(0, 120);
+      // Skip raw CH IDs from attendance labels too
+      if (/^CH\d{8,}/i.test(semKey)) continue;
+      if (!groups.has(semKey)) groups.set(semKey, []);
+      const alreadyInGroup = [...groups.values()].flat().some(g => g.courseCode === a.courseCode);
+      if (!alreadyInGroup) {
+        groups.get(semKey)!.push({
+          id: a.id,
+          userId: a.userId,
+          semesterLabel: semKey,
+          courseCode: a.courseCode,
+          courseName: a.courseName,
+          credits: null,
+          grade: null,
+          gradePoint: null,
+          faculty: null,
+          slot: null,
+          category: null,
+          syncedAt: a.syncedAt,
+        } as any);
+      }
+    }
+
+    if (groups.size === 0) return { semesters: 0, courses: 0 };
+
     let newSemesters = 0;
     let newCourses = 0;
 
     const now = new Date();
-    const endPlaceholder = new Date(now);
-    endPlaceholder.setMonth(endPlaceholder.getMonth() + 5);
+
+    function semesterDates(name: string): { startDate: Date; endDate: Date } {
+      // Extract year range like "2024-25" or "2025-26"
+      const yearMatch = name.match(/(\d{4})-(\d{2})/);
+      const termMatch = name.match(/\b(fall|winter|summer|spring)\b/i);
+
+      if (yearMatch && termMatch) {
+        const startYear = parseInt(yearMatch[1]);
+        const endYear = 2000 + parseInt(yearMatch[2]);
+        const term = termMatch[1].toLowerCase();
+
+        if (term === "fall") {
+          // Fall: Sep - Dec of startYear
+          return {
+            startDate: new Date(startYear, 8, 1),   // Sep 1
+            endDate: new Date(startYear, 11, 31),    // Dec 31
+          };
+        } else if (term === "winter") {
+          // Winter: Jan - May of endYear
+          return {
+            startDate: new Date(endYear, 0, 1),      // Jan 1
+            endDate: new Date(endYear, 4, 31),        // May 31
+          };
+        } else if (term === "summer") {
+          return {
+            startDate: new Date(startYear, 4, 1),    // May 1
+            endDate: new Date(startYear, 7, 31),     // Aug 31
+          };
+        }
+      }
+
+      // Fallback
+      const end = new Date(now);
+      end.setMonth(end.getMonth() + 5);
+      return { startDate: now, endDate: end };
+    }
 
     for (const [semName, rows] of groups) {
       let semester = await prisma.semester.findFirst({
-        where: { userId, name: semName, deletedAt: null },
-      });
+  where: { userId, name: semName, deletedAt: null },
+});
+
+// ← ADD THIS
+if (semester) {
+  const { startDate, endDate } = semesterDates(semName);
+  await prisma.semester.update({
+    where: { id: semester.id },
+    data: { startDate, endDate },
+  });
+}
+
+if (!semester) {
+  const { startDate, endDate } = semesterDates(semName);
+  semester = await prisma.semester.create({
+    data: {
+      userId,
+      name: semName,
+      startDate,
+      endDate,
+    },
+  });
+  newSemesters++;
+}
       if (!semester) {
-        semester = await prisma.semester.create({
-          data: {
-            userId,
-            name: semName,
-            startDate: now,
-            endDate: endPlaceholder,
-          },
-        });
+        const { startDate, endDate } = semesterDates(semName);
+          semester = await prisma.semester.create({
+            data: {
+              userId,
+              name: semName,
+              startDate,
+              endDate,
+            },
+          });
         newSemesters++;
       }
 
@@ -1115,6 +1378,7 @@ async function scrapeTimetable(
       console.log(
         "[VTOP] Timetable",
         opt.value,
+        `"${opt.label}"`,
         "HTML length:",
         html.length,
         "timeTableStyle rows:",
@@ -1217,21 +1481,14 @@ async function scrapeAcademicCalendar(page: any, userId: string, authorizedID: s
       JUNE: 5, JULY: 6, AUGUST: 7, SEPTEMBER: 8, OCTOBER: 9, NOVEMBER: 10, DECEMBER: 11,
     };
 
-    // Determine months based on semesterSubId pattern
-    // CH20252605 = Winter 2025-26 = Jan-May 2026
-    // CH20251501 = Summer 2025 = May-Sep 2025
-    // Default to current year months if can't detect
     const currentYear = new Date().getFullYear();
     let months: string[];
 
     if (semesterSubId.includes("2605") || semesterSubId.includes("2606")) {
-      // Winter semester Jan-May
       months = [`01-JAN-${currentYear}`, `01-FEB-${currentYear}`, `01-MAR-${currentYear}`, `01-APR-${currentYear}`, `01-MAY-${currentYear}`];
     } else if (semesterSubId.includes("1505") || semesterSubId.includes("1506")) {
-      // Summer semester May-Sep
       months = [`01-MAY-${currentYear}`, `01-JUN-${currentYear}`, `01-JUL-${currentYear}`, `01-AUG-${currentYear}`, `01-SEP-${currentYear}`];
     } else {
-      // Fallback: scrape next 5 months from now
       const now = new Date();
       const MONTH_ABBR = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
       months = Array.from({ length: 5 }, (_, i) => {
@@ -1287,7 +1544,6 @@ export async function getVtopGrades(userId: string) {
   return prisma.vtopGrade.findMany({ where: { userId }, orderBy: { courseCode: "asc" } });
 }
 
-/** CGPA snapshot (portal value when scraped + credit-weighted computation). */
 export async function getVtopCgpa(userId: string) {
   const s = await getVtopGradesSummary(userId);
   return {
@@ -1299,7 +1555,6 @@ export async function getVtopCgpa(userId: string) {
   };
 }
 
-/** Grades grouped by semester with computed / portal GPA per term. */
 export async function getVtopSemesterGrades(userId: string) {
   const s = await getVtopGradesSummary(userId);
   return { semesters: s.semesters };
@@ -1322,9 +1577,7 @@ export interface GradeSummarySemester {
   totalCredits: number;
   weightedScore: number;
   gpa: number | null;
-  /** Semester GPA shown on VTOP grade history when scraped */
   gpaFromPortal: number | null;
-  /** GPA from credits × grade points only */
   gpaComputed: number | null;
   courses: GradeSummaryCourse[];
 }
