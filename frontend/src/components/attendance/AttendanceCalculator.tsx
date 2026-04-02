@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { readNum, PREF_ATTENDANCE_TARGET } from "../../lib/prefs";
 
 export type AttendanceCalcRow = {
   id: string;
@@ -28,7 +29,7 @@ export function AttendanceCalculator({
   attendance: AttendanceCalcRow[];
   variant?: Variant;
 }) {
-  const [targetPercent, setTargetPercent] = useState(DEFAULT_TARGET);
+  const [targetPercent, setTargetPercent] = useState(() => readNum(PREF_ATTENDANCE_TARGET, DEFAULT_TARGET));
   const TARGET = useMemo(() => clampTarget(targetPercent), [targetPercent]);
 
   const inputClass =

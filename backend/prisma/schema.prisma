@@ -54,6 +54,10 @@ model User {
   vtopStudentMetrics VtopStudentMetrics?
   vtopSemesterMetrics VtopSemesterMetrics[]
   studentFiles      StudentFile[]
+  mindspaceEntries  MindspaceEntry[]
+  lmsCourses        LmsCourse[]
+  lmsAssignments    LmsAssignment[]
+  lmsModules        LmsModule[]
 
   @@index([email])
   @@index([deletedAt])
@@ -241,6 +245,29 @@ model Task {
   @@index([deletedAt])
 }
 
+/// Quick-capture scratchpad: text snippets, images, PDFs, or any file.
+model MindspaceEntry {
+  id           String    @id @default(cuid())
+  userId       String
+  type         String    // "text" | "file"
+  title        String?
+  body         String?   // plain-text content for type="text"
+  // File metadata (populated when type="file")
+  storedName   String?
+  originalName String?
+  mimeType     String?
+  sizeBytes    Int?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([deletedAt])
+}
+
 model VtopAttendance {
   id                String   @id @default(cuid())
   userId            String
@@ -332,6 +359,64 @@ model VtopAcademicEvent {
   @@unique([userId, date])
   @@index([userId])
   @@index([date])
+}
+
+model LmsCourse {
+  id          String   @id @default(cuid())
+  userId      String
+  lmsCourseId String   // Moodle internal course id
+  fullName    String
+  shortName   String?
+  category    String?
+  syncedAt    DateTime @default(now())
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments LmsAssignment[]
+  modules     LmsModule[]
+
+  @@unique([userId, lmsCourseId])
+  @@index([userId])
+}
+
+model LmsModule {
+  id          String   @id @default(cuid())
+  userId      String
+  lmsCourseId String
+  moduleId    String   // numeric cmid when accessible, "module-XXXXX" when restricted
+  modtype     String   // assign | quiz | resource | folder | forum | url | page | …
+  name        String
+  href        String?  // null when restricted/unavailable to student
+  accessible  Boolean  @default(true)
+  syncedAt    DateTime @default(now())
+
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course LmsCourse @relation(fields: [userId, lmsCourseId], references: [userId, lmsCourseId], onDelete: Cascade)
+
+  @@unique([userId, lmsCourseId, moduleId])
+  @@index([userId])
+  @@index([userId, lmsCourseId])
+}
+
+model LmsAssignment {
+  id              String    @id @default(cuid())
+  userId          String
+  lmsCourseId     String    // Moodle internal course id
+  lmsAssignmentId String    // Moodle internal assignment id
+  name            String
+  dueDate         DateTime?
+  cutOffDate      DateTime?
+  allowSubmissions Boolean  @default(true)
+  submitted       Boolean   @default(false)
+  description     String?
+  syncedAt        DateTime  @default(now())
+
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course LmsCourse @relation(fields: [userId, lmsCourseId], references: [userId, lmsCourseId], onDelete: Cascade)
+
+  @@unique([userId, lmsAssignmentId])
+  @@index([userId])
+  @@index([userId, lmsCourseId])
+  @@index([dueDate])
 }
 
 model VtopTimetable {

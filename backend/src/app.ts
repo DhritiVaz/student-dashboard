@@ -14,10 +14,14 @@ import { tasksRouter } from "./routes/tasks";
 import { eventsRouter } from "./routes/events";
 import { searchRouter } from "./routes/search";
 import { vtopRouter } from "./routes/vtop";
+import { lmsRouter } from "./routes/lms";
 import { filesRouter } from "./routes/files";
+import { mindspaceRouter } from "./routes/mindspace";
 import { ensureUploadRoot } from "./services/fileService";
+import { ensureMindspaceUploadRoot } from "./services/mindspaceService";
 
 void ensureUploadRoot();
+void ensureMindspaceUploadRoot();
 
 const app = express();
 
@@ -37,6 +41,8 @@ app.use("/api/tasks", tasksRouter);
 app.use("/api/events", eventsRouter);
 app.use("/api/search", searchRouter);
 app.use("/api/vtop", vtopRouter);
+app.use("/api/lms", lmsRouter);
 app.use("/api/files", filesRouter);
+app.use("/api/mindspace", mindspaceRouter);
 
 export default app;

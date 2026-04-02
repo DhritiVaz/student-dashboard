@@ -2,16 +2,25 @@ import { useEffect, useState } from "react";
 import { BarChart2, Calculator } from "lucide-react";
 import { useVtopAttendance } from "../hooks/api/vtop";
 import { AttendanceCalculator } from "../components/attendance/AttendanceCalculator";
+import { usePrefNum } from "../hooks/usePrefs";
+import { PREF_ATTENDANCE_SAFE, PREF_ATTENDANCE_WARN } from "../lib/prefs";
 
 export default function AttendancePage() {
   const { data: attendance, fetch: fetchAttendance, loading } = useVtopAttendance();
   const [activeTab, setActiveTab] = useState<"attendance" | "calculator">("attendance");
+
+  const safe = usePrefNum(PREF_ATTENDANCE_SAFE, 75);
+  const warn = usePrefNum(PREF_ATTENDANCE_WARN, 65);
 
   useEffect(() => { fetchAttendance(); }, []);
 
   const overall = attendance.length
     ? attendance.reduce((s, r) => s + r.attendancePercent, 0) / attendance.length
     : null;
+
+  function attendanceColor(pct: number) {
+    return pct >= safe ? "#4ade80" : pct >= warn ? "#facc15" : "#f87171";
+  }
 
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">
@@ -24,7 +33,7 @@ export default function AttendancePage() {
         </div>
         {overall !== null && (
           <div className="text-right">
-            <div className="text-3xl font-bold" style={{ color: overall >= 75 ? "#4ade80" : overall >= 65 ? "#facc15" : "#f87171" }}>
+            <div className="text-3xl font-bold" style={{ color: attendanceColor(overall) }}>
               {overall.toFixed(1)}%
             </div>
             <div className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>overall average</div>
@@ -95,7 +104,7 @@ export default function AttendancePage() {
                         <td className="px-4 py-3 text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{row.courseType ?? "—"}</td>
                         <td className="px-4 py-3 text-right" style={{ color: "rgba(255,255,255,0.7)" }}>{row.attended}</td>
                         <td className="px-4 py-3 text-right" style={{ color: "rgba(255,255,255,0.7)" }}>{row.conducted}</td>
-                        <td className="px-4 py-3 text-right font-semibold" style={{ color: row.attendancePercent >= 75 ? "#4ade80" : row.attendancePercent >= 65 ? "#facc15" : "#f87171" }}>
+                        <td className="px-4 py-3 text-right font-semibold" style={{ color: attendanceColor(row.attendancePercent) }}>
                           {row.attendancePercent.toFixed(1)}%
                         </td>
                       </tr>
