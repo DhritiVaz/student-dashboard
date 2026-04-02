@@ -503,21 +503,19 @@ export default function CalendarPage() {
   }, [currentSemester, courses]);
 
   const timetableInSemester = useMemo(() => {
-  if (!currentSemester) return timetable;
-  // Filter by semesterLabel on timetable entry first (most reliable)
-  const byLabel = timetable.filter(e =>
-    e.semesterLabel && normalizeSemLabel(e.semesterLabel) === normalizeSemLabel(currentSemester.name)
-  );
-  if (byLabel.length > 0) return byLabel;
-  // Fallback: filter by course codes in current semester
-  const codes = new Set(
-    (courses ?? [])
-      .filter(c => c.semesterId === currentSemester.id)
-      .map(c => c.code.replace(/\s/g, "").toUpperCase())
-  );
-  if (codes.size === 0) return [];
-  return timetable.filter(e => codes.has(e.courseCode.replace(/\s/g, "").toUpperCase()));
-}, [timetable, currentSemester, courses]);
+    if (!currentSemester) return timetable;
+    const byLabel = timetable.filter(e =>
+      e.semesterLabel && normalizeSemLabel(e.semesterLabel) === normalizeSemLabel(currentSemester.name)
+    );
+    if (byLabel.length > 0) return byLabel;
+    const codes = new Set(
+      (courses ?? [])
+        .filter(c => c.semesterId === currentSemester.id)
+        .map(c => c.code.replace(/\s/g, "").toUpperCase())
+    );
+    if (codes.size === 0) return [];
+    return timetable.filter(e => codes.has(e.courseCode.replace(/\s/g, "").toUpperCase()));
+  }, [timetable, currentSemester, courses]);
 
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent(editingEvent?.id ?? "");
@@ -580,6 +578,13 @@ export default function CalendarPage() {
       add(key, { id: t.id, title: t.title, dateKey: key, sortTime: new Date(t.dueDate).getTime(), type: "task", courseCode: t.course?.code, courseId: t.course?.id });
     });
 
+    const holidayDateKeys = new Set<string>();
+    academicEvents.forEach(e => {
+      if (e.eventType.toLowerCase().includes("holiday")) {
+        holidayDateKeys.add(e.date.slice(0, 10));
+      }
+    });
+
     academicEvents.forEach(e => {
       const key = e.date.slice(0, 10);
       const isHoliday = e.eventType.toLowerCase().includes("holiday");
@@ -595,32 +600,33 @@ export default function CalendarPage() {
           if (cell.getDay() !== entry.dayOfWeek) return;
           if (cell.getMonth() !== month) return;
           const key = dateKey(cell);
+          if (holidayDateKeys.has(key)) return;
           const [sh, sm] = entry.startTime.split(":").map(Number);
           const cid = codeToId.get(entry.courseCode.replace(/\s/g, "").toUpperCase());
           const courseColor = courses?.find(c =>
-  c.code?.replace(/\s/g, "").toUpperCase() === entry.courseCode.replace(/\s/g, "").toUpperCase() ||
-  c.code?.replace(/\s/g, "").toUpperCase().replace(/[LP]$/, "") === entry.courseCode.replace(/\s/g, "").toUpperCase().replace(/[LP]$/, "")
-)?.color ?? null;
+            c.code?.replace(/\s/g, "").toUpperCase() === entry.courseCode.replace(/\s/g, "").toUpperCase() ||
+            c.code?.replace(/\s/g, "").toUpperCase().replace(/[LP]$/, "") === entry.courseCode.replace(/\s/g, "").toUpperCase().replace(/[LP]$/, "")
+          )?.color ?? null;
 
-        add(key, {
-          id: `${entry.id}-${key}`,
-          title: `${entry.courseCode} · ${formatCompactTimeRange(entry.startTime, entry.endTime)}`,
-          dateKey: key,
-          sortTime: new Date(cell).setHours(sh, sm),
-          type: "event",
-          eventType: "class" as EventType,
-          customColor: courseColor,
-          time: `${entry.startTime} – ${entry.endTime}`,
-          courseCode: entry.courseCode,
-          courseId: cid,
-        });
+          add(key, {
+            id: `${entry.id}-${key}`,
+            title: `${entry.courseCode} · ${formatCompactTimeRange(entry.startTime, entry.endTime)}`,
+            dateKey: key,
+            sortTime: new Date(cell).setHours(sh, sm),
+            type: "event",
+            eventType: "class" as EventType,
+            customColor: courseColor,
+            time: `${entry.startTime} – ${entry.endTime}`,
+            courseCode: entry.courseCode,
+            courseId: cid,
+          });
         });
       });
     }
 
     map.forEach((v, k) => map.set(k, v.sort((a, b) => a.sortTime - b.sortTime)));
     return map;
-  }, [events, assignments, tasks, academicEvents, timetableInSemester, cells, month, showTimetable, coursesInSemester, currentSemester, semesterCourseIds]);
+  }, [events, assignments, tasks, academicEvents, timetableInSemester, cells, month, showTimetable, coursesInSemester, currentSemester, semesterCourseIds, courses]);
 
   const allItems = useMemo(() => [...itemsByDate.values()].flat(), [itemsByDate]);
 
