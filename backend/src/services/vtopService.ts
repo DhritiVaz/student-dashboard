@@ -178,6 +178,8 @@ await prisma.vtopGrade.deleteMany({
 });
 
 const gradesCount = await scrapeGrades(page, userId, authorizedID, semesterOptions, semesterSubId);
+// Fix any courses still labelled "Unknown" by matching them to timetable semester data
+await applyTimetableSemesterFallback(userId);
 await refreshVtopGradeMetricsFromDb(userId);
 const academicEventsCount = await scrapeAcademicCalendar(page, userId, authorizedID, semesterSubId);
 const marksCount = await scrapeMarks(page, userId, authorizedID);
@@ -1038,14 +1040,17 @@ export async function syncSemestersAndCoursesFromVtop(
     const att = await prisma.vtopAttendance.findMany({ where: { userId } });
     const attByCode = new Map(att.map((a) => [a.courseCode, a]));
 
-    // Add attendance-only courses (current semester) that have no grade entry yet
+    // Add attendance-only courses (current semester) that have no grade entry yet.
+    // NOTE: Only check within the SAME semester's group so online/current courses
+    // are not incorrectly skipped because the same course code appears in a past semester.
     for (const a of att) {
       const semKey = (a.semesterLabel?.trim() || "Current Semester").slice(0, 120);
       if (/^CH\d{8,}/i.test(semKey)) continue;
       if (!groups.has(semKey)) groups.set(semKey, []);
-      const alreadyInGroup = [...groups.values()].flat().some(g => g.courseCode === a.courseCode);
-      if (!alreadyInGroup) {
-        groups.get(semKey)!.push({
+      const groupForSem = groups.get(semKey)!;
+      const alreadyInThisSem = groupForSem.some(g => g.courseCode === a.courseCode);
+      if (!alreadyInThisSem) {
+        groupForSem.push({
           id: a.id,
           userId: a.userId,
           semesterLabel: semKey,
@@ -1585,9 +1590,23 @@ export async function getVtopGradesSummary(userId: string): Promise<{
     for (const r of rows) {
       const c = r.credits;
       const gp = effectiveGradePoint(r.grade, r.gradePoint);
-      // Skip pass/fail courses from CGPA calculation
-      const isNgcr = r.faculty != null && /NGCR/i.test(r.faculty) && r.grade === "P";
+
+      // Exclude courses that should not count towards CGPA:
+      // 1. NGCR courses (non-credit, pass/fail) — check faculty, slot OR category fields
+      const allFields = [r.faculty, r.slot, r.category].filter(Boolean).join(" ");
+      const isNgcr = /NGCR/i.test(allFields);
       if (isNgcr) continue;
+
+      // 2. Pure pass/fail grades (P or F) with no numeric grade point stored —
+      //    these are online/SWAYAM/audit courses that don't carry credit weight.
+      const gradeUpper = (r.grade ?? "").replace(/\s/g, "").toUpperCase();
+      const isPurePassFail =
+        (gradeUpper === "P" || gradeUpper === "F") && r.gradePoint == null;
+      if (isPurePassFail) continue;
+
+      // 3. Zero-credit courses
+      if (c != null && c === 0) continue;
+
       if (c != null && gp != null && !Number.isNaN(c) && !Number.isNaN(gp)) {
         wc += c;
         ws += c * gp;
