@@ -6,8 +6,9 @@ import { EntryRoute } from "./components/EntryRoute";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ToastContainer } from "./components/ToastContainer";
 
-import LoginPage            from "./pages/auth/LoginPage";
-import RegisterPage         from "./pages/auth/RegisterPage";
+import LoginPage                from "./pages/auth/LoginPage";
+import RegisterPage             from "./pages/auth/RegisterPage";
+import GoogleOAuthCallbackPage  from "./pages/auth/GoogleOAuthCallbackPage";
 import DashboardPage        from "./pages/DashboardPage";
 import AttendancePage       from "./pages/AttendancePage";
 import SemestersPage        from "./pages/SemestersPage";
@@ -23,6 +24,8 @@ import TasksPage            from "./pages/TasksPage";
 import CalendarPage         from "./pages/CalendarPage";
 import SettingsPage         from "./pages/SettingsPage";
 import CgpaPage             from "./pages/CgpaPage";
+import LmsPage              from "./pages/LmsPage";
+import MindspacePage        from "./pages/MindspacePage";
 import NotFoundPage         from "./pages/NotFoundPage";
 
 export default function App() {
@@ -34,6 +37,9 @@ export default function App() {
           <Route path="/login"    element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Route>
+
+        {/* ── Google OAuth2 popup callback ─────────────────────────── */}
+        <Route path="/auth/google/callback" element={<GoogleOAuthCallbackPage />} />
 
         {/* ── Root: landing (logged out) or redirect to dashboard (logged in) ─ */}
         <Route path="/" element={<EntryRoute />} />
@@ -53,6 +59,8 @@ export default function App() {
           <Route path="/files"          element={<FilesPage />} />
           <Route path="/tasks"          element={<TasksPage />} />
           <Route path="/calendar"       element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
+          <Route path="/lms"            element={<LmsPage />} />
+          <Route path="/mindspace"      element={<MindspacePage />} />
           <Route path="/settings"       element={<SettingsPage />} />
         </Route>
 

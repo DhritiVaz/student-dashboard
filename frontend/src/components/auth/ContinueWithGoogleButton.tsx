@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
@@ -8,27 +8,6 @@ type Props = {
   loading?: boolean;
   onCredential: (idToken: string) => void | Promise<void>;
 };
-
-function loadGoogleScript(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (window.google?.accounts?.id) {
-      resolve();
-      return;
-    }
-    const existing = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-    if (existing) {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("Google script error")));
-      return;
-    }
-    const s = document.createElement("script");
-    s.src = "https://accounts.google.com/gsi/client";
-    s.async = true;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("Failed to load Google script"));
-    document.head.appendChild(s);
-  });
-}
 
 function GoogleMark({ className }: { className?: string }) {
   return (
@@ -53,52 +32,85 @@ function GoogleMark({ className }: { className?: string }) {
   );
 }
 
-/** “Continue with Google” — loads GIS, opens account picker (One Tap / FedCM), returns JWT to `onCredential`. */
-export function ContinueWithGoogleButton({
-  disabled,
-  loading,
-  onCredential,
-}: Props) {
+/** Opens a proper Google OAuth2 popup window and resolves with an id_token. */
+function openGoogleOAuthPopup(clientId: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const nonce = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      response_type: "id_token",
+      redirect_uri: `${window.location.origin}/auth/google/callback`,
+      scope: "openid email profile",
+      nonce,
+      prompt: "select_account",
+    });
+
+    const width = 500;
+    const height = 620;
+    const left = Math.round(window.screenX + (window.outerWidth - width) / 2);
+    const top = Math.round(window.screenY + (window.outerHeight - height) / 2);
+
+    const popup = window.open(
+      `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
+      "google-signin",
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+
+    if (!popup) {
+      reject(new Error("Popup blocked. Allow popups for this site and try again."));
+      return;
+    }
+
+    function onMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== "google-oauth-callback") return;
+      cleanup();
+      if (event.data.idToken) {
+        resolve(event.data.idToken as string);
+      } else {
+        reject(new Error(event.data.error ?? "Google sign-in cancelled."));
+      }
+    }
+
+    // Detect popup closed without completing sign-in
+    const pollTimer = setInterval(() => {
+      if (popup.closed) {
+        cleanup();
+        reject(new Error("Google sign-in cancelled."));
+      }
+    }, 500);
+
+    function cleanup() {
+      window.removeEventListener("message", onMessage);
+      clearInterval(pollTimer);
+    }
+
+    window.addEventListener("message", onMessage);
+  });
+}
+
+/** "Continue with Google" — opens a proper OAuth2 popup and returns an id_token to `onCredential`. */
+export function ContinueWithGoogleButton({ disabled, loading, onCredential }: Props) {
   const cbRef = useRef(onCredential);
   cbRef.current = onCredential;
 
-  const [gsiReady, setGsiReady] = useState(false);
-  const [scriptError, setScriptError] = useState(false);
-
-  useEffect(() => {
-    if (!CLIENT_ID?.trim()) return;
-
-    let cancelled = false;
-    loadGoogleScript()
-      .then(() => {
-        if (cancelled || !window.google?.accounts?.id) return;
-        window.google.accounts.id.initialize({
-          client_id: CLIENT_ID.trim(),
-          callback: (res) => {
-            if (!res.credential) return;
-            void Promise.resolve(cbRef.current(res.credential)).catch(() => {
-              /* parent handles errors */
-            });
-          },
-          auto_select: false,
-          use_fedcm_for_prompt: true,
-        });
-        setGsiReady(true);
-      })
-      .catch(() => {
-        if (!cancelled) setScriptError(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  /** FedCM migration: do not use One Tap `PromptMomentNotification` display/skip APIs (deprecated). */
-  const handleClick = useCallback(() => {
-    if (disabled || loading || !CLIENT_ID?.trim() || !gsiReady) return;
-    window.google?.accounts?.id.prompt();
-  }, [disabled, loading, gsiReady]);
+  const handleClick = useCallback(async () => {
+    if (disabled || loading || !CLIENT_ID?.trim()) return;
+    try {
+      const idToken = await openGoogleOAuthPopup(CLIENT_ID.trim());
+      await Promise.resolve(cbRef.current(idToken));
+    } catch (err) {
+      // Cancelled or blocked — parent doesn't need to know unless it's a real error
+      const msg = (err as Error)?.message ?? "";
+      if (msg && !msg.toLowerCase().includes("cancel")) {
+        // Re-surface popup-blocked errors
+        console.error("[Google sign-in]", msg);
+      }
+    }
+  }, [disabled, loading]);
 
   if (!CLIENT_ID?.trim()) {
     return (
@@ -121,15 +133,7 @@ export function ContinueWithGoogleButton({
     );
   }
 
-  if (scriptError) {
-    return (
-      <p className="text-xs text-center px-2" style={{ color: "rgba(255,255,255,0.45)" }}>
-        Could not load Google sign-in. Check your connection or try again later.
-      </p>
-    );
-  }
-
-  const busy = Boolean(disabled || loading || !gsiReady);
+  const busy = Boolean(disabled || loading);
 
   return (
     <button

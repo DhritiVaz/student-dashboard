@@ -19,7 +19,6 @@ import {
   deriveStatus,
   type Assignment,
 } from "../hooks/api/assignments";
-import { DEMO_ASSIGNMENTS_PAGE } from "../lib/uiPlaceholders";
 
 type SortKey   = "dueDate" | "name" | "course";
 type StatusFilter = "all" | "submitted" | "pending" | "overdue";
@@ -43,46 +42,6 @@ function formatDue(iso?: string | null) {
   return `Due ${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.getFullYear() !== today.getFullYear() ? "numeric" : undefined })}`;
 }
 
-function DemoAssignmentSamples() {
-  const sc = statusConfig("pending");
-  return (
-    <div className="space-y-2">
-      {DEMO_ASSIGNMENTS_PAGE.map((d) => (
-        <div
-          key={d.title}
-          className="flex items-center gap-4 px-5 py-4"
-          style={{
-            background: "#111111",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 10,
-          }}
-        >
-          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sc.dot}`} />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium truncate" style={{ color: "rgba(255,255,255,0.85)" }}>
-                {d.title}
-              </span>
-              <span className="text-[10px] font-semibold rounded-md px-1.5 py-0.5 tracking-wide flex-shrink-0"
-                style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                {d.code}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-xs flex items-center gap-1" style={{ color: "rgba(255,255,255,0.3)" }}>
-                <Calendar size={11} /> {d.dueLine}
-              </span>
-            </div>
-          </div>
-          <span className={`hidden sm:inline-block text-[10px] font-semibold rounded-full px-2.5 py-0.5 flex-shrink-0 ${sc.text}`}
-            style={{ border: `1px solid ${sc.border}`, background: sc.bg }}>
-            {sc.label}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function AssignmentRow({ assignment, onEdit, onDelete }: {
   assignment: Assignment; onEdit: () => void; onDelete: () => void;
@@ -274,7 +233,11 @@ export default function AssignmentsPage() {
         />
       )}
 
-      {!isLoading && filtered.length === 0 && activeFilters === 0 && <DemoAssignmentSamples />}
+      {!isLoading && filtered.length === 0 && activeFilters === 0 && (
+        <div className="py-12 text-center">
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>No assignments yet</p>
+        </div>
+      )}
 
       {!isLoading && filtered.length > 0 && (
         <div className="space-y-2">

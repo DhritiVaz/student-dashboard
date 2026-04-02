@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "../stores/authStore";
 import { SkeletonCard } from "../components/ui/Skeleton";
+import { usePrefBool, usePrefNum } from "../hooks/usePrefs";
+import { PREF_SHOW_GREETING, PREF_DEADLINE_DAYS } from "../lib/prefs";
 import { useSemesters } from "../hooks/api/semesters";
 import { useCourses } from "../hooks/api/courses";
 import { useAssignments, deriveStatus } from "../hooks/api/assignments";
@@ -15,11 +17,6 @@ import { useNotes } from "../hooks/api/notes";
 import { useEvents } from "../hooks/api/events";
 import { useVtopAttendance, useVtopGradesSummary } from "../hooks/api/vtop";
 import VtopSync from "../components/vtop/VtopSync";
-import {
-  DEMO_DASHBOARD_DEADLINES,
-  DEMO_DASHBOARD_NOTES,
-  DEMO_DASHBOARD_TASKS,
-} from "../lib/uiPlaceholders";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -182,6 +179,9 @@ export default function DashboardPage() {
   const { user }  = useAuthStore();
   const firstName = user?.name?.split(" ")[0] ?? "there";
 
+  const showGreeting  = usePrefBool(PREF_SHOW_GREETING, true);
+  const deadlineDays  = usePrefNum(PREF_DEADLINE_DAYS, 14);
+
   const { data: semesters,   isLoading: loadingS } = useSemesters();
   const { data: allCourses,  isLoading: loadingC } = useCourses();
   const { data: assignments, isLoading: loadingA } = useAssignments();
@@ -221,14 +221,14 @@ export default function DashboardPage() {
   const now = Date.now();
 
   const dueSoonCount = useMemo(() => {
-    const cutoff = new Date(now + 7 * 86400000);
+    const cutoff = new Date(now + deadlineDays * 86400000);
     const a = assignments?.filter(a => !a.isSubmitted && a.dueDate && new Date(a.dueDate) >= today && new Date(a.dueDate) <= cutoff).length ?? 0;
     const t = tasks?.filter(t => !t.isCompleted && t.dueDate && new Date(t.dueDate) >= today && new Date(t.dueDate) <= cutoff).length ?? 0;
     return a + t;
-  }, [assignments, tasks, now]);
+  }, [assignments, tasks, now, deadlineDays]);
 
   const upcomingDeadlines = useMemo(() => {
-    const cutoff = new Date(now + 14 * 86400000);
+    const cutoff = new Date(now + deadlineDays * 86400000);
     const items: { id: string; title: string; type: "assignment" | "task"; dueDate: string; courseCode?: string; link: string; }[] = [];
     assignments?.forEach(a => {
       if (!a.dueDate) return;
@@ -243,7 +243,7 @@ export default function DashboardPage() {
       items.push({ id: t.id, title: t.title, type: "task", dueDate: t.dueDate, courseCode: t.course?.code, link: `/tasks` });
     });
     return items.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()).slice(0, 8);
-  }, [assignments, tasks, now]);
+  }, [assignments, tasks, now, deadlineDays]);
 
   const activeDays = useMemo(() => {
     const set = new Set<string>();
@@ -285,16 +285,18 @@ export default function DashboardPage() {
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-1" style={{ color: "rgba(255,255,255,0.95)" }}>
-          {getGreeting()}, {firstName}
-        </h1>
-        <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
-          {currentSemester
-            ? `${currentSemester.name} · ${semesterCourses.length} course${semesterCourses.length !== 1 ? "s" : ""}`
-            : "Your academic overview"}
-        </p>
-      </div>
+      {showGreeting && (
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight mb-1" style={{ color: "rgba(255,255,255,0.95)" }}>
+            {getGreeting()}, {firstName}
+          </h1>
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
+            {currentSemester
+              ? `${currentSemester.name} · ${semesterCourses.length} course${semesterCourses.length !== 1 ? "s" : ""}`
+              : "Your academic overview"}
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard
@@ -340,28 +342,9 @@ export default function DashboardPage() {
               {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} height={36} />)}
             </div>
           ) : upcomingDeadlines.length === 0 ? (
-            <>
-              {DEMO_DASHBOARD_DEADLINES.map((row, i) => (
-                <Link key={row.title} to="/assignments"
-                  className="flex items-center gap-3 px-4 py-2.5 transition-colors"
-                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
-                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
-                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[13px] truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{row.title}</span>
-                      <span className="text-[10px] font-medium rounded px-1.5 py-0.5 flex-shrink-0"
-                        style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                        {row.code}
-                      </span>
-                    </div>
-                  </div>
-                  <span className={`text-[10px] font-medium border rounded-full px-2 py-0.5 flex-shrink-0 whitespace-nowrap ${row.cls}`}>
-                    {row.pill}
-                  </span>
-                </Link>
-              ))}
-            </>
+            <div className="px-4 py-8 text-center">
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>No upcoming deadlines</p>
+            </div>
           ) : (
             upcomingDeadlines.map((item, i) => {
               const due = relDue(item.dueDate);
@@ -422,25 +405,9 @@ export default function DashboardPage() {
               {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} height={36} />)}
             </div>
           ) : recentNotes.length === 0 ? (
-            <>
-              {DEMO_DASHBOARD_NOTES.map((row, i) => (
-                <Link key={row.title} to="/notes"
-                  className="flex items-center gap-3 px-4 py-2.5 transition-colors"
-                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
-                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
-                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[13px] truncate block" style={{ color: "rgba(255,255,255,0.8)" }}>
-                      {row.title}
-                    </span>
-                    <span className="text-[10px] font-medium rounded px-1.5 py-0.5 mt-0.5 inline-block"
-                      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                      {row.code}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </>
+            <div className="px-4 py-8 text-center">
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>No notes yet</p>
+            </div>
           ) : (
             recentNotes.map((n, i) => (
               <Link key={n.id} to={`/notes/${n.id}`}
@@ -478,30 +445,9 @@ export default function DashboardPage() {
               {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} height={36} />)}
             </div>
           ) : pendingTasksPreview.length === 0 ? (
-            <>
-              {DEMO_DASHBOARD_TASKS.map((row, i) => (
-                <Link key={row.title} to="/tasks"
-                  className="flex items-center gap-3 px-4 py-2.5 transition-colors"
-                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
-                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
-                  onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[13px] truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{row.title}</span>
-                      {row.code && (
-                        <span className="text-[10px] font-medium rounded px-1.5 py-0.5 flex-shrink-0"
-                          style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                          {row.code}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-medium border rounded-full px-2 py-0.5 flex-shrink-0 whitespace-nowrap text-zinc-500 bg-zinc-500/10 border-zinc-500/20">
-                    {row.due}
-                  </span>
-                </Link>
-              ))}
-            </>
+            <div className="px-4 py-8 text-center">
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>No pending tasks</p>
+            </div>
           ) : (
             pendingTasksPreview.map((t, i) => {
               const due = t.dueDate ? relDue(t.dueDate) : null;

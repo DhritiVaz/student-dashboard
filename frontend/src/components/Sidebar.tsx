@@ -4,7 +4,7 @@ import {
   LayoutDashboard, BookOpen, GraduationCap,
   ClipboardList, FileText, CheckSquare, Calendar,
   Settings, X, LogOut, PanelLeftClose, PanelLeft,
-  BarChart2, Sigma, FolderOpen,
+  BarChart2, Sigma, FolderOpen, BookMarked, Brain,
 } from "lucide-react";
 import { useAuthStore } from "../stores/authStore";
 import { logoutApi } from "../lib/authApi";
@@ -15,6 +15,8 @@ const workspaceNav = [
   { label: "Dashboard",  href: "/dashboard",  icon: LayoutDashboard, exact: true },
   { label: "Attendance", href: "/attendance", icon: BarChart2 },
   { label: "CGPA",       href: "/cgpa",       icon: Sigma },
+  { label: "LMS",        href: "/lms",        icon: BookMarked },
+  { label: "Mindspace",  href: "/mindspace",  icon: Brain },
   { label: "Semesters",  href: "/semesters",  icon: GraduationCap },
   { label: "Courses",    href: "/courses",    icon: BookOpen },
 ];

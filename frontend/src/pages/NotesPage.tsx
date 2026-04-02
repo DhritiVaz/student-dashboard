@@ -12,7 +12,6 @@ import { useToast } from "../hooks/useToast";
 import { useSemesters } from "../hooks/api/semesters";
 import { useCourses } from "../hooks/api/courses";
 import { useNotes, useCreateNote, useDeleteNote, type Note } from "../hooks/api/notes";
-import { DEMO_NOTES_PAGE } from "../lib/uiPlaceholders";
 
 type SortKey = "updatedAt" | "createdAt" | "title";
 
@@ -267,32 +266,6 @@ export default function NotesPage() {
         />
       )}
 
-      {!isLoading && filtered.length === 0 && activeFilters === 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {DEMO_NOTES_PAGE.map((d) => (
-            <div
-              key={d.title}
-              className="rounded-xl p-5"
-              style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)" }}
-            >
-              <p className="font-semibold text-sm mb-2" style={{ color: "rgba(255,255,255,0.9)" }}>{d.title}</p>
-              <p className="text-xs leading-relaxed mb-3 line-clamp-2" style={{ color: "rgba(255,255,255,0.35)" }}>
-                {d.preview}
-              </p>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] font-semibold rounded-md px-1.5 py-0.5 tracking-wide"
-                  style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  {d.code}
-                </span>
-                <span className="text-[10px] rounded-full px-2 py-0.5 flex items-center gap-1"
-                  style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.3)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <Tag size={9} /> {d.tag}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {!isLoading && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

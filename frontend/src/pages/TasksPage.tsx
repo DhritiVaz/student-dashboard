@@ -13,7 +13,6 @@ import {
   useTasks, useCreateTask, useUpdateTask, useToggleTask, useDeleteTask,
   type Task, type Priority,
 } from "../hooks/api/tasks";
-import { DEMO_TASKS_PAGE } from "../lib/uiPlaceholders";
 
 type GroupBy = "all" | "priority" | "course" | "completed";
 type SortKey = "dueDate" | "priority" | "createdAt";
@@ -170,36 +169,6 @@ function Section({ title, count, defaultOpen = true, children, accent }: {
   );
 }
 
-function DemoTaskSamples() {
-  return (
-    <div className="space-y-1.5">
-      {DEMO_TASKS_PAGE.map((d) => (
-        <div
-          key={d.title}
-          className="flex items-start gap-3 px-4 py-3"
-          style={{
-            borderRadius: 10,
-            border: "1px solid rgba(255,255,255,0.06)",
-            background: "#111111",
-          }}
-        >
-          <Circle size={18} strokeWidth={1.8} className="flex-shrink-0 mt-0.5" style={{ color: "rgba(255,255,255,0.2)" }} />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.85)" }}>{d.title}</span>
-              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${priorityDot(d.priority)}`} title={PRIORITY_LABEL[d.priority]} />
-            </div>
-          </div>
-          {d.dueLabel && (
-            <span className="text-[10px] font-medium border rounded-full px-2 py-0.5 flex-shrink-0 whitespace-nowrap text-orange-400 bg-orange-500/10 border-orange-500/20">
-              {d.dueLabel}
-            </span>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function QuickAdd({ onAdd }: { onAdd: (title: string) => Promise<void> }) {
   const [value, setValue]   = useState("");
@@ -423,7 +392,9 @@ export default function TasksPage() {
       {isLoading ? (
         <SkeletonList count={8} layout="list" cardHeight={56} />
       ) : (tasks?.length ?? 0) === 0 ? (
-        <DemoTaskSamples />
+        <div className="py-12 text-center">
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>No tasks yet</p>
+        </div>
       ) : (
         renderList()
       )}
