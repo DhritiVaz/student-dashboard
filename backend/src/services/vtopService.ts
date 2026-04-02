@@ -170,14 +170,20 @@ export async function syncVtopData(userId: string, username: string, password: s
       : semesterSubId;
 
     const attendanceCount = await scrapeAttendance(page, userId, authorizedID, semesterSubId, currentSemLabel);
-    const timetableCount = await scrapeTimetable(page, userId, authorizedID, semesterOptions, semesterSubId);
-    const gradesCount = await scrapeGrades(page, userId, authorizedID, semesterOptions, semesterSubId);
-    await applyTimetableSemesterFallback(userId);
-    await refreshVtopGradeMetricsFromDb(userId);
-    const academicEventsCount = await scrapeAcademicCalendar(page, userId, authorizedID, semesterSubId);
-    const marksCount = await scrapeMarks(page, userId, authorizedID);
-    const { semesters: semUpserted, courses: courseUpserted } =
-      await syncSemestersAndCoursesFromVtop(userId);
+const timetableCount = await scrapeTimetable(page, userId, authorizedID, semesterOptions, semesterSubId);
+
+// Delete junk grade rows BEFORE scraping so they get re-created with correct labels
+await prisma.vtopGrade.deleteMany({
+  where: { userId, semesterLabel: { in: ["Unknown", "Reg.No."] } }
+});
+
+const gradesCount = await scrapeGrades(page, userId, authorizedID, semesterOptions, semesterSubId);
+await refreshVtopGradeMetricsFromDb(userId);
+const academicEventsCount = await scrapeAcademicCalendar(page, userId, authorizedID, semesterSubId);
+const marksCount = await scrapeMarks(page, userId, authorizedID);
+
+const { semesters: semUpserted, courses: courseUpserted } =
+  await syncSemestersAndCoursesFromVtop(userId);
 
     const coreRows = attendanceCount + gradesCount + timetableCount + marksCount;
     if (coreRows === 0) {
@@ -843,14 +849,19 @@ async function scrapeGrades(
       if (p.cgpaFromPortal != null) mergedCgpa = mergedCgpa ?? p.cgpaFromPortal;
       const L = dropdownLabel ? normVtopSemesterLabel(dropdownLabel) : null;
       if (L) {
-        for (const s of p.semesters) {
-          if (s.gpaFromPortal != null) {
-            semesterGpaMerge.set(L, s.gpaFromPortal);
-            break;
-          }
-        }
-        for (const r of p.rows) mergedRows.push({ ...r, semesterLabel: L });
-      } else {
+  for (const s of p.semesters) {
+    if (s.gpaFromPortal != null) {
+      semesterGpaMerge.set(L, s.gpaFromPortal);
+      break;
+    }
+  }
+  for (const r of p.rows) {
+    // Only use dropdown label as fallback — preserve examMonth-derived labels
+    const rowLabel = normVtopSemesterLabel(r.semesterLabel);
+    const isJunk = rowLabel === "Unknown" || /^reg\.?no\.?$/i.test(rowLabel) || rowLabel.length < 5;
+    mergedRows.push({ ...r, semesterLabel: isJunk ? L : r.semesterLabel });
+  }
+} else {
         for (const s of p.semesters) {
           if (s.gpaFromPortal != null) {
             semesterGpaMerge.set(normVtopSemesterLabel(s.semesterLabel), s.gpaFromPortal);
@@ -876,19 +887,13 @@ async function scrapeGrades(
     // Only fall back to per-semester fetching if the single fetch returned nothing
     if (mergedRows.length === 0) {
       console.log("[VTOP] Single fetch returned 0 rows, trying per-semester fallback...");
-      for (const opt of semesterOptions) {
-        try {
-          const h = await fetchExamGradeHistoryForSemester(page, authorizedID, opt.value, csrf, cookieStr);
-          const p = parseGradeHtml(h);
-          if (p) ingest(p, opt.label, h);
-          if (p?.rows.length) {
-            console.log("[VTOP] Grades (semester fallback)", opt.value, `"${opt.label}"`, "→", p.rows.length, "rows");
-          }
-          await new Promise((r) => setTimeout(r, 200));
-        } catch {
-          continue;
-        }
-      }
+      // Single fetch — VTOP returns full grade history regardless of semester param
+const singleHtml = await fetchExamGradeHistoryForSemester(page, authorizedID, primarySemesterSubId, csrf, cookieStr);
+const singleParsed = parseGradeHtml(singleHtml);
+if (singleParsed) {
+  ingest(singleParsed, null, singleHtml); // null = don't override examMonth-derived labels
+  console.log("[VTOP] Grades (single fetch):", singleParsed.rows.length, "rows");
+}
     }
 
     // Last resort: try legacy paths with candidate semester IDs
@@ -991,7 +996,7 @@ export async function syncSemestersAndCoursesFromVtop(
   userId: string
 ): Promise<{ semesters: number; courses: number }> {
   try {
-    // FIX: Delete any junk semesters with raw CH IDs left over from previous syncs
+    // Clean up junk semesters with raw CH IDs
     const allSemesters = await prisma.semester.findMany({ where: { userId } });
     const junkIds = allSemesters
       .filter(s => /^CH\d{8,}/i.test(s.name))
@@ -999,24 +1004,7 @@ export async function syncSemestersAndCoursesFromVtop(
     if (junkIds.length > 0) {
       console.log("[VTOP] Cleaning up", junkIds.length, "junk semester(s) with raw CH IDs");
       await prisma.course.deleteMany({ where: { semesterId: { in: junkIds } } });
-      const semesters = await prisma.semester.findMany({
-  where: {
-    userId,
-    name: {
-      startsWith: "CH",
-    },
-  },
-});
-
-await prisma.semester.deleteMany({
-  where: {
-    id: {
-      in: semesters
-        .filter(s => /^CH[0-9]{8}$/.test(s.name))
-        .map(s => s.id),
-    },
-  },
-});
+      await prisma.semester.deleteMany({ where: { id: { in: junkIds } } });
     }
 
     const grades = await prisma.vtopGrade.findMany({
@@ -1024,36 +1012,17 @@ await prisma.semester.deleteMany({
       orderBy: [{ semesterLabel: "asc" }, { courseCode: "asc" }],
     });
 
-    // Group grade rows by semester label, skipping raw CH IDs
+    // Group grade rows by semester label, skipping junk
     const groups = new Map<string, typeof grades>();
     for (const g of grades) {
-      let key = (g.semesterLabel?.trim() || "").slice(0, 120);
-      // ❌ junk labels
-if (
-  !key ||
-  /^CH\d+/i.test(key) ||
-  /^reg\.?no\.?$/i.test(key) ||
-  /^course/i.test(key) ||
-  key.length < 5
-) {
-  key = "Unknown Semester";
-}
-
-// 🚫 Reject garbage labels
-if (
-  !key ||
-  /^CH\d+/i.test(key) ||           // raw IDs
-  /^reg\.?no\.?$/i.test(key) ||    // Reg.No
-  /^course/i.test(key) ||          // Course headers
-  key.length < 5                   // too short = junk
-) {
-  key = "Unknown Semester";
-}
-      if (/^CH\d{8,}/i.test(key)) {
-        console.warn("[VTOP] Skipping raw semester ID in grade grouping:", key);
-        continue;
-      }
-      if (!groups.has(key)) groups.set(key, []);
+      const key = (g.semesterLabel?.trim() || "").slice(0, 120);
+      if (
+        !key ||
+        /^CH\d+/i.test(key) ||
+        /^reg\.?no\.?$/i.test(key) ||
+        /^course/i.test(key) ||
+        key.length < 5
+      ) continue;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(g);
     }
@@ -1072,7 +1041,6 @@ if (
     // Add attendance-only courses (current semester) that have no grade entry yet
     for (const a of att) {
       const semKey = (a.semesterLabel?.trim() || "Current Semester").slice(0, 120);
-      // Skip raw CH IDs from attendance labels too
       if (/^CH\d{8,}/i.test(semKey)) continue;
       if (!groups.has(semKey)) groups.set(semKey, []);
       const alreadyInGroup = [...groups.values()].flat().some(g => g.courseCode === a.courseCode);
@@ -1098,11 +1066,9 @@ if (
 
     let newSemesters = 0;
     let newCourses = 0;
-
     const now = new Date();
 
     function semesterDates(name: string): { startDate: Date; endDate: Date } {
-      // Extract year range like "2024-25" or "2025-26"
       const yearMatch = name.match(/(\d{4})-(\d{2})/);
       const termMatch = name.match(/\b(fall|winter|summer|spring)\b/i);
 
@@ -1112,67 +1078,46 @@ if (
         const term = termMatch[1].toLowerCase();
 
         if (term === "fall") {
-          // Fall: Sep - Dec of startYear
           return {
-            startDate: new Date(startYear, 8, 1),   // Sep 1
-            endDate: new Date(startYear, 11, 31),    // Dec 31
+            startDate: new Date(startYear, 8, 1),
+            endDate: new Date(startYear, 11, 31),
           };
         } else if (term === "winter") {
-          // Winter: Jan - May of endYear
           return {
-            startDate: new Date(endYear, 0, 1),      // Jan 1
-            endDate: new Date(endYear, 4, 31),        // May 31
+            startDate: new Date(endYear, 0, 1),
+            endDate: new Date(endYear, 4, 31),
           };
         } else if (term === "summer") {
           return {
-            startDate: new Date(startYear, 4, 1),    // May 1
-            endDate: new Date(startYear, 7, 31),     // Aug 31
+            startDate: new Date(startYear, 4, 1),
+            endDate: new Date(startYear, 7, 31),
           };
         }
       }
 
-      // Fallback
-      const end = new Date(now);
-      end.setMonth(end.getMonth() + 5);
-      return { startDate: now, endDate: end };
+      // Fallback — Unknown/unrecognized semesters get old dates so they sort before real semesters
+  return { 
+    startDate: new Date(2020, 0, 1), 
+    endDate: new Date(2020, 5, 1) 
+  };
     }
 
     for (const [semName, rows] of groups) {
       let semester = await prisma.semester.findFirst({
-  where: { userId, name: semName, deletedAt: null },
-});
+        where: { userId, name: semName, deletedAt: null },
+      });
 
-// ← ADD THIS
-if (semester) {
-  const { startDate, endDate } = semesterDates(semName);
-  await prisma.semester.update({
-    where: { id: semester.id },
-    data: { startDate, endDate },
-  });
-}
-
-if (!semester) {
-  const { startDate, endDate } = semesterDates(semName);
-  semester = await prisma.semester.create({
-    data: {
-      userId,
-      name: semName,
-      startDate,
-      endDate,
-    },
-  });
-  newSemesters++;
-}
-      if (!semester) {
+      if (semester) {
         const { startDate, endDate } = semesterDates(semName);
-          semester = await prisma.semester.create({
-            data: {
-              userId,
-              name: semName,
-              startDate,
-              endDate,
-            },
-          });
+        await prisma.semester.update({
+          where: { id: semester.id },
+          data: { startDate, endDate },
+        });
+      } else {
+        const { startDate, endDate } = semesterDates(semName);
+        semester = await prisma.semester.create({
+          data: { userId, name: semName, startDate, endDate },
+        });
         newSemesters++;
       }
 
@@ -1609,6 +1554,13 @@ export async function getVtopGradesSummary(userId: string): Promise<{
   const bySem = new Map<string, typeof grades>();
   for (const g of grades) {
     const k = normVtopSemesterLabel(g.semesterLabel);
+    // Skip junk labels
+    if (
+      /^reg\.?no\.?$/i.test(k) ||
+      /^CH\d{8,}/i.test(k) ||
+      /^course/i.test(k) ||
+      k.length < 5
+    ) continue;
     if (!bySem.has(k)) bySem.set(k, []);
     bySem.get(k)!.push(g);
   }
@@ -1633,6 +1585,9 @@ export async function getVtopGradesSummary(userId: string): Promise<{
     for (const r of rows) {
       const c = r.credits;
       const gp = effectiveGradePoint(r.grade, r.gradePoint);
+      // Skip pass/fail courses from CGPA calculation
+      const isNgcr = r.faculty != null && /NGCR/i.test(r.faculty) && r.grade === "P";
+      if (isNgcr) continue;
       if (c != null && gp != null && !Number.isNaN(c) && !Number.isNaN(gp)) {
         wc += c;
         ws += c * gp;

@@ -86,10 +86,10 @@ function CourseCard({
       <span
         className="inline-block text-[10px] font-semibold tracking-wide rounded-md px-1.5 py-0.5 mb-3"
         style={{
-          background: "rgba(255,255,255,0.06)",
-          color: "rgba(255,255,255,0.4)",
-          border: "1px solid rgba(255,255,255,0.08)",
-        }}
+  background: "#141414",
+  border: "1px solid rgba(255,255,255,0.06)",
+  borderLeft: course.color ? `3px solid ${course.color}` : "1px solid rgba(255,255,255,0.06)",
+}}
       >
         {course.code}
       </span>

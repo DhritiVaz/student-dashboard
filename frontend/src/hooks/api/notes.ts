@@ -16,7 +16,7 @@ export interface NotePayload {
   title: string;
   content?: string;
   tags?: string[];
-  courseId: string;
+  courseId?: string;
 }
 
 export interface NoteUpdatePayload {

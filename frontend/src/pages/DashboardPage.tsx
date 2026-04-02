@@ -13,7 +13,7 @@ import { useAssignments, deriveStatus } from "../hooks/api/assignments";
 import { useTasks } from "../hooks/api/tasks";
 import { useNotes } from "../hooks/api/notes";
 import { useEvents } from "../hooks/api/events";
-import { useVtopAttendance, useVtopGrades } from "../hooks/api/vtop";
+import { useVtopAttendance, useVtopGradesSummary } from "../hooks/api/vtop";
 import VtopSync from "../components/vtop/VtopSync";
 import {
   DEMO_DASHBOARD_DEADLINES,
@@ -189,25 +189,14 @@ export default function DashboardPage() {
   const { data: notes,      isLoading: loadingN } = useNotes();
 
   const { data: attendance, fetch: fetchAttendance } = useVtopAttendance();
-  const { data: grades, fetch: fetchGrades, loading: loadingGrades } = useVtopGrades();
-  useEffect(() => { fetchAttendance(); fetchGrades(); }, []);
+  const { data: gradesSummary, fetch: fetchGradesSummary, loading: loadingGrades } = useVtopGradesSummary();
+  useEffect(() => { fetchAttendance(); fetchGradesSummary(); }, []);
 
   const overallAttendance = attendance?.length
     ? attendance.reduce((s, r) => s + r.attendancePercent, 0) / attendance.length
     : null;
 
-  const cgpa = useMemo(() => {
-    if (!grades?.length) return null;
-    let pts = 0;
-    let cr = 0;
-    for (const g of grades) {
-      if (g.credits != null && g.gradePoint != null && !Number.isNaN(g.credits) && !Number.isNaN(g.gradePoint)) {
-        pts += g.credits * g.gradePoint;
-        cr += g.credits;
-      }
-    }
-    return cr > 0 ? pts / cr : null;
-  }, [grades]);
+  const cgpa = gradesSummary?.cgpa ?? null;
 
   const today      = new Date();
   const monthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`;

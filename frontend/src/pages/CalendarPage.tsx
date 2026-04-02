@@ -18,6 +18,10 @@ import {
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS   = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
+function normalizeSemLabel(s: string): string {
+  return s.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
 function parseTimeToMinutes(t: string): number {
   const [h, m] = t.split(":").map(Number);
   return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
@@ -346,6 +350,19 @@ function EventDetailModal({ item, onEdit, onDelete, onClose, deleting }: {
   );
 }
 
+function courseColorFromCode(code: string, courses: Course[] | undefined): string | null {
+  if (!courses) return null;
+  const normalized = code.replace(/\s/g, "").toUpperCase();
+  // Try exact match first
+  let match = courses.find(c => c.code?.replace(/\s/g, "").toUpperCase() === normalized);
+  if (!match) {
+    // Try base code match (strip trailing L/P for lab matching)
+    const base = normalized.replace(/[LP]$/, "");
+    match = courses.find(c => c.code?.replace(/\s/g, "").toUpperCase().replace(/[LP]$/, "") === base);
+  }
+  return match?.color ?? null;
+}
+
 function TimetableGrid({ entries, courses }: { entries: VtopTimetableEntry[]; courses: Course[] | undefined }) {
   const codeToId = useMemo(() => {
     const m = new Map<string, string>();
@@ -407,7 +424,10 @@ function TimetableGrid({ entries, courses }: { entries: VtopTimetableEntry[]; co
                     {hits.map((h) => {
                       const cid = codeToId.get(h.courseCode.replace(/\s/g, "").toUpperCase());
                       const inner = (
-                        <div className="rounded-lg p-2" style={{ background: "rgba(255,255,255,0.04)" }}>
+                        <div className="rounded-lg p-2" style={{ 
+                          background: "rgba(255,255,255,0.04)",
+                          borderLeft: `3px solid ${courseColorFromCode(h.courseCode, courses) ?? "rgba(255,255,255,0.15)"}`,
+                        }}>
                           <div className="font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>{h.courseCode}</div>
                           <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>{h.courseType} · {h.venue}</div>
                         </div>
@@ -483,15 +503,21 @@ export default function CalendarPage() {
   }, [currentSemester, courses]);
 
   const timetableInSemester = useMemo(() => {
-    if (!currentSemester) return timetable;
-    const codes = new Set(
-      (courses ?? [])
-        .filter(c => c.semesterId === currentSemester.id)
-        .map(c => c.code.replace(/\s/g, "").toUpperCase())
-    );
-    if (codes.size === 0) return [];
-    return timetable.filter(e => codes.has(e.courseCode.replace(/\s/g, "").toUpperCase()));
-  }, [timetable, currentSemester, courses]);
+  if (!currentSemester) return timetable;
+  // Filter by semesterLabel on timetable entry first (most reliable)
+  const byLabel = timetable.filter(e =>
+    e.semesterLabel && normalizeSemLabel(e.semesterLabel) === normalizeSemLabel(currentSemester.name)
+  );
+  if (byLabel.length > 0) return byLabel;
+  // Fallback: filter by course codes in current semester
+  const codes = new Set(
+    (courses ?? [])
+      .filter(c => c.semesterId === currentSemester.id)
+      .map(c => c.code.replace(/\s/g, "").toUpperCase())
+  );
+  if (codes.size === 0) return [];
+  return timetable.filter(e => codes.has(e.courseCode.replace(/\s/g, "").toUpperCase()));
+}, [timetable, currentSemester, courses]);
 
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent(editingEvent?.id ?? "");
@@ -571,17 +597,23 @@ export default function CalendarPage() {
           const key = dateKey(cell);
           const [sh, sm] = entry.startTime.split(":").map(Number);
           const cid = codeToId.get(entry.courseCode.replace(/\s/g, "").toUpperCase());
-          add(key, {
-            id: `${entry.id}-${key}`,
-            title: `${entry.courseCode} · ${formatCompactTimeRange(entry.startTime, entry.endTime)}`,
-            dateKey: key,
-            sortTime: new Date(cell).setHours(sh, sm),
-            type: "event",
-            eventType: "class" as EventType,
-            time: `${entry.startTime} – ${entry.endTime}`,
-            courseCode: entry.courseCode,
-            courseId: cid,
-          });
+          const courseColor = courses?.find(c =>
+  c.code?.replace(/\s/g, "").toUpperCase() === entry.courseCode.replace(/\s/g, "").toUpperCase() ||
+  c.code?.replace(/\s/g, "").toUpperCase().replace(/[LP]$/, "") === entry.courseCode.replace(/\s/g, "").toUpperCase().replace(/[LP]$/, "")
+)?.color ?? null;
+
+        add(key, {
+          id: `${entry.id}-${key}`,
+          title: `${entry.courseCode} · ${formatCompactTimeRange(entry.startTime, entry.endTime)}`,
+          dateKey: key,
+          sortTime: new Date(cell).setHours(sh, sm),
+          type: "event",
+          eventType: "class" as EventType,
+          customColor: courseColor,
+          time: `${entry.startTime} – ${entry.endTime}`,
+          courseCode: entry.courseCode,
+          courseId: cid,
+        });
         });
       });
     }

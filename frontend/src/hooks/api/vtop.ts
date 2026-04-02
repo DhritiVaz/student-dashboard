@@ -220,6 +220,7 @@ export interface VtopTimetableEntry {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
+  semesterLabel: string | null;
 }
 
 export function useVtopTimetable() {

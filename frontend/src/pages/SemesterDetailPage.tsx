@@ -34,9 +34,13 @@ function CourseCard({
   const navigate = useNavigate();
   return (
     <div
-      className="group card-hover bg-white border border-[#e5e7eb] rounded-card p-5 cursor-pointer
-                 hover:border-[#d1d5db] transition-all duration-150 flex flex-col gap-3"
-      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+      className="group card-hover bg-white rounded-card p-5 cursor-pointer
+           hover:border-[#d1d5db] transition-all duration-150 flex flex-col gap-3"
+        style={{ 
+          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+          border: "1px solid #e5e7eb",
+          borderLeft: course.color ? `3px solid ${course.color}` : "1px solid #e5e7eb",
+        }}
       onClick={() => navigate(`/courses/${course.id}`)}
     >
       <div className="flex items-start justify-between gap-2">

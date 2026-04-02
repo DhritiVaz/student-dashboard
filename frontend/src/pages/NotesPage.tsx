@@ -130,7 +130,6 @@ function NewNoteForm({ courses, onSubmit, onCancel }: NewNoteFormProps) {
     e.preventDefault();
     setError("");
     if (!title.trim()) return setError("Title is required.");
-    if (!courseId)     return setError("Please select a course.");
     setLoading(true);
     try { await onSubmit(title.trim(), courseId, tags); }
     catch { setError("Something went wrong."); }
@@ -141,8 +140,8 @@ function NewNoteForm({ courses, onSubmit, onCancel }: NewNoteFormProps) {
     <form onSubmit={handleSubmit} noValidate>
       <div className="space-y-4">
         <FloatingInput label="Note title" value={title} onChange={setTitle} disabled={loading} />
-        <Select label="Course" value={courseId} onChange={e => setCourse(e.target.value)} disabled={loading}>
-          {!courses?.length && <option value="">No courses yet</option>}
+        <Select label="Course (optional)" value={courseId} onChange={e => setCourse(e.target.value)} disabled={loading}>
+          <option value="">No course</option>
           {courses?.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
         </Select>
         <div>
@@ -304,7 +303,7 @@ export default function NotesPage() {
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="New note">
         <NewNoteForm courses={allCourses}
           onSubmit={async (title, courseId, tags) => {
-            const note = await createNote.mutateAsync({ title, courseId, tags, content: "" });
+            const note = await createNote.mutateAsync({ title, courseId: courseId || undefined, tags, content: "" });
             setShowCreate(false);
             navigate(`/notes/${note.id}`);
           }}
