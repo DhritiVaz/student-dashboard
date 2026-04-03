@@ -12,6 +12,7 @@ import { useToast } from "../hooks/useToast";
 import { useSemesters } from "../hooks/api/semesters";
 import { useCourses } from "../hooks/api/courses";
 import { useNotes, useCreateNote, useDeleteNote, type Note } from "../hooks/api/notes";
+import { PLACEHOLDER_NOTES } from "../lib/placeholders";
 
 type SortKey = "updatedAt" | "createdAt" | "title";
 
@@ -200,8 +201,15 @@ export default function NotesPage() {
     return [...set].sort();
   }, [notes]);
 
+  const activeFilters = [courseFilter, tagFilter, search.trim()].filter(Boolean).length;
+
   const filtered = useMemo(() => {
     let list = notes ?? [];
+    const isActuallyEmpty = !isLoading && list.length === 0 && activeFilters === 0;
+    if (isActuallyEmpty) {
+      list = PLACEHOLDER_NOTES;
+    }
+
     if (courseFilter) list = list.filter(n => n.courseId === courseFilter);
     if (tagFilter)    list = list.filter(n => n.tags.includes(tagFilter));
     if (search.trim()) {
@@ -213,9 +221,7 @@ export default function NotesPage() {
       if (sortBy === "createdAt") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
-  }, [notes, courseFilter, tagFilter, search, sortBy]);
-
-  const activeFilters = [courseFilter, tagFilter, search.trim()].filter(Boolean).length;
+  }, [notes, courseFilter, tagFilter, search, sortBy, isLoading, activeFilters]);
 
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">

@@ -13,6 +13,7 @@ import {
   useTasks, useCreateTask, useUpdateTask, useToggleTask, useDeleteTask,
   type Task, type Priority,
 } from "../hooks/api/tasks";
+import { PLACEHOLDER_TASKS } from "../lib/placeholders";
 
 type GroupBy = "all" | "priority" | "course" | "completed";
 type SortKey = "dueDate" | "priority" | "createdAt";
@@ -30,7 +31,7 @@ function dueDateStyle(iso?: string | null, done?: boolean): { label: string; cls
   if (!iso) return null;
   const d     = new Date(iso);
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const diff  = Math.round((d.setHours(0,0,0,0) - today.getTime()) / 86400000);
+  const diff  = Math.round((new Date(d).setHours(0,0,0,0) - today.getTime()) / 86400000);
   if (done) return { label: formatDate(iso), cls: "text-zinc-500 bg-zinc-500/10 border-zinc-500/20" };
   if (diff < 0)   return { label: `${Math.abs(diff)}d overdue`, cls: "text-red-400 bg-red-500/10 border-red-500/20" };
   if (diff === 0) return { label: "Today",                      cls: "text-orange-400 bg-orange-500/10 border-orange-500/20" };
@@ -221,8 +222,15 @@ export default function TasksPage() {
   const [editingTask,    setEditingTask]     = useState<Task | null>(null);
   const [deletingId,     setDeletingId]     = useState<string | null>(null);
 
+  const activeFilters = [priorityFilter, courseFilter, search.trim()].filter(Boolean).length;
+
   const filtered = useMemo(() => {
     let list = tasks ?? [];
+    const isActuallyEmpty = !isLoading && list.length === 0 && activeFilters === 0;
+    if (isActuallyEmpty) {
+      list = PLACEHOLDER_TASKS;
+    }
+
     if (priorityFilter) list = list.filter(t => t.priority === priorityFilter);
     if (courseFilter)   list = list.filter(t => t.courseId === courseFilter);
     if (search.trim()) {
@@ -230,7 +238,7 @@ export default function TasksPage() {
       list = list.filter(t => t.title.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));
     }
     return sortTasks(list, sortBy);
-  }, [tasks, priorityFilter, courseFilter, search, sortBy]);
+  }, [tasks, priorityFilter, courseFilter, search, sortBy, isLoading, activeFilters]);
 
   const pending   = filtered.filter(t => !t.isCompleted);
   const completed = filtered.filter(t => t.isCompleted);
@@ -334,7 +342,6 @@ export default function TasksPage() {
   }
 
   const deletingTask  = tasks?.find(t => t.id === deletingId);
-  const activeFilters = [priorityFilter, courseFilter, search.trim()].filter(Boolean).length;
 
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">
@@ -391,7 +398,7 @@ export default function TasksPage() {
 
       {isLoading ? (
         <SkeletonList count={8} layout="list" cardHeight={56} />
-      ) : (tasks?.length ?? 0) === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>No tasks yet</p>
         </div>

@@ -19,6 +19,7 @@ import {
   deriveStatus,
   type Assignment,
 } from "../hooks/api/assignments";
+import { PLACEHOLDER_ASSIGNMENTS } from "../lib/placeholders";
 
 type SortKey   = "dueDate" | "name" | "course";
 type StatusFilter = "all" | "submitted" | "pending" | "overdue";
@@ -148,8 +149,15 @@ export default function AssignmentsPage() {
 
   const now = new Date();
 
+  const activeFilters = [courseFilter, statusFilter !== "all", dateRange !== "all", search.trim()].filter(Boolean).length;
+
   const filtered = useMemo(() => {
     let list = allAssignments ?? [];
+    const isActuallyEmpty = !isLoading && list.length === 0 && activeFilters === 0;
+    if (isActuallyEmpty) {
+      list = PLACEHOLDER_ASSIGNMENTS;
+    }
+
     if (courseFilter) list = list.filter(a => a.courseId === courseFilter);
     if (statusFilter !== "all") list = list.filter(a => deriveStatus(a) === statusFilter);
     if (dateRange !== "all") {
@@ -174,9 +182,7 @@ export default function AssignmentsPage() {
       if (!b.dueDate) return -1;
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
-  }, [allAssignments, courseFilter, statusFilter, dateRange, search, sortBy, now]);
-
-  const activeFilters = [courseFilter, statusFilter !== "all", dateRange !== "all", search.trim()].filter(Boolean).length;
+  }, [allAssignments, courseFilter, statusFilter, dateRange, search, sortBy, now, isLoading, activeFilters]);
 
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">

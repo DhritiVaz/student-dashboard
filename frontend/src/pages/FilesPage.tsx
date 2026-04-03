@@ -25,6 +25,7 @@ import {
   downloadStudentFile,
   type StudentFile,
 } from "../hooks/api/files";
+import { PLACEHOLDER_FILES } from "../lib/placeholders";
 
 const CATEGORIES = [
   { value: "", label: "None" },
@@ -187,8 +188,15 @@ export default function FilesPage() {
     return semesterFilter ? allCourses.filter((c) => c.semesterId === semesterFilter) : allCourses;
   }, [allCourses, semesterFilter]);
 
+  const activeFilters = [courseFilter, search.trim()].filter(Boolean).length;
+
   const filtered = useMemo(() => {
     let list = files ?? [];
+    const isActuallyEmpty = !isLoading && list.length === 0 && activeFilters === 0;
+    if (isActuallyEmpty) {
+      list = PLACEHOLDER_FILES;
+    }
+
     if (courseFilter) list = list.filter((f) => f.courseId === courseFilter);
     const q = search.trim().toLowerCase();
     if (q) {
@@ -200,9 +208,7 @@ export default function FilesPage() {
       );
     }
     return list;
-  }, [files, courseFilter, search]);
-
-  const activeFilters = [courseFilter, search.trim()].filter(Boolean).length;
+  }, [files, courseFilter, search, isLoading, activeFilters]);
 
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">

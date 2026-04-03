@@ -14,6 +14,7 @@ import { useCourses } from "../hooks/api/courses";
 import { useAssignments, deriveStatus } from "../hooks/api/assignments";
 import { useTasks } from "../hooks/api/tasks";
 import { useNotes } from "../hooks/api/notes";
+import { PLACEHOLDER_ASSIGNMENTS, PLACEHOLDER_NOTES, PLACEHOLDER_TASKS } from "../lib/placeholders";
 import { useEvents } from "../hooks/api/events";
 import { useVtopAttendance, useVtopGradesSummary } from "../hooks/api/vtop";
 import VtopSync from "../components/vtop/VtopSync";
@@ -184,9 +185,13 @@ export default function DashboardPage() {
 
   const { data: semesters,   isLoading: loadingS } = useSemesters();
   const { data: allCourses,  isLoading: loadingC } = useCourses();
-  const { data: assignments, isLoading: loadingA } = useAssignments();
-  const { data: tasks,       isLoading: loadingT } = useTasks();
-  const { data: notes,      isLoading: loadingN } = useNotes();
+  const { data: rawAssignments, isLoading: loadingA } = useAssignments();
+  const { data: rawTasks,       isLoading: loadingT } = useTasks();
+  const { data: rawNotes,       isLoading: loadingN } = useNotes();
+
+  const assignments = !loadingA && !rawAssignments?.length ? PLACEHOLDER_ASSIGNMENTS : rawAssignments;
+  const tasks       = !loadingT && !rawTasks?.length       ? PLACEHOLDER_TASKS       : rawTasks;
+  const notes       = !loadingN && !rawNotes?.length       ? PLACEHOLDER_NOTES       : rawNotes;
 
   const { data: attendance, fetch: fetchAttendance } = useVtopAttendance();
   const { data: gradesSummary, fetch: fetchGradesSummary, loading: loadingGrades } = useVtopGradesSummary();
