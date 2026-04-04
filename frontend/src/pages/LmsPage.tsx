@@ -579,7 +579,7 @@ export default function LmsPage() {
           {tab === "quizzes"   && <QuizzesTab modules={modules} courses={courses} />}
           {tab === "files"     && <FilesTab modules={modules} courses={courses} />}
           {tab === "courses"   && <CoursesTab courses={courses} modules={modules} />}
-          {tab === "sync"      && <div className="max-w-xl"><LmsSync /></div>}
+          {tab === "sync"      && <div className="max-w-xl mx-auto"><LmsSync /></div>}
         </>
       )}
     </div>

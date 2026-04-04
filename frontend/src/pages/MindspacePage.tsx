@@ -512,53 +512,55 @@ export default function MindspacePage() {
 
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">
-      {/* Header */}
-      <div className="flex items-center gap-2.5 mb-2">
-        <Brain size={19} style={{ color: "rgba(255,255,255,0.35)" }} />
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.95)" }}>
-          Mindspace
-        </h1>
-      </div>
-      <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.35)" }}>
-        A scratchpad for anything — text, images, PDFs, files. Review later.
-      </p>
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center gap-2.5 mb-2">
+          <Brain size={19} style={{ color: "rgba(255,255,255,0.35)" }} />
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.95)" }}>
+            Mindspace
+          </h1>
+        </div>
+        <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.35)" }}>
+          A scratchpad for anything — text, images, PDFs, files. Review later.
+        </p>
 
-      {/* Composer */}
-      <div className="max-w-2xl mb-8">
-        <Composer onSuccess={handleSuccess} />
-      </div>
+        {/* Composer */}
+        <div className="mb-8">
+          <Composer onSuccess={handleSuccess} />
+        </div>
 
-      {/* Feed */}
-      {isLoading ? (
-        <div className="max-w-2xl space-y-3">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-28 rounded-xl animate-pulse" style={{ background: "#111" }} />
-          ))}
-        </div>
-      ) : entries.length === 0 ? (
-        <div
-          className="max-w-2xl flex flex-col items-center justify-center py-16 rounded-xl text-center"
-          style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)" }}
-        >
-          <Brain size={32} className="mb-3" style={{ color: "rgba(255,255,255,0.1)" }} />
-          <p className="text-sm font-medium mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
-            Nothing captured yet
-          </p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
-            Write a note or drop a file above to get started
-          </p>
-        </div>
-      ) : (
-        <div className="max-w-2xl space-y-3">
-          {entries.map(entry => (
-            <EntryCard
-              key={entry.id}
-              entry={entry}
-              onDelete={() => handleDelete(entry.id)}
-            />
-          ))}
-        </div>
-      )}
+        {/* Feed */}
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-28 rounded-xl animate-pulse" style={{ background: "#111" }} />
+            ))}
+          </div>
+        ) : entries.length === 0 ? (
+          <div
+            className="flex flex-col items-center justify-center py-16 rounded-xl text-center"
+            style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <Brain size={32} className="mb-3" style={{ color: "rgba(255,255,255,0.1)" }} />
+            <p className="text-sm font-medium mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+              Nothing captured yet
+            </p>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
+              Write a note or drop a file above to get started
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {entries.map(entry => (
+              <EntryCard
+                key={entry.id}
+                entry={entry}
+                onDelete={() => handleDelete(entry.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

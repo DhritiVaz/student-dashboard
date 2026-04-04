@@ -502,44 +502,46 @@ export default function SettingsPage() {
 
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">
-      {/* Page title */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.95)" }}>Settings</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.35)" }}>Manage your profile, preferences, and account.</p>
-      </div>
+      <div className="max-w-[600px] mx-auto">
+        {/* Page title */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.95)" }}>Settings</h1>
+          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.35)" }}>Manage your profile, preferences, and account.</p>
+        </div>
 
-      {/* Tab bar */}
-      <div
-        className="flex gap-0.5 p-1 mb-6 rounded-xl w-fit max-w-full overflow-x-auto"
-        style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.07)" }}
-      >
-        {TABS.map(({ id, label, icon: Icon }) => {
-          const active = tab === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setTab(id)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
-              style={{
-                background: active ? "rgba(255,255,255,0.09)" : "transparent",
-                color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.42)",
-              }}
-            >
-              <Icon size={14} strokeWidth={active ? 2 : 1.6} />
-              {label}
-            </button>
-          );
-        })}
-      </div>
+        {/* Tab bar */}
+        <div
+          className="flex gap-0.5 p-1 mb-6 rounded-xl w-fit max-w-full overflow-x-auto"
+          style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          {TABS.map(({ id, label, icon: Icon }) => {
+            const active = tab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTab(id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
+                style={{
+                  background: active ? "rgba(255,255,255,0.09)" : "transparent",
+                  color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.42)",
+                }}
+              >
+                <Icon size={14} strokeWidth={active ? 2 : 1.6} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Tab content — max width for readability */}
-      <div className="max-w-[600px]">
-        {tab === "profile"    && <ProfileTab />}
-        {tab === "appearance" && <AppearanceTab />}
-        {tab === "dashboard"  && <DashboardTab />}
-        {tab === "academics"  && <AcademicsTab />}
-        {tab === "account"    && <AccountTab />}
+        {/* Tab content — max width for readability */}
+        <div>
+          {tab === "profile"    && <ProfileTab />}
+          {tab === "appearance" && <AppearanceTab />}
+          {tab === "dashboard"  && <DashboardTab />}
+          {tab === "academics"  && <AcademicsTab />}
+          {tab === "account"    && <AccountTab />}
+        </div>
       </div>
     </div>
   );
