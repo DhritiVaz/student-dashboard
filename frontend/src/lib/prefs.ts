@@ -10,6 +10,7 @@ export const PREF_DEADLINE_DAYS    = "settings-deadline-days";           // numb
 export const PREF_ATTENDANCE_SAFE  = "settings-attendance-safe";         // number, default 75
 export const PREF_ATTENDANCE_WARN  = "settings-attendance-warn";         // number, default 65
 export const PREF_ATTENDANCE_TARGET = "settings-attendance-target";      // number, default 75
+export const PREF_THEME            = "settings-theme";                   // "light" or "dark", default "light"
 
 const EVENT = "dashboard-prefs-changed";
 
@@ -28,6 +29,14 @@ export function readNum(key: string, def: number): number {
   try {
     const v = localStorage.getItem(key);
     if (v !== null) { const n = Number(v); if (Number.isFinite(n)) return n; }
+  } catch { /* ignore */ }
+  return def;
+}
+
+export function readStr(key: string, def: string): string {
+  try {
+    const v = localStorage.getItem(key);
+    if (v !== null) return v;
   } catch { /* ignore */ }
   return def;
 }

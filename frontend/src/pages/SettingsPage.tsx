@@ -7,6 +7,7 @@ import { useAuthStore } from "../stores/authStore";
 import { useMe, useUpdateProfile, useChangePassword, useLogoutAllSessions } from "../hooks/api/users";
 import { logoutApi } from "../lib/authApi";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../ThemeContext";
 import {
   PREF_SIDEBAR_START, PREF_REDUCED_MOTION,
   PREF_SHOW_GREETING, PREF_DEADLINE_DAYS,
@@ -29,6 +30,19 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
 // ─── Reusable primitives ────────────────────────────────────────────────────
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  // Colors
+  const trackOff = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+  const trackOn = isDark ? "rgba(255,255,255,0.88)" : "#E87040";
+  const knobUnchecked = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
+  const knobChecked = isDark ? "#111" : "#ffffff";
+
+  const trackBorder = isDark
+    ? checked ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.12)"
+    : checked ? "rgba(232,112,64,0.6)" : "rgba(0,0,0,0.2)";
+
   return (
     <button
       type="button"
@@ -38,14 +52,14 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
       style={{
         display: "inline-flex", alignItems: "center",
         width: 40, height: 22, borderRadius: 999, padding: 2, cursor: "pointer", flexShrink: 0,
-        background: checked ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.1)",
-        border: "1.5px solid " + (checked ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.12)"),
+        background: checked ? trackOn : trackOff,
+        border: `1.5px solid ${checked ? trackBorder : trackBorder}`,
         transition: "background 180ms, border-color 180ms",
       }}
     >
       <span style={{
         display: "block", width: 14, height: 14, borderRadius: "50%", flexShrink: 0,
-        background: checked ? "#111" : "rgba(255,255,255,0.4)",
+        background: checked ? knobChecked : knobUnchecked,
         transform: checked ? "translateX(18px)" : "translateX(0)",
         transition: "transform 180ms, background 180ms",
       }} />
@@ -56,11 +70,16 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 function Row({
   label, desc, danger = false, children,
 }: { label: string; desc?: string; danger?: boolean; children: React.ReactNode }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const labelColor = danger ? "#f87171" : isDark ? "rgba(255,255,255,0.78)" : "rgba(0,0,0,0.78)";
+  const descColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.5)";
+
   return (
     <div className="flex items-center justify-between gap-6" style={{ minHeight: 40 }}>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium" style={{ color: danger ? "#f87171" : "rgba(255,255,255,0.78)" }}>{label}</p>
-        {desc && <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>{desc}</p>}
+        <p className="text-sm font-medium" style={{ color: labelColor }}>{label}</p>
+        {desc && <p className="text-xs mt-0.5" style={{ color: descColor }}>{desc}</p>}
       </div>
       <div className="flex-shrink-0">{children}</div>
     </div>
@@ -68,16 +87,25 @@ function Row({
 }
 
 function Divider() {
-  return <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }} />;
+  const { theme } = useTheme();
+  const borderColor = theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  return <div style={{ borderTop: `1px solid ${borderColor}` }} />;
 }
 
 function Card({ title, desc, children }: { title?: string; desc?: string; children: React.ReactNode }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const bg = isDark ? "#111" : "#ffffff";
+  const border = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)";
+  const titleColor = isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)";
+  const descColor = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)";
+
   return (
-    <div className="rounded-xl" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)" }}>
+    <div className="rounded-xl" style={{ background: bg, border: `1px solid ${border}` }}>
       {(title || desc) && (
-        <div className="px-5 py-3.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          {title && <p className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>{title}</p>}
-          {desc  && <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{desc}</p>}
+        <div className="px-5 py-3.5" style={{ borderBottom: `1px solid ${border}` }}>
+          {title && <p className="text-sm font-semibold" style={{ color: titleColor }}>{title}</p>}
+          {desc && <p className="text-xs mt-0.5" style={{ color: descColor }}>{desc}</p>}
         </div>
       )}
       <div className="px-5 py-4 space-y-4">{children}</div>
@@ -88,14 +116,15 @@ function Card({ title, desc, children }: { title?: string; desc?: string; childr
 function NumInput({
   value, onChange, min, max, unit,
 }: { value: number; onChange: (n: number) => void; min: number; max: number; unit?: string }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [raw, setRaw] = useState(String(value));
-  // sync if parent value changes (e.g. on reset)
   useEffect(() => { setRaw(String(value)); }, [value]);
 
   function commit(s: string) {
     const n = parseInt(s, 10);
     if (Number.isFinite(n)) onChange(Math.min(max, Math.max(min, n)));
-    setRaw(String(value)); // reset display to actual value
+    setRaw(String(value));
   }
 
   return (
@@ -110,15 +139,17 @@ function NumInput({
         onKeyDown={e => { if (e.key === "Enter") commit((e.target as HTMLInputElement).value); }}
         style={{
           width: 70, padding: "5px 8px", textAlign: "center",
-          background: "#1a1a1a", color: "rgba(255,255,255,0.85)",
-          border: "1.5px solid rgba(255,255,255,0.13)", borderRadius: 8,
+          background: isDark ? "#1a1a1a" : "#f3f4f6",
+          color: isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)",
+          border: `1.5px solid ${isDark ? "rgba(255,255,255,0.13)" : "rgba(0,0,0,0.2)"}`,
+          borderRadius: 8,
           fontSize: 14, outline: "none", fontVariantNumeric: "tabular-nums",
           transition: "border-color 150ms",
         }}
-        onFocus={e => (e.target.style.borderColor = "rgba(255,255,255,0.4)")}
-        onBlurCapture={e => (e.target.style.borderColor = "rgba(255,255,255,0.13)")}
+        onFocus={e => (e.target.style.borderColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)")}
+        onBlurCapture={e => (e.target.style.borderColor = isDark ? "rgba(255,255,255,0.13)" : "rgba(0,0,0,0.2)")}
       />
-      {unit && <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{unit}</span>}
+      {unit && <span className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>{unit}</span>}
     </div>
   );
 }
@@ -130,36 +161,49 @@ function RadioGroup<T extends string>({
   onChange: (v: T) => void;
   options: { value: T; label: string; desc?: string }[];
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
     <div className="space-y-2">
-      {options.map(opt => (
-        <button
-          key={opt.value}
-          type="button"
-          onClick={() => onChange(opt.value)}
-          className="w-full flex items-center gap-3 text-left rounded-lg px-3 py-2.5 transition-colors"
-          style={{
-            background: value === opt.value ? "rgba(255,255,255,0.06)" : "transparent",
-            border: "1.5px solid " + (value === opt.value ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.06)"),
-          }}
-        >
-          <span style={{
-            width: 16, height: 16, borderRadius: "50%", flexShrink: 0,
-            border: "1.5px solid " + (value === opt.value ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.22)"),
-            background: value === opt.value ? "rgba(255,255,255,0.88)" : "transparent",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "border-color 150ms, background 150ms",
-          }}>
-            {value === opt.value && (
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#111" }} />
-            )}
-          </span>
-          <span>
-            <span className="block text-sm font-medium" style={{ color: "rgba(255,255,255,0.8)" }}>{opt.label}</span>
-            {opt.desc && <span className="block text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{opt.desc}</span>}
-          </span>
-        </button>
-      ))}
+      {options.map(opt => {
+        const active = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className="w-full flex items-center gap-3 text-left rounded-lg px-3 py-2.5 transition-colors"
+            style={{
+              background: active ? (isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)") : "transparent",
+              border: `1.5px solid ${active
+                ? (isDark ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)")
+                : (isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)")}`,
+            }}
+          >
+            <span style={{
+              width: 16, height: 16, borderRadius: "50%", flexShrink: 0,
+              border: `1.5px solid ${active
+                ? (isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)")
+                : (isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.2)")}`,
+              background: active ? (isDark ? "rgba(255,255,255,0.88)" : "#E87040") : "transparent",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "border-color 150ms, background 150ms",
+            }}>
+              {active && (
+                <span style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: isDark ? "#111" : "#fff",
+                }} />
+              )}
+            </span>
+            <span>
+              <span className="block text-sm font-medium" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)" }}>{opt.label}</span>
+              {opt.desc && <span className="block text-xs" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>{opt.desc}</span>}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -174,6 +218,8 @@ function getInitials(name?: string | null) {
 
 // ─── Profile tab ──────────────────────────────────────────────────────────
 function ProfileTab() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const toast = useToast();
   const { user: authUser, refreshToken, setAuth } = useAuthStore();
   const { data: me, refetch } = useMe();
@@ -201,22 +247,27 @@ function ProfileTab() {
     }
   }
 
+  const avatarBg = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)";
+  const avatarColor = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)";
+  const nameTextColor = isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)";
+  const emailTextColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.5)";
+
   return (
     <div className="space-y-4">
       <Card title="Personal information">
         <div className="flex items-center gap-4 pb-1">
           <div className="flex items-center justify-center rounded-full text-sm font-semibold flex-shrink-0"
-            style={{ width: 52, height: 52, background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)", letterSpacing: "-0.02em" }}>
+            style={{ width: 52, height: 52, background: avatarBg, color: avatarColor, letterSpacing: "-0.02em" }}>
             {getInitials(name || live?.name)}
           </div>
           <div>
-            <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>{name || "No name"}</p>
-            <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>{email || "No email"}</p>
+            <p className="text-sm font-medium" style={{ color: nameTextColor }}>{name || "No name"}</p>
+            <p className="text-xs mt-0.5" style={{ color: emailTextColor }}>{email || "No email"}</p>
           </div>
         </div>
         <Divider />
-        <FloatingInput dark label="Full name"      value={name}  onChange={setName}  autoComplete="name" />
-        <FloatingInput dark label="Email address"  type="email"  value={email} onChange={setEmail} autoComplete="email" />
+        <FloatingInput dark={isDark} label="Full name"      value={name}  onChange={setName}  autoComplete="name" />
+        <FloatingInput dark={isDark} label="Email address"  type="email"  value={email} onChange={setEmail} autoComplete="email" />
         <div className="flex justify-end pt-1">
           <Button size="sm" onClick={save} loading={updateProfile.isPending} disabled={!dirty}>
             Save changes
@@ -229,6 +280,8 @@ function ProfileTab() {
 
 // ─── Security section (inside Account tab) ────────────────────────────────
 function PasswordSection() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const toast = useToast();
   const changePassword = useChangePassword();
   const [cur, setCur] = useState("");
@@ -250,9 +303,9 @@ function PasswordSection() {
 
   return (
     <Card title="Change password" desc="Must be at least 8 characters. Google-linked accounts need an existing password to use this.">
-      <FloatingInput dark label="Current password" type="password" passwordToggle value={cur} onChange={setCur} autoComplete="current-password" />
-      <FloatingInput dark label="New password"      type="password" passwordToggle value={nw}  onChange={setNw}  autoComplete="new-password" />
-      <FloatingInput dark label="Confirm new password" type="password" passwordToggle value={cnf} onChange={setCnf} autoComplete="new-password" />
+      <FloatingInput dark={isDark} label="Current password" type="password" passwordToggle value={cur} onChange={setCur} autoComplete="current-password" />
+      <FloatingInput dark={isDark} label="New password"      type="password" passwordToggle value={nw}  onChange={setNw}  autoComplete="new-password" />
+      <FloatingInput dark={isDark} label="Confirm new password" type="password" passwordToggle value={cnf} onChange={setCnf} autoComplete="new-password" />
       <div className="flex justify-end pt-1">
         <Button size="sm" variant="secondary" onClick={submit} loading={changePassword.isPending}>
           Update password
@@ -265,6 +318,7 @@ function PasswordSection() {
 // ─── Appearance tab ────────────────────────────────────────────────────────
 function AppearanceTab() {
   const toast = useToast();
+  const { theme, setTheme } = useTheme();
 
   const [sidebarStart, setSidebarStart] = useState(() => readBool(PREF_SIDEBAR_START, false));
   const [motion, setMotion] = useState<"system" | "on" | "off">(() => {
@@ -294,6 +348,17 @@ function AppearanceTab() {
         </Row>
       </Card>
 
+      <Card title="Theme">
+        <RadioGroup
+          value={theme}
+          onChange={(t) => setTheme(t as "light" | "dark")}
+          options={[
+            { value: "light", label: "Light", desc: "Light background with dark text" },
+            { value: "dark", label: "Dark", desc: "Dark background with light text" },
+          ]}
+        />
+      </Card>
+
       <Card title="Motion & animations">
         <RadioGroup
           value={motion}
@@ -311,6 +376,8 @@ function AppearanceTab() {
 
 // ─── Dashboard tab ─────────────────────────────────────────────────────────
 function DashboardTab() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const toast = useToast();
 
   const [showGreeting, setShowGreeting] = useState(() => readBool(PREF_SHOW_GREETING, true));
@@ -321,6 +388,13 @@ function DashboardTab() {
     setShowGreeting(v);
     toast.success(v ? "Greeting restored." : "Greeting hidden.");
   }
+
+  const dlBgActive = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
+  const dlBgInactive = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";
+  const dlTextActive = isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)";
+  const dlTextInactive = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
+  const dlBorderActive = isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)";
+  const dlBorderInactive = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)";
 
   function changeDeadlineDays(n: number) {
     writeNum(PREF_DEADLINE_DAYS, n);
@@ -346,9 +420,9 @@ function DashboardTab() {
                 onClick={() => changeDeadlineDays(d)}
                 className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
                 style={{
-                  background: deadlineDays === d ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.04)",
-                  color: deadlineDays === d ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
-                  border: "1.5px solid " + (deadlineDays === d ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.07)"),
+                  background: deadlineDays === d ? dlBgActive : dlBgInactive,
+                  color: deadlineDays === d ? dlTextActive : dlTextInactive,
+                  border: "1.5px solid " + (deadlineDays === d ? dlBorderActive : dlBorderInactive),
                 }}
               >
                 {d}d
@@ -499,20 +573,24 @@ function AccountTab() {
 // ─── Main page ─────────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>("profile");
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const titleColor = isDark ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.9)";
+  const subtitleColor = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)";
 
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">
       <div className="max-w-[600px] mx-auto">
         {/* Page title */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.95)" }}>Settings</h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.35)" }}>Manage your profile, preferences, and account.</p>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: titleColor }}>Settings</h1>
+          <p className="text-sm mt-1" style={{ color: subtitleColor }}>Manage your profile, preferences, and account.</p>
         </div>
 
         {/* Tab bar */}
         <div
           className="flex gap-0.5 p-1 mb-6 rounded-xl w-fit max-w-full overflow-x-auto"
-          style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.07)" }}
+          style={{ background: isDark ? "#141414" : "#f3f4f6", border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"}` }}
         >
           {TABS.map(({ id, label, icon: Icon }) => {
             const active = tab === id;
@@ -523,8 +601,8 @@ export default function SettingsPage() {
                 onClick={() => setTab(id)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
                 style={{
-                  background: active ? "rgba(255,255,255,0.09)" : "transparent",
-                  color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.42)",
+                  background: active ? (isDark ? "rgba(255,255,255,0.09)" : "#ffffff") : "transparent",
+                  color: active ? (isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.8)") : (isDark ? "rgba(255,255,255,0.42)" : "rgba(0,0,0,0.4)"),
                 }}
               >
                 <Icon size={14} strokeWidth={active ? 2 : 1.6} />

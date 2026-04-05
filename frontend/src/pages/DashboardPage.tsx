@@ -18,6 +18,7 @@ import { PLACEHOLDER_ASSIGNMENTS, PLACEHOLDER_NOTES, PLACEHOLDER_TASKS } from ".
 import { useEvents } from "../hooks/api/events";
 import { useVtopAttendance, useVtopGradesSummary } from "../hooks/api/vtop";
 import VtopSync from "../components/vtop/VtopSync";
+import { useTheme } from "../ThemeContext";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -54,7 +55,7 @@ function relDue(iso: string): { label: string; cls: string } {
   if (diff < 0)   return { label: `${Math.abs(diff)}d overdue`, cls: "text-red-400 bg-red-500/10 border-red-500/20" };
   if (diff === 0) return { label: "Today",     cls: "text-orange-400 bg-orange-500/10 border-orange-500/20" };
   if (diff === 1) return { label: "Tomorrow",  cls: "text-amber-400 bg-amber-500/10 border-amber-500/20" };
-  if (diff <= 7)  return { label: `${diff}d`,  cls: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
+  if (diff <= 7)  return { label: `${diff}d`,  cls: "text-green-600 bg-green-500/10 border-green-500/20" };
   return { label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), cls: "text-zinc-500 bg-zinc-500/10 border-zinc-500/20" };
 }
 
@@ -62,16 +63,17 @@ function StatCard({ icon, label, value, sub, loading, to, accent }: {
   icon: React.ReactNode; label: string; value: string | null;
   sub: string; loading?: boolean; to?: string; accent?: string;
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const inner = (
     <div className="relative rounded-xl p-5 h-full flex flex-col gap-3 overflow-hidden transition-all duration-150"
-      style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}>
+      style={{ background: isDark ? "#141414" : "#ffffff", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}>
       <div className="flex items-center justify-between">
         <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: accent ?? "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          style={{ background: accent ?? (isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"), border: `1px solid ${accent ? (accent + "40") : (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)")}` }}>
           {icon}
         </div>
-        <span className="text-[11px] font-medium uppercase tracking-widest"
-          style={{ color: "rgba(255,255,255,0.2)" }}>{label}</span>
+        <span className="text-[11px] font-medium uppercase tracking-widest" style={{ color: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.5)" }}>{label}</span>
       </div>
       {loading ? (
         <div>
@@ -80,9 +82,8 @@ function StatCard({ icon, label, value, sub, loading, to, accent }: {
         </div>
       ) : (
         <div>
-          <p className="text-3xl font-bold tracking-tight leading-none mb-1"
-            style={{ color: "rgba(255,255,255,0.95)" }}>{value ?? "—"}</p>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>{sub}</p>
+          <p className="text-3xl font-bold tracking-tight leading-none mb-1" style={{ color: isDark ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.9)" }}>{value ?? "—"}</p>
+          <p className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>{sub}</p>
         </div>
       )}
     </div>
@@ -92,13 +93,13 @@ function StatCard({ icon, label, value, sub, loading, to, accent }: {
     <Link to={to} className="group block"
       onMouseEnter={e => {
         const el = e.currentTarget.querySelector("div") as HTMLDivElement;
-        el.style.border = "1px solid rgba(255,255,255,0.14)";
-        el.style.background = "#191919";
+        el.style.border = isDark ? "1px solid rgba(255,255,255,0.14)" : "1px solid rgba(0,0,0,0.14)";
+        el.style.background = isDark ? "#191919" : "#f5f5f5";
       }}
       onMouseLeave={e => {
         const el = e.currentTarget.querySelector("div") as HTMLDivElement;
-        el.style.border = "1px solid rgba(255,255,255,0.08)";
-        el.style.background = "#141414";
+        el.style.border = `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`;
+        el.style.background = isDark ? "#141414" : "#ffffff";
       }}>
       {inner}
     </Link>
@@ -109,6 +110,8 @@ function StatCard({ icon, label, value, sub, loading, to, accent }: {
 const MINI_WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
 function MiniCalendar({ activeDays }: { activeDays: Set<string> }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const navigate = useNavigate();
   const today    = new Date();
   const cells    = getCalendarCells(today.getFullYear(), today.getMonth());
@@ -118,8 +121,7 @@ function MiniCalendar({ activeDays }: { activeDays: Set<string> }) {
     <div className="flex flex-col flex-1 min-h-0">
       <div className="grid grid-cols-7 mb-1">
         {MINI_WEEKDAYS.map((d, i) => (
-          <div key={i} className="text-center text-[10px] font-semibold py-1"
-            style={{ color: "rgba(255,255,255,0.2)" }}>{d}</div>
+          <div key={i} className="text-center text-[10px] font-semibold py-1" style={{ color: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.4)" }}>{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 flex-1 min-h-0"
@@ -129,21 +131,27 @@ function MiniCalendar({ activeDays }: { activeDays: Set<string> }) {
           const inMonth  = cell.getMonth() === today.getMonth();
           const tod      = isToday(cell);
           const hasItems = activeDays.has(key);
+          const hoverBgValue = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
+          const dayColorInMonth = inMonth ? (isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.6)") : (isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)");
+          const dotColor = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)";
+          const todayBg = isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.8)";
+          const todayText = isDark ? "#0a0a0a" : "#fff";
+
           return (
             <button key={key} type="button" onClick={() => navigate("/calendar")}
               className="flex flex-col items-center justify-center rounded-md transition-all"
               style={{ opacity: !inMonth ? 0.25 : 1 }}
-              onMouseEnter={e => !tod && ((e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)")}
+              onMouseEnter={e => !tod && ((e.currentTarget as HTMLButtonElement).style.background = hoverBgValue)}
               onMouseLeave={e => !tod && ((e.currentTarget as HTMLButtonElement).style.background = "transparent")}>
               <span className="flex items-center justify-center rounded-full text-[11px] tabular-nums"
                 style={tod
-                  ? { width: 22, height: 22, background: "rgba(255,255,255,0.9)", color: "#0a0a0a", fontWeight: 700 }
-                  : { width: 22, height: 22, color: inMonth ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.15)", fontWeight: 400 }
+                  ? { width: 22, height: 22, background: todayBg, color: todayText, fontWeight: 700 }
+                  : { width: 22, height: 22, color: dayColorInMonth, fontWeight: 400 }
                 }>
                 {cell.getDate()}
               </span>
               {hasItems && inMonth && (
-                <span className="w-1 h-1 rounded-full mt-0.5" style={{ background: "rgba(255,255,255,0.25)" }} />
+                <span className="w-1 h-1 rounded-full mt-0.5" style={{ background: dotColor }} />
               )}
             </button>
           );
@@ -157,14 +165,21 @@ function Card({ title, icon, action, children, fillBody }: {
   title: string; icon: React.ReactNode; action?: React.ReactNode;
   children: React.ReactNode; fillBody?: boolean;
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const bg = isDark ? "#141414" : "#ffffff";
+  const border = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  const borderBottom = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const titleColor = isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)";
+
   return (
     <div className="flex flex-col min-h-0 rounded-xl overflow-hidden"
-      style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}>
+      style={{ background: bg, border: `1px solid ${border}` }}>
       <div className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        style={{ borderBottom: `1px solid ${borderBottom}` }}>
         <div className="flex items-center gap-2">
           {icon}
-          <span className="text-[13px] font-semibold" style={{ color: "rgba(255,255,255,0.8)" }}>{title}</span>
+          <span className="text-[13px] font-semibold" style={{ color: titleColor }}>{title}</span>
         </div>
         {action}
       </div>
@@ -179,6 +194,8 @@ function Card({ title, icon, action, children, fillBody }: {
 export default function DashboardPage() {
   const { user }  = useAuthStore();
   const firstName = user?.name?.split(" ")[0] ?? "there";
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const showGreeting  = usePrefBool(PREF_SHOW_GREETING, true);
   const deadlineDays  = usePrefNum(PREF_DEADLINE_DAYS, 14);
@@ -280,22 +297,23 @@ export default function DashboardPage() {
 
   const actionLinkStyle = {
     fontSize: 12,
-    color: "rgba(255,255,255,0.3)",
+    color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)",
     display: "flex",
     alignItems: "center",
     gap: 4,
     transition: "color 0.15s",
   };
+  const actionLinkHover = isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)";
 
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">
 
       {showGreeting && (
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-1" style={{ color: "rgba(255,255,255,0.95)" }}>
+          <h1 className="text-3xl font-bold tracking-tight mb-1" style={{ color: isDark ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.9)" }}>
             {getGreeting()}, {firstName}
           </h1>
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <p className="text-sm" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>
             {currentSemester
               ? `${currentSemester.name} · ${semesterCourses.length} course${semesterCourses.length !== 1 ? "s" : ""}`
               : "Your academic overview"}
@@ -305,17 +323,17 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard
-          icon={<Layers size={13} style={{ color: "rgba(255,255,255,0.5)" }} strokeWidth={1.8} />}
+          icon={<Layers size={13} style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)" }} strokeWidth={1.8} />}
           label="Semester" value={currentSemester?.name ?? "None"}
           sub={currentSemester ? `${semesterCourses.length} courses` : "Create one to start"}
           loading={loadingS || loadingC} to="/semesters" />
         <StatCard
-          icon={<BarChart2 size={13} style={{ color: "#4ade80" }} strokeWidth={1.8} />}
+          icon={<BarChart2 size={13} style={{ color: isDark ? "#4ade80" : "#22c55e" }} strokeWidth={1.8} />}
           label="Attendance"
           value={overallAttendance != null ? `${overallAttendance.toFixed(1)}%` : "—"}
           sub={overallAttendance != null ? "Overall average" : "Sync VTOP to see"}
           to="/attendance"
-          accent="rgba(74,222,128,0.12)" />
+          accent={isDark ? "rgba(74,222,128,0.12)" : "rgba(34,197,94,0.2)"} />
         <StatCard
           icon={<GraduationCap size={13} style={{ color: "#a78bfa" }} strokeWidth={1.8} />}
           label="CGPA"
@@ -323,22 +341,22 @@ export default function DashboardPage() {
           sub={cgpa != null ? "From VTOP grade history" : "Sync VTOP to see"}
           loading={loadingGrades}
           to="/cgpa"
-          accent="rgba(167,139,250,0.12)" />
+          accent={isDark ? "rgba(167,139,250,0.12)" : "rgba(167,139,250,0.2)"} />
         <StatCard
           icon={<Clock size={13} style={{ color: "#fb923c" }} strokeWidth={1.8} />}
           label="Due Soon" value={loadingAll ? null : String(dueSoonCount)}
           sub={dueSoonCount === 0 ? "All caught up!" : "due in 7 days"}
           loading={loadingAll} to="/assignments"
-          accent="rgba(251,146,60,0.12)" />
+          accent={isDark ? "rgba(251,146,60,0.12)" : "rgba(251,146,60,0.2)"} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <Card title="Upcoming Deadlines"
-          icon={<ClipboardList size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}
+          icon={<ClipboardList size={13} style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)" }} strokeWidth={1.8} />}
           action={
             <Link to="/assignments" style={actionLinkStyle}
-              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.7)"}
-              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.3)"}>
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = actionLinkHover}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = actionLinkStyle.color}>
               All <ArrowRight size={11} />
             </Link>
           }>
@@ -348,7 +366,7 @@ export default function DashboardPage() {
             </div>
           ) : upcomingDeadlines.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>No upcoming deadlines</p>
+              <p className="text-sm" style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.4)" }}>No upcoming deadlines</p>
             </div>
           ) : (
             upcomingDeadlines.map((item, i) => {
@@ -356,15 +374,15 @@ export default function DashboardPage() {
               return (
                 <Link key={`${item.type}-${item.id}`} to={item.link}
                   className="flex items-center gap-3 px-4 py-2.5 transition-colors"
-                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
-                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
+                  style={{ borderTop: i === 0 ? "none" : `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)"}` }}
+                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)"}
                   onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[13px] truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{item.title}</span>
+                      <span className="text-[13px] truncate" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)" }}>{item.title}</span>
                       {item.courseCode && (
                         <span className="text-[10px] font-medium rounded px-1.5 py-0.5 flex-shrink-0"
-                          style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                          style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)"}` }}>
                           {item.courseCode}
                         </span>
                       )}
@@ -381,11 +399,11 @@ export default function DashboardPage() {
 
         <Card fillBody
           title={new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-          icon={<CalendarDays size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}
+          icon={<CalendarDays size={13} style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)" }} strokeWidth={1.8} />}
           action={
             <Link to="/calendar" style={actionLinkStyle}
-              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.7)"}
-              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.3)"}>
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = actionLinkHover}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = actionLinkStyle.color}>
               Full view <ArrowRight size={11} />
             </Link>
           }>
@@ -397,11 +415,11 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <Card title="Notes"
-          icon={<FileText size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}
+          icon={<FileText size={13} style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)" }} strokeWidth={1.8} />}
           action={
             <Link to="/notes" style={actionLinkStyle}
-              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.7)"}
-              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.3)"}>
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = actionLinkHover}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = actionLinkStyle.color}>
               All <ArrowRight size={11} />
             </Link>
           }>
@@ -411,22 +429,22 @@ export default function DashboardPage() {
             </div>
           ) : recentNotes.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>No notes yet</p>
+              <p className="text-sm" style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.4)" }}>No notes yet</p>
             </div>
           ) : (
             recentNotes.map((n, i) => (
               <Link key={n.id} to={`/notes/${n.id}`}
                 className="flex items-center gap-3 px-4 py-2.5 transition-colors"
-                style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
-                onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
+                style={{ borderTop: i === 0 ? "none" : `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)"}` }}
+                onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)"}
                 onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
                 <div className="flex-1 min-w-0">
-                  <span className="text-[13px] truncate block" style={{ color: "rgba(255,255,255,0.8)" }}>
+                  <span className="text-[13px] truncate block" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)" }}>
                     {n.title || "Untitled"}
                   </span>
                   {n.course?.code && (
                     <span className="text-[10px] font-medium rounded px-1.5 py-0.5 mt-0.5 inline-block"
-                      style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)"}` }}>
                       {n.course.code}
                     </span>
                   )}
@@ -437,11 +455,11 @@ export default function DashboardPage() {
         </Card>
 
         <Card title="Tasks"
-          icon={<CheckSquare size={13} style={{ color: "rgba(255,255,255,0.3)" }} strokeWidth={1.8} />}
+          icon={<CheckSquare size={13} style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)" }} strokeWidth={1.8} />}
           action={
             <Link to="/tasks" style={actionLinkStyle}
-              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.7)"}
-              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.3)"}>
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = actionLinkHover}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = actionLinkStyle.color}>
               All <ArrowRight size={11} />
             </Link>
           }>
@@ -451,7 +469,7 @@ export default function DashboardPage() {
             </div>
           ) : pendingTasksPreview.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>No pending tasks</p>
+              <p className="text-sm" style={{ color: isDark ? "rgba(255,255,white,0.25)" : "rgba(0,0,0,0.4)" }}>No pending tasks</p>
             </div>
           ) : (
             pendingTasksPreview.map((t, i) => {
@@ -459,15 +477,15 @@ export default function DashboardPage() {
               return (
                 <Link key={t.id} to="/tasks"
                   className="flex items-center gap-3 px-4 py-2.5 transition-colors"
-                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.04)" }}
-                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.03)"}
+                  style={{ borderTop: i === 0 ? "none" : `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)"}` }}
+                  onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)"}
                   onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = "transparent"}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[13px] truncate" style={{ color: "rgba(255,255,255,0.8)" }}>{t.title}</span>
+                      <span className="text-[13px] truncate" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)" }}>{t.title}</span>
                       {t.course?.code && (
                         <span className="text-[10px] font-medium rounded px-1.5 py-0.5 flex-shrink-0"
-                          style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                          style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)", color: isDark ? "rgba(255,255,0.35)" : "rgba(0,0,0,0.5)", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)"}` }}>
                           {t.course.code}
                         </span>
                       )}
@@ -486,7 +504,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-4 rounded-xl overflow-hidden"
-        style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}>
+        style={{ background: isDark ? "#141414" : "#ffffff", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}>
         <div className="p-5">
           <VtopSync variant="dashboard" />
         </div>

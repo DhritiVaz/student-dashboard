@@ -14,6 +14,7 @@ import {
   type Task, type Priority,
 } from "../hooks/api/tasks";
 import { PLACEHOLDER_TASKS } from "../lib/placeholders";
+import { useTheme } from "../ThemeContext";
 
 type GroupBy = "all" | "priority" | "course" | "completed";
 type SortKey = "dueDate" | "priority" | "createdAt";
@@ -36,7 +37,7 @@ function dueDateStyle(iso?: string | null, done?: boolean): { label: string; cls
   if (diff < 0)   return { label: `${Math.abs(diff)}d overdue`, cls: "text-red-400 bg-red-500/10 border-red-500/20" };
   if (diff === 0) return { label: "Today",                      cls: "text-orange-400 bg-orange-500/10 border-orange-500/20" };
   if (diff === 1) return { label: "Tomorrow",                   cls: "text-orange-300 bg-orange-500/10 border-orange-500/20" };
-  if (diff <= 7)  return { label: `${diff}d`,                   cls: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" };
+  if (diff <= 7)  return { label: `${diff}d`,                   cls: "text-green-600 bg-green-500/10 border-green-500/20" };
   return           { label: formatDate(iso),                    cls: "text-zinc-500 bg-zinc-500/10 border-zinc-500/20" };
 }
 
@@ -56,6 +57,11 @@ function sortTasks(list: Task[], sortBy: SortKey): Task[] {
 }
 
 function TaskCheckbox({ done, onClick, title }: { done: boolean; onClick: () => void; title: string }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const uncheckedColor = isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)";
+  const uncheckedHoverColor = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)";
+
   return (
     <button type="button" role="checkbox" aria-checked={done}
       aria-label={done ? `Mark "${title}" as incomplete` : `Mark "${title}" as complete`}
@@ -64,9 +70,9 @@ function TaskCheckbox({ done, onClick, title }: { done: boolean; onClick: () => 
       className="flex-shrink-0 w-5 h-5 flex items-center justify-center mt-0.5">
       {done
         ? <CheckCircle2 size={18} style={{ color: "#34d399" }} strokeWidth={2} />
-        : <Circle size={18} strokeWidth={1.8} style={{ color: "rgba(255,255,255,0.2)" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.5)")}
-            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.2)")} />
+        : <Circle size={18} strokeWidth={1.8} style={{ color: uncheckedColor }}
+            onMouseEnter={e => (e.currentTarget.style.color = uncheckedHoverColor)}
+            onMouseLeave={e => (e.currentTarget.style.color = uncheckedColor)} />
       }
     </button>
   );
@@ -75,21 +81,38 @@ function TaskCheckbox({ done, onClick, title }: { done: boolean; onClick: () => 
 function TaskItem({ task, onEdit, onDelete, onToggle, deleting }: {
   task: Task; onEdit: () => void; onDelete: () => void; onToggle: () => void; deleting: boolean;
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  const cardBg = isDark ? "#111111" : "#ffffff";
+  const cardBgDone = isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.01)";
+  const cardBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const cardBorderHover = isDark ? "rgba(255,255,255,0.11)" : "rgba(0,0,0,0.11)";
+  const titleColor = isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)";
+  const completedTitleColor = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.15)";
+  const descColor = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.4)";
+  const completedDescColor = isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)";
+  const codeBg = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const codeColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)";
+  const codeBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  const actionColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+  const actionHoverColor = isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.7)";
+
   const due = dueDateStyle(task.dueDate, task.isCompleted);
   return (
     <div
       className="group flex items-start gap-3 px-4 py-3 transition-all duration-150"
       style={{
         borderRadius: 10,
-        border: "1px solid rgba(255,255,255,0.06)",
-        background: task.isCompleted ? "rgba(255,255,255,0.02)" : "#111111",
+        border: `1px solid ${cardBorder}`,
+        background: task.isCompleted ? cardBgDone : cardBg,
       }}
       onMouseEnter={e => {
         if (!task.isCompleted)
-          (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.11)";
+          (e.currentTarget as HTMLDivElement).style.border = `1px solid ${cardBorderHover}`;
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.06)";
+        (e.currentTarget as HTMLDivElement).style.border = `1px solid ${cardBorder}`;
       }}
     >
       <TaskCheckbox done={task.isCompleted} onClick={onToggle} title={task.title} />
@@ -97,7 +120,7 @@ function TaskItem({ task, onEdit, onDelete, onToggle, deleting }: {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-sm font-medium transition-all duration-200 ${task.isCompleted ? "line-through" : ""}`}
-            style={{ color: task.isCompleted ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.85)" }}>
+            style={{ color: task.isCompleted ? completedTitleColor : titleColor }}>
             {task.title}
           </span>
           {!task.isCompleted && (
@@ -106,14 +129,14 @@ function TaskItem({ task, onEdit, onDelete, onToggle, deleting }: {
           )}
           {task.course && (
             <span className="text-[10px] font-semibold rounded-md px-1.5 py-0.5 tracking-wide flex-shrink-0"
-              style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              style={{ background: codeBg, color: codeColor, border: `1px solid ${codeBorder}` }}>
               {task.course.code}
             </span>
           )}
         </div>
         {task.description && (
           <p className="text-xs mt-0.5 truncate max-w-lg"
-            style={{ color: task.isCompleted ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.35)" }}>
+            style={{ color: task.isCompleted ? completedDescColor : descColor }}>
             {task.description}
           </p>
         )}
@@ -124,23 +147,23 @@ function TaskItem({ task, onEdit, onDelete, onToggle, deleting }: {
           <span className={`inline-flex items-center gap-1 text-[10px] font-medium border rounded-full px-2 py-0.5 ${due.cls}`}>
             {due.cls.includes("red") && <AlertCircle size={10} />}
             {(due.label === "Today" || due.label === "Tomorrow") && <Clock size={10} />}
-            {due.cls.includes("emerald") && <Calendar size={10} />}
+            {due.cls.includes("green") && <Calendar size={10} />}
             {due.label}
           </span>
         )}
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button onClick={onEdit} aria-label="Edit task"
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "rgba(255,255,255,0.3)" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+            style={{ color: actionColor }}
+            onMouseEnter={e => (e.currentTarget.style.color = actionHoverColor)}
+            onMouseLeave={e => (e.currentTarget.style.color = actionColor)}>
             <Pencil size={12} />
           </button>
           <button onClick={onDelete} disabled={deleting} aria-label="Delete task"
             className="p-1.5 rounded-lg transition-colors disabled:opacity-40"
-            style={{ color: "rgba(255,255,255,0.3)" }}
+            style={{ color: actionColor }}
             onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
-            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+            onMouseLeave={e => (e.currentTarget.style.color = actionColor)}>
             <Trash2 size={12} />
           </button>
         </div>
@@ -153,17 +176,23 @@ function Section({ title, count, defaultOpen = true, children, accent }: {
   title: string; count: number; defaultOpen?: boolean; children: React.ReactNode; accent?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const chevronColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+  const sectionTitleColor = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.4)";
+  const sectionCountColor = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)";
+
   return (
     <div>
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}
         className="w-full flex items-center gap-2 py-2 mb-1 text-left">
         <span className={`flex-shrink-0 transition-transform duration-150 ${open ? "rotate-0" : "-rotate-90"}`}>
-          <ChevronDown size={14} style={{ color: "rgba(255,255,255,0.3)" }} />
+          <ChevronDown size={14} style={{ color: chevronColor }} />
         </span>
         {accent && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${accent}`} />}
         <span className="text-xs font-semibold uppercase tracking-wider"
-          style={{ color: "rgba(255,255,255,0.35)" }}>{title}</span>
-        <span className="text-xs ml-1" style={{ color: "rgba(255,255,255,0.25)" }}>{count}</span>
+          style={{ color: sectionTitleColor }}>{title}</span>
+        <span className="text-xs ml-1" style={{ color: sectionCountColor }}>{count}</span>
       </button>
       {open && <div className="space-y-1.5">{children}</div>}
     </div>
@@ -172,6 +201,8 @@ function Section({ title, count, defaultOpen = true, children, accent }: {
 
 
 function QuickAdd({ onAdd }: { onAdd: (title: string) => Promise<void> }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [value, setValue]   = useState("");
   const [adding, setAdding] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -184,18 +215,24 @@ function QuickAdd({ onAdd }: { onAdd: (title: string) => Promise<void> }) {
     finally { setAdding(false); }
   }
 
+  const cardBg = isDark ? "#111111" : "#ffffff";
+  const cardBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  const cardBorderFocus = isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)";
+  const iconColor = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)";
+  const inputColor = isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)";
+
   return (
     <div className="flex items-center gap-2 rounded-xl px-4 py-3 mb-6 transition-all duration-150"
-      style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.08)" }}
-      onFocus={e => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.2)")}
-      onBlur={e => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)")}>
-      <Plus size={16} className="flex-shrink-0" style={{ color: "rgba(255,255,255,0.25)" }} />
+      style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
+      onFocus={e => (e.currentTarget.style.border = `1px solid ${cardBorderFocus}`)}
+      onBlur={e => (e.currentTarget.style.border = `1px solid ${cardBorder}`)}>
+      <Plus size={16} className="flex-shrink-0" style={{ color: iconColor }} />
       <input ref={inputRef} value={value} onChange={e => setValue(e.target.value)}
         onKeyDown={e => { if (e.key === "Enter") submit(); }}
         placeholder="Add a task… press Enter to save"
         disabled={adding}
         className="flex-1 bg-transparent text-sm outline-none disabled:opacity-50"
-        style={{ color: "rgba(255,255,255,0.8)", colorScheme: "dark" }}
+        style={{ color: inputColor, colorScheme: isDark ? "dark" : "light" }}
       />
       {adding && <span className="w-4 h-4 border border-zinc-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />}
     </div>
@@ -203,6 +240,8 @@ function QuickAdd({ onAdd }: { onAdd: (title: string) => Promise<void> }) {
 }
 
 export default function TasksPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const toast = useToast();
   const { data: tasks, isLoading } = useTasks();
   const { data: courses }          = useCourses();
@@ -223,6 +262,19 @@ export default function TasksPage() {
   const [deletingId,     setDeletingId]     = useState<string | null>(null);
 
   const activeFilters = [priorityFilter, courseFilter, search.trim()].filter(Boolean).length;
+
+  const titleColor = isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)";
+  const subtitleColor = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)";
+  const subtitleExtra = isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.3)";
+  const emptyColor = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.35)";
+  const showDoneBgActive = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)";
+  const showDoneBgInactive = isDark ? "transparent" : "transparent";
+  const showDoneTextActive = isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)";
+  const showDoneTextInactive = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.4)";
+  const showDoneBorderActive = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)";
+  const showDoneBorderInactive = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+  const modalTextColor = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)";
+  const modalTextStrongColor = isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)";
 
   const filtered = useMemo(() => {
     let list = tasks ?? [];
@@ -347,13 +399,13 @@ export default function TasksPage() {
     <div className="p-6 sm:p-8 w-full min-w-0">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.9)" }}>Tasks</h2>
-          <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <h2 className="text-xl font-bold tracking-tight" style={{ color: titleColor }}>Tasks</h2>
+          <p className="text-sm mt-0.5" style={{ color: subtitleColor }}>
             {pending.length} pending
             {completed.length > 0 && <span className="ml-1">· {completed.length} done</span>}
             {activeFilters > 0 && <span className="ml-1">· {activeFilters} filter{activeFilters > 1 ? "s" : ""}</span>}
             {!isLoading && (tasks?.length ?? 0) === 0 && (
-              <span className="ml-1" style={{ color: "rgba(255,255,255,0.22)" }}>· sample below</span>
+              <span className="ml-1" style={{ color: subtitleExtra }}>· sample below</span>
             )}
           </p>
         </div>
@@ -389,8 +441,8 @@ export default function TasksPage() {
           <button onClick={() => setShowCompleted(v => !v)}
             className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all duration-150"
             style={showCompleted
-              ? { background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.15)" }
-              : { background: "transparent", color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              ? { background: showDoneBgActive, color: showDoneTextActive, border: `1px solid ${showDoneBorderActive}` }
+              : { background: showDoneBgInactive, color: showDoneTextInactive, border: `1px solid ${showDoneBorderInactive}` }}>
             <CheckSquare size={12} /> Show done
           </button>
         )}
@@ -400,7 +452,7 @@ export default function TasksPage() {
         <SkeletonList count={8} layout="list" cardHeight={56} />
       ) : filtered.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>No tasks yet</p>
+          <p className="text-sm" style={{ color: emptyColor }}>No tasks yet</p>
         </div>
       ) : (
         renderList()
@@ -421,8 +473,8 @@ export default function TasksPage() {
       </Modal>
 
       <Modal open={!!deletingTask} onClose={() => setDeletingId(null)} title="Delete task" maxWidth={400}>
-        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.5)" }}>
-          Delete <strong style={{ color: "rgba(255,255,255,0.85)" }}>{deletingTask?.title}</strong>? This cannot be undone.
+        <p className="text-sm mb-5" style={{ color: modalTextColor }}>
+          Delete <strong style={{ color: modalTextStrongColor }}>{deletingTask?.title}</strong>? This cannot be undone.
         </p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={() => setDeletingId(null)}>Cancel</Button>
@@ -439,9 +491,11 @@ export default function TasksPage() {
 }
 
 function EmptyTaskState({ text }: { text?: string }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   return (
     <EmptyState
-      icon={<AlertCircle size={16} strokeWidth={1.6} style={{ color: "rgba(255,255,255,0.3)" }} />}
+      icon={<AlertCircle size={16} strokeWidth={1.6} style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }} />}
       title={text ?? "You're all caught up. No tasks remaining."} />
   );
 }

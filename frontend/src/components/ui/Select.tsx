@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { useTheme } from "../../ThemeContext";
 
 interface SelectProps {
   label?: string;
@@ -40,6 +41,8 @@ function parseOptions(children: ReactNode): Option[] {
 }
 
 export function Select({ label, value = "", onChange, disabled, className = "", children }: SelectProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -67,7 +70,7 @@ export function Select({ label, value = "", onChange, disabled, className = "", 
   return (
     <div ref={ref} className={`relative ${className}`}>
       {label && (
-        <label className="block text-xs font-medium mb-1.5" style={{ color: "#71717a" }}>
+        <label className="block text-xs font-medium mb-1.5" style={{ color: isDark ? "#71717a" : "rgba(0,0,0,0.5)" }}>
           {label}
         </label>
       )}
@@ -77,16 +80,16 @@ export function Select({ label, value = "", onChange, disabled, className = "", 
         onClick={() => !disabled && setOpen(o => !o)}
         className="relative w-full flex items-center justify-between gap-2 rounded-input px-3 py-2 pr-8 text-sm text-left outline-none transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
         style={{
-          background: "#1e1e1e",
-          border: "1px solid #333",
-          color: "#f0f0f0",
+          background: isDark ? "#1e1e1e" : "#ffffff",
+          border: `1px solid ${isDark ? "#333" : "rgba(0,0,0,0.15)"}`,
+          color: isDark ? "#f0f0f0" : "#111",
         }}
         onFocus={e => {
-          e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
-          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,255,255,0.06)";
+          e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.3)";
+          e.currentTarget.style.boxShadow = isDark ? "0 0 0 3px rgba(255,255,255,0.06)" : "0 0 0 3px rgba(0,0,0,0.06)";
         }}
         onBlur={e => {
-          e.currentTarget.style.borderColor = "#333";
+          e.currentTarget.style.borderColor = isDark ? "#333" : "rgba(0,0,0,0.15)";
           e.currentTarget.style.boxShadow = "none";
         }}
       >
@@ -94,7 +97,7 @@ export function Select({ label, value = "", onChange, disabled, className = "", 
         <ChevronDown
           size={14}
           className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none shrink-0 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
-          style={{ color: "#52525b" }}
+          style={{ color: isDark ? "#52525b" : "#9ca3af" }}
         />
       </button>
 
@@ -102,9 +105,9 @@ export function Select({ label, value = "", onChange, disabled, className = "", 
         <div
           className="absolute left-0 right-0 top-full mt-1 z-50 rounded-input overflow-hidden py-1"
           style={{
-            background: "#1e1e1e",
-            border: "1px solid #333",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+            background: isDark ? "#1e1e1e" : "#ffffff",
+            border: `1px solid ${isDark ? "#333" : "rgba(0,0,0,0.15)"}`,
+            boxShadow: isDark ? "0 4px 12px rgba(0,0,0,0.4)" : "0 4px 12px rgba(0,0,0,0.1)",
           }}
         >
           {options.map(opt => (
@@ -114,19 +117,19 @@ export function Select({ label, value = "", onChange, disabled, className = "", 
               onClick={() => handleSelect(opt)}
               className="w-full text-left px-3 py-2 text-sm transition-colors"
               style={{
-                color: opt.value === value ? "#f0f0f0" : "#a1a1aa",
-                background: opt.value === value ? "rgba(255,255,255,0.08)" : "transparent",
+                color: opt.value === value ? (isDark ? "#f0f0f0" : "#111") : (isDark ? "#a1a1aa" : "rgba(0,0,0,0.5)"),
+                background: opt.value === value ? (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)") : "transparent",
               }}
               onMouseEnter={e => {
                 if (opt.value !== value) {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                  e.currentTarget.style.color = "#f0f0f0";
+                  e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
+                  e.currentTarget.style.color = isDark ? "#f0f0f0" : "#111";
                 }
               }}
               onMouseLeave={e => {
                 if (opt.value !== value) {
                   e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = "#a1a1aa";
+                  e.currentTarget.style.color = isDark ? "#a1a1aa" : "rgba(0,0,0,0.5)";
                 }
               }}
             >

@@ -4,6 +4,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { googleLoginApi, registerApi } from "../../lib/authApi";
 import { FloatingInput } from "../../components/ui/FloatingInput";
 import { ContinueWithGoogleButton } from "../../components/auth/ContinueWithGoogleButton";
+import { useTheme } from "../../ThemeContext";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -17,6 +18,10 @@ interface Strength {
   label: string;
   color: string;
 }
+function validateEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function calcStrength(pw: string): Strength {
   if (!pw) return { score: 0, label: "", color: "#e5e7eb" };
   let pts = 0;
@@ -30,13 +35,11 @@ function calcStrength(pw: string): Strength {
   return              { score: 100, label: "Strong", color: "#10b981" };
 }
 
-function validateEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const [name, setName]               = useState("");
   const [email, setEmail]             = useState("");
@@ -82,7 +85,6 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
-
     setServerError("");
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -92,7 +94,6 @@ export default function RegisterPage() {
     }
     setErrors({});
     setStatus("loading");
-
     try {
       const { user, accessToken, refreshToken } = await registerApi(email, password, name.trim());
       setAuth(user, accessToken, refreshToken);
@@ -135,161 +136,65 @@ export default function RegisterPage() {
         (res ? "Google sign-in failed. Try again or register with email." : "Connection error. Check your internet and try again.");
       setServerError(msg);
       triggerShake();
-    } finally {
-      setGoogleBusy(false);
-    }
+    } finally { setGoogleBusy(false); }
   }
 
   return (
-    <div
-      className={`auth-form-container w-full max-w-[380px] form-enter${shaking ? " form-shake" : ""}${leaving ? " page-leave" : ""}`}
-    >
-      {/* Heading */}
-      <div className="field-1 mb-8">
-        <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: "rgba(255,255,255,0.9)" }}>
+    <div className={`w-full max-w-[380px]${shaking ? " form-shake" : ""}${leaving ? " page-leave" : ""}`}>
+      <div className="mb-8">
+        <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)" }}>
           Create account
         </h1>
-        <p className="mt-1.5 text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+        <p className="mt-1.5 text-sm" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>
           Start your academic journey
         </p>
       </div>
 
       <form onSubmit={handleSubmit} noValidate>
         <div className="space-y-4">
-
-          <div className="field-2">
-            <FloatingInput
-              dark
-              label="Full name"
-              type="text"
-              value={name}
-              onChange={setName}
-              error={errors.name}
-              autoComplete="name"
-              disabled={busy}
-            />
-          </div>
-
-          <div className="field-3">
-            <FloatingInput
-              dark
-              label="Email address"
-              type="email"
-              value={email}
-              onChange={setEmail}
-              error={errors.email}
-              autoComplete="email"
-              disabled={busy}
-            />
-          </div>
-
-          <div className="field-4">
-            <FloatingInput
-              dark
-              label="Password"
-              type="password"
-              passwordToggle
-              value={password}
-              onChange={setPassword}
-              error={errors.password}
-              autoComplete="new-password"
-              disabled={busy}
-            />
-            {password.length > 0 && (
-              <div className="mt-2.5">
-                <div className="strength-bar">
-                  <div
-                    className="strength-fill"
-                    style={{ width: `${strength.score}%`, background: strength.color }}
-                  />
-                </div>
-                <p
-                  className="mt-1 text-xs font-medium transition-colors duration-300"
-                  style={{ color: strength.color }}
-                >
-                  {strength.label}
-                </p>
+          <FloatingInput label="Full name" type="text" value={name} onChange={setName} dark={isDark} error={errors.name} autoComplete="name" disabled={busy} />
+          <FloatingInput label="Email address" type="email" value={email} onChange={setEmail} dark={isDark} error={errors.email} autoComplete="email" disabled={busy} />
+          <FloatingInput label="Password" type="password" passwordToggle value={password} onChange={setPassword} dark={isDark} error={errors.password} autoComplete="new-password" disabled={busy} />
+          {password.length > 0 && (
+            <div className="mt-2.5">
+              <div className="strength-bar">
+                <div className="strength-fill" style={{ width: `${strength.score}%`, background: strength.color }} />
               </div>
-            )}
-          </div>
-
-          <div className="field-5">
-            <FloatingInput
-              dark
-              label="Confirm password"
-              type="password"
-              passwordToggle
-              value={confirm}
-              onChange={setConfirm}
-              error={errors.confirm}
-              autoComplete="new-password"
-              disabled={busy}
-            />
-          </div>
+              <p className="mt-1 text-xs font-medium transition-colors duration-300" style={{ color: strength.color }}>{strength.label}</p>
+            </div>
+          )}
+          <FloatingInput label="Confirm password" type="password" passwordToggle value={confirm} onChange={setConfirm} dark={isDark} error={errors.confirm} autoComplete="new-password" disabled={busy} />
 
           {serverError && (
-            <div
-              className="error-slide rounded-lg px-4 py-3 text-sm text-red-600"
-              style={{
-                background: "rgba(239,68,68,0.06)",
-                border: "1px solid rgba(239,68,68,0.18)",
-              }}
-            >
-              {serverError}
-            </div>
+            <div className="error-slide rounded-lg px-4 py-3 text-sm text-red-600" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.18)" }}>{serverError}</div>
           )}
 
           <div className="pt-1">
-            <button
-              type="submit"
-              disabled={busy}
-              className="btn-solid btn-auth w-full flex items-center justify-center gap-2.5 rounded-[10px] font-semibold"
-              style={{ padding: "11px 14px", fontSize: "15px", letterSpacing: "0.01em" }}
-            >
-              {status === "loading" ? (
-                <>
-                  <span className="css-spinner" />
-                  Creating account…
-                </>
-              ) : status === "success" ? (
-                <>
-                  <svg className="check-pop w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Account created!
-                </>
-              ) : (
-                "Create account"
-              )}
+            <button type="submit" disabled={busy} className="btn-solid btn-auth w-full flex items-center justify-center gap-2.5 rounded-[10px] font-semibold" style={{ padding: "11px 14px", fontSize: "15px", letterSpacing: "0.01em" }}>
+              {status === "loading" ? (<><span className="css-spinner" /> Creating account…</>) :
+               status === "success" ? (<><svg className="check-pop w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg> Account created!</>) :
+               "Create account"}
             </button>
           </div>
 
           <div className="relative py-2">
             <div className="absolute inset-0 flex items-center" aria-hidden>
-              <div className="w-full border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
+              <div className="w-full border-t" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }} />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-3" style={{ background: "#0a0a0a", color: "rgba(255,255,255,0.35)" }}>
+              <span className="px-3" style={{ background: isDark ? "#0a0a0a" : "#fafafa", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)" }}>
                 or continue with
               </span>
             </div>
           </div>
 
-          <ContinueWithGoogleButton
-            disabled={busy}
-            loading={googleBusy}
-            onCredential={handleGoogleCredential}
-          />
+          <ContinueWithGoogleButton disabled={busy} loading={googleBusy} onCredential={handleGoogleCredential} />
         </div>
       </form>
 
-      <p className="mt-7 text-center text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+      <p className="mt-7 text-center text-sm" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>
         Already have an account?{" "}
-        <Link
-          to="/login"
-          className="font-medium hover:underline transition-colors duration-150"
-          style={{ color: "rgba(255,255,255,0.85)" }}
-        >
+        <Link to="/login" className="font-medium hover:underline transition-colors duration-150" style={{ color: isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)" }}>
           Sign in
         </Link>
       </p>

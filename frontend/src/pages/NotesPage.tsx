@@ -13,6 +13,7 @@ import { useSemesters } from "../hooks/api/semesters";
 import { useCourses } from "../hooks/api/courses";
 import { useNotes, useCreateNote, useDeleteNote, type Note } from "../hooks/api/notes";
 import { PLACEHOLDER_NOTES } from "../lib/placeholders";
+import { useTheme } from "../ThemeContext";
 
 type SortKey = "updatedAt" | "createdAt" | "title";
 
@@ -35,22 +36,40 @@ function contentPreview(content: string, maxLen = 100) {
 
 function NoteCard({ note, onDelete }: { note: Note; onDelete: () => void }) {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const cardBg = isDark ? "#111111" : "#ffffff";
+  const cardBgHover = isDark ? "#161616" : "#f9f9f9";
+  const cardBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const cardBorderHover = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)";
+  const titleColor = isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)";
+  const descColor = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.4)";
+  const actionColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+  const actionHoverColor = isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.7)";
+  const codeBg = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const codeColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)";
+  const codeBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  const tagBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";
+  const tagColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+  const tagBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const dateColor = isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)";
+
   return (
     <div
       className="group relative cursor-pointer rounded-xl p-5 transition-all duration-200"
-      style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)" }}
+      style={{ background: cardBg, border: `1px solid ${cardBorder}` }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.12)";
-        (e.currentTarget as HTMLDivElement).style.background = "#161616";
+        (e.currentTarget as HTMLDivElement).style.border = `1px solid ${cardBorderHover}`;
+        (e.currentTarget as HTMLDivElement).style.background = cardBgHover;
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.06)";
-        (e.currentTarget as HTMLDivElement).style.background = "#111111";
+        (e.currentTarget as HTMLDivElement).style.border = `1px solid ${cardBorder}`;
+        (e.currentTarget as HTMLDivElement).style.background = cardBg;
       }}
       onClick={() => navigate(`/notes/${note.id}`)}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <p className="font-semibold text-sm truncate flex-1" style={{ color: "rgba(255,255,255,0.9)" }}>
+        <p className="font-semibold text-sm truncate flex-1" style={{ color: titleColor }}>
           {note.title || "Untitled"}
         </p>
         <div
@@ -59,23 +78,23 @@ function NoteCard({ note, onDelete }: { note: Note; onDelete: () => void }) {
         >
           <button onClick={() => navigate(`/notes/${note.id}`)} aria-label="Edit note"
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "rgba(255,255,255,0.3)" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+            style={{ color: actionColor }}
+            onMouseEnter={e => (e.currentTarget.style.color = actionHoverColor)}
+            onMouseLeave={e => (e.currentTarget.style.color = actionColor)}>
             <Pencil size={13} />
           </button>
           <button onClick={onDelete} aria-label="Delete note"
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "rgba(255,255,255,0.3)" }}
+            style={{ color: actionColor }}
             onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
-            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+            onMouseLeave={e => (e.currentTarget.style.color = actionColor)}>
             <Trash2 size={13} />
           </button>
         </div>
       </div>
 
       {note.content && (
-        <p className="text-xs leading-relaxed mb-3 line-clamp-2" style={{ color: "rgba(255,255,255,0.35)" }}>
+        <p className="text-xs leading-relaxed mb-3 line-clamp-2" style={{ color: descColor }}>
           {contentPreview(note.content)}
         </p>
       )}
@@ -84,21 +103,21 @@ function NoteCard({ note, onDelete }: { note: Note; onDelete: () => void }) {
         <div className="flex items-center gap-1.5 flex-wrap">
           {note.course && (
             <span className="text-[10px] font-semibold rounded-md px-1.5 py-0.5 tracking-wide"
-              style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              style={{ background: codeBg, color: codeColor, border: `1px solid ${codeBorder}` }}>
               {note.course.code}
             </span>
           )}
           {note.tags.slice(0, 3).map(tag => (
             <span key={tag} className="text-[10px] rounded-full px-2 py-0.5 flex items-center gap-1"
-              style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.3)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              style={{ background: tagBg, color: tagColor, border: `1px solid ${tagBorder}` }}>
               <Tag size={9} /> {tag}
             </span>
           ))}
           {note.tags.length > 3 && (
-            <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.25)" }}>+{note.tags.length - 3}</span>
+            <span className="text-[10px]" style={{ color: dateColor }}>+{note.tags.length - 3}</span>
           )}
         </div>
-        <span className="text-[10px] flex-shrink-0" style={{ color: "rgba(255,255,255,0.2)" }}>
+        <span className="text-[10px] flex-shrink-0" style={{ color: dateColor }}>
           {relativeDate(note.updatedAt)}
         </span>
       </div>
@@ -113,6 +132,8 @@ interface NewNoteFormProps {
 }
 
 function NewNoteForm({ courses, onSubmit, onCancel }: NewNoteFormProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [title,    setTitle]   = useState("");
   const [courseId, setCourse]  = useState(courses?.[0]?.id ?? "");
   const [tagInput, setTag]     = useState("");
@@ -139,7 +160,7 @@ function NewNoteForm({ courses, onSubmit, onCancel }: NewNoteFormProps) {
   return (
     <form onSubmit={handleSubmit} noValidate>
       <div className="space-y-4">
-        <FloatingInput label="Note title" value={title} onChange={setTitle} disabled={loading} />
+        <FloatingInput dark={isDark} label="Note title" value={title} onChange={setTitle} disabled={loading} />
         <Select label="Course (optional)" value={courseId} onChange={e => setCourse(e.target.value)} disabled={loading}>
           <option value="">No course</option>
           {courses?.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
@@ -148,18 +169,17 @@ function NewNoteForm({ courses, onSubmit, onCancel }: NewNoteFormProps) {
           <div className="flex items-center gap-2 flex-wrap mb-2">
             {tags.map(t => (
               <span key={t} className="inline-flex items-center gap-1 text-xs rounded-full px-2.5 py-0.5"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)" }}>
+                style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"}`, color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)" }}>
                 {t}
                 <button type="button" onClick={() => setTags(p => p.filter(x => x !== t))}
-                  style={{ color: "rgba(255,255,255,0.4)" }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}>
+                  style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)" }}
+                  onMouseEnter={e => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)")}>
                   <X size={10} />
                 </button>
               </span>
             ))}
           </div>
-          <FloatingInput label="Add tag (Enter or comma)" value={tagInput} onChange={setTag}
+          <FloatingInput dark={isDark} label="Add tag (Enter or comma)" value={tagInput} onChange={setTag}
             onKeyDown={e => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput); } }}
             disabled={loading} />
         </div>
@@ -174,6 +194,8 @@ function NewNoteForm({ courses, onSubmit, onCancel }: NewNoteFormProps) {
 }
 
 export default function NotesPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const navigate  = useNavigate();
   const toast     = useToast();
   const { data: semesters }        = useSemesters();
@@ -227,12 +249,12 @@ export default function NotesPage() {
     <div className="p-6 sm:p-8 w-full min-w-0">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.9)" }}>Notes</h2>
-          <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <h2 className="text-xl font-bold tracking-tight" style={{ color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)" }}>Notes</h2>
+          <p className="text-sm mt-0.5" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>
             {filtered.length} note{filtered.length !== 1 ? "s" : ""}
             {activeFilters > 0 && <span className="ml-1">· {activeFilters} filter{activeFilters > 1 ? "s" : ""} active</span>}
             {!isLoading && (notes?.length ?? 0) === 0 && activeFilters === 0 && (
-              <span className="ml-1" style={{ color: "rgba(255,255,255,0.22)" }}>· sample below</span>
+              <span className="ml-1" style={{ color: isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.3)" }}>· sample below</span>
             )}
           </p>
         </div>
@@ -290,8 +312,8 @@ export default function NotesPage() {
       </Modal>
 
       <Modal open={!!deletingNote} onClose={() => setDeletingNote(null)} title="Delete note" maxWidth={400}>
-        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.5)" }}>
-          Delete <strong style={{ color: "rgba(255,255,255,0.85)" }}>{deletingNote?.title || "Untitled"}</strong>? This cannot be undone.
+        <p className="text-sm mb-5" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>
+          Delete <strong style={{ color: isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)" }}>{deletingNote?.title || "Untitled"}</strong>? This cannot be undone.
         </p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={() => setDeletingNote(null)}>Cancel</Button>

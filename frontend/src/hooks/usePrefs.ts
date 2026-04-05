@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { readBool, readNum } from "../lib/prefs";
+import { readBool, readNum, readStr } from "../lib/prefs";
 
 const EVENT = "dashboard-prefs-changed";
 
@@ -19,6 +19,17 @@ export function usePrefNum(key: string, def: number): number {
   const [val, setVal] = useState(() => readNum(key, def));
   useEffect(() => {
     const sync = () => setVal(readNum(key, def));
+    window.addEventListener(EVENT, sync);
+    return () => window.removeEventListener(EVENT, sync);
+  }, [key, def]);
+  return val;
+}
+
+/** Reads a string pref and re-renders whenever any pref changes. */
+export function usePrefStr(key: string, def: string): string {
+  const [val, setVal] = useState(() => readStr(key, def));
+  useEffect(() => {
+    const sync = () => setVal(readStr(key, def));
     window.addEventListener(EVENT, sync);
     return () => window.removeEventListener(EVENT, sync);
   }, [key, def]);

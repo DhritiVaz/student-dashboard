@@ -17,6 +17,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { useToast } from "../hooks/useToast";
 import { useSemesters } from "../hooks/api/semesters";
 import { useCourses } from "../hooks/api/courses";
+import { useTheme } from "../ThemeContext";
 import {
   useStudentFiles,
   useUploadStudentFile,
@@ -63,35 +64,37 @@ function FileCard({
   onDelete: () => void;
   onDownload: () => void;
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   return (
     <div
       className="group relative rounded-xl p-5 transition-all duration-200"
-      style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)" }}
+      style={{ background: isDark ? "#111111" : "#ffffff", border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}` }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.12)";
-        (e.currentTarget as HTMLDivElement).style.background = "#161616";
+        (e.currentTarget as HTMLDivElement).style.border = `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)"}`;
+        (e.currentTarget as HTMLDivElement).style.background = isDark ? "#161616" : "#f9f9f9";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.06)";
-        (e.currentTarget as HTMLDivElement).style.background = "#111111";
+        (e.currentTarget as HTMLDivElement).style.border = `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`;
+        (e.currentTarget as HTMLDivElement).style.background = isDark ? "#111111" : "#ffffff";
       }}
     >
       <div className="flex items-start gap-3">
         <div
           className="flex-shrink-0 rounded-lg p-2.5"
-          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
+          style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}
         >
-          <File size={20} className="text-white/50" strokeWidth={1.5} />
+          <File size={20} style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)" }} strokeWidth={1.5} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm truncate" style={{ color: "rgba(255,255,255,0.9)" }}>
+          <p className="font-semibold text-sm truncate" style={{ color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)" }}>
             {f.title}
           </p>
-          <p className="text-xs truncate mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-            {f.originalName} · {formatSize(f.sizeBytes)}
+          <p className="text-xs truncate mt-0.5" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.4)" }}>
+            {f.originalName} {formatSize(f.sizeBytes)}
           </p>
           {f.description && (
-            <p className="text-xs mt-2 line-clamp-2" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <p className="text-xs mt-2 line-clamp-2" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)" }}>
               {f.description}
             </p>
           )}
@@ -100,9 +103,9 @@ function FileCard({
               <span
                 className="text-[10px] font-semibold rounded-md px-1.5 py-0.5 tracking-wide"
                 style={{
-                  background: "rgba(255,255,255,0.06)",
-                  color: "rgba(255,255,255,0.45)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+                  color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.45)",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
                 }}
               >
                 {f.course.code}
@@ -112,15 +115,15 @@ function FileCard({
               <span
                 className="text-[10px] rounded-md px-1.5 py-0.5"
                 style={{
-                  background: "rgba(255,255,255,0.04)",
-                  color: "rgba(255,255,255,0.35)",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
+                  color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
                 }}
               >
                 {f.category}
               </span>
             )}
-            <span className="text-[10px] ml-auto" style={{ color: "rgba(255,255,255,0.2)" }}>
+            <span className="text-[10px] ml-auto" style={{ color: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)" }}>
               {relativeDate(f.updatedAt)}
             </span>
           </div>
@@ -133,10 +136,10 @@ function FileCard({
             type="button"
             onClick={onDownload}
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "rgba(255,255,255,0.35)" }}
+            style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)" }}
             title="Download"
-            onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.85)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
+            onMouseEnter={(e) => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)")}
           >
             <Download size={14} />
           </button>
@@ -144,10 +147,10 @@ function FileCard({
             type="button"
             onClick={onEdit}
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "rgba(255,255,255,0.35)" }}
+            style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)" }}
             title="Edit details"
-            onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.85)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
+            onMouseEnter={(e) => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)")}
           >
             <Pencil size={14} />
           </button>
@@ -155,10 +158,10 @@ function FileCard({
             type="button"
             onClick={onDelete}
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "rgba(255,255,255,0.35)" }}
+            style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)" }}
             title="Delete"
             onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)")}
           >
             <Trash2 size={14} />
           </button>
@@ -169,6 +172,9 @@ function FileCard({
 }
 
 export default function FilesPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   const toast = useToast();
   const { data: semesters } = useSemesters();
   const { data: allCourses } = useCourses();
@@ -214,10 +220,10 @@ export default function FilesPage() {
     <div className="p-6 sm:p-8 w-full min-w-0">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.9)" }}>
+          <h2 className="text-xl font-bold tracking-tight" style={{ color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)" }}>
             Files
           </h2>
-          <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <p className="text-sm mt-0.5" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>
             Digital materials linked to your courses
             {activeFilters > 0 && (
               <span className="ml-1">
@@ -268,7 +274,7 @@ export default function FilesPage() {
 
       {!isLoading && filtered.length === 0 && (
         <EmptyState
-          icon={<FolderOpen size={18} strokeWidth={1.6} style={{ color: "rgba(255,255,255,0.3)" }} />}
+          icon={<FolderOpen size={18} strokeWidth={1.6} style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)" }} />}
           title={activeFilters > 0 ? "No files match your filters" : "No files yet"}
           description={
             activeFilters > 0
@@ -372,6 +378,9 @@ function UploadForm({
   onSubmit: (fd: FormData) => Promise<void>;
   onCancel: () => void;
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -398,7 +407,7 @@ function UploadForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-xs font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.45)" }}>
+        <label className="block text-xs font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.5)" }}>
           File
         </label>
         <input
@@ -412,8 +421,8 @@ function UploadForm({
           className="block w-full text-sm text-white/70 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-white/10 file:text-white/90 hover:file:bg-white/15 cursor-pointer"
         />
       </div>
-      <FloatingInput label="Title" value={title} onChange={setTitle} disabled={loading} />
-      <FloatingInput label="Description (optional)" value={description} onChange={setDescription} disabled={loading} />
+      <FloatingInput label="Title" value={title} onChange={setTitle} disabled={loading} dark={isDark} />
+      <FloatingInput label="Description (optional)" value={description} onChange={setDescription} disabled={loading} dark={isDark} />
       <Select label="Course (optional)" value={courseId} onChange={(e) => setCourseId(e.target.value)} disabled={loading}>
         <option value="">No course</option>
         {courses?.map((c) => (
@@ -453,6 +462,9 @@ function EditFileModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   const toast = useToast();
   const update = useUpdateStudentFile(file.id);
   const [title, setTitle] = useState(file.title);
@@ -479,12 +491,13 @@ function EditFileModal({
           }
         }}
       >
-        <FloatingInput label="Title" value={title} onChange={setTitle} disabled={update.isPending} />
+        <FloatingInput label="Title" value={title} onChange={setTitle} disabled={update.isPending} dark={isDark} />
         <FloatingInput
           label="Description"
           value={description}
           onChange={setDescription}
           disabled={update.isPending}
+          dark={isDark}
         />
         <Select label="Course" value={courseId} onChange={(e) => setCourseId(e.target.value)} disabled={update.isPending}>
           <option value="">No course</option>
@@ -501,7 +514,7 @@ function EditFileModal({
             </option>
           ))}
         </Select>
-        <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+        <p className="text-[11px]" style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)" }}>
           File on disk: {file.originalName} ({formatSize(file.sizeBytes)})
         </p>
         <div className="flex justify-end gap-2 pt-1">

@@ -13,7 +13,7 @@ export const DEMO_DASHBOARD_TASKS: { title: string; due: string; code?: string }
 ];
 
 export const DEMO_DASHBOARD_DEADLINES = [
-  { title: "Problem set 5", code: "MAT1011", pill: "5d", cls: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+  { title: "Problem set 5", code: "MAT1011", pill: "5d", cls: "text-green-600 bg-green-500/10 border-green-500/20" },
   { title: "Project proposal", code: "CSE2001", pill: "Tomorrow", cls: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
 ] as const;
 

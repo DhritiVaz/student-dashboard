@@ -7,6 +7,7 @@ import {
   GraduationCap,
   Zap,
 } from "lucide-react";
+import { useTheme } from "../../ThemeContext";
 
 const features = [
   {
@@ -59,8 +60,25 @@ const item = {
 };
 
 export function LandingFeatures() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const bg = isDark ? "#0a0a0a" : "#f5f4f2";
+  const headingColor = isDark ? "#ffffff" : "#111827";
+  const subtextColor = isDark ? "#9ca3af" : "#6b7280";
+  const badgeBorder = isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.1)";
+  const badgeBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)";
+  const badgeText = isDark ? "#9ca3af" : "#6b7280";
+  const cardBg = isDark ? "#141414" : "#ffffff";
+  const cardBorder = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)";
+  const cardBorderHover = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.15)";
+  const iconBoxBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)";
+  const iconBoxBorder = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)";
+  const iconColor = isDark ? "#e5e7eb" : "#374151";
+  const titleColor = isDark ? "#f9fafb" : "#111827";
+  const descColor = isDark ? "#9ca3af" : "#6b7280";
+
   return (
-    <section id="features" className="py-24 px-4 bg-[#0a0a0a]">
+    <section id="features" className="py-24 px-4" style={{ background: bg }}>
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -69,13 +87,13 @@ export function LandingFeatures() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-2 rounded-full text-[10px] font-semibold uppercase tracking-widest text-[#9ca3af] mb-4 border border-white/20 bg-white/5">
+          <span className="inline-block px-4 py-2 rounded-full text-[10px] font-semibold uppercase tracking-widest mb-4 border" style={{ borderColor: badgeBorder, background: badgeBg, color: badgeText }}>
             Features
           </span>
-          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4">
+          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4" style={{ color: headingColor }}>
             Everything you need to excel
           </h2>
-          <p className="text-[#9ca3af] text-sm max-w-xl mx-auto">
+          <p className="text-sm max-w-xl mx-auto" style={{ color: subtextColor }}>
             Purpose-built tools for serious students who want to stay on top.
           </p>
         </motion.div>
@@ -91,13 +109,16 @@ export function LandingFeatures() {
             <motion.div
               key={title}
               variants={item}
-              className="p-8 rounded-card bg-[#141414] border border-white/10 transition-all duration-200 cursor-default hover:border-white/30"
+              className="p-8 rounded-card border transition-all duration-200 cursor-default"
+              style={{ background: cardBg, borderColor: cardBorder }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = cardBorderHover)}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = cardBorder)}
             >
-              <div className="w-12 h-12 rounded-input flex items-center justify-center mb-6 bg-white/5 border border-white/10">
-                <Icon size={22} className="text-white" strokeWidth={1.8} />
+              <div className="w-12 h-12 rounded-input flex items-center justify-center mb-6 border" style={{ background: iconBoxBg, borderColor: iconBoxBorder }}>
+                <Icon size={22} style={{ color: iconColor }} strokeWidth={1.8} />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-3">{title}</h3>
-              <p className="text-sm text-[#9ca3af] leading-relaxed">{desc}</p>
+              <h3 className="text-lg font-semibold mb-3" style={{ color: titleColor }}>{title}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: descColor }}>{desc}</p>
             </motion.div>
           ))}
         </motion.div>

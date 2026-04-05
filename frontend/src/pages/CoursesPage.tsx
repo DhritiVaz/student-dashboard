@@ -10,6 +10,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { CourseForm } from "../components/courses/CourseForm";
 import { useToast } from "../hooks/useToast";
 import { useSemesters } from "../hooks/api/semesters";
+import { useTheme } from "../ThemeContext";
 import {
   useCourses,
   useCreateCourse,
@@ -30,20 +31,22 @@ function CourseCard({
   onDelete: () => void;
 }) {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   return (
     <div
       className="group relative cursor-pointer rounded-xl p-5 transition-all duration-200"
       style={{
-        background: "#141414",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: isDark ? "#141414" : "#ffffff",
+        border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.12)";
-        (e.currentTarget as HTMLDivElement).style.background = "#181818";
+        (e.currentTarget as HTMLDivElement).style.border = `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)"}`;
+        (e.currentTarget as HTMLDivElement).style.background = isDark ? "#181818" : "#f9f9f9";
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.06)";
-        (e.currentTarget as HTMLDivElement).style.background = "#141414";
+        (e.currentTarget as HTMLDivElement).style.border = `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`;
+        (e.currentTarget as HTMLDivElement).style.background = isDark ? "#141414" : "#ffffff";
       }}
       onClick={() => navigate(`/courses/${course.id}`)}
     >
@@ -56,9 +59,9 @@ function CourseCard({
           onClick={onEdit}
           aria-label="Edit course"
           className="p-1.5 rounded-lg transition-colors duration-150"
-          style={{ color: "rgba(255,255,255,0.3)" }}
-          onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
+          style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }}
+          onMouseEnter={e => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.7)")}
+          onMouseLeave={e => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)")}
         >
           <Pencil size={12} />
         </button>
@@ -66,9 +69,9 @@ function CourseCard({
           onClick={onDelete}
           aria-label="Delete course"
           className="p-1.5 rounded-lg transition-colors duration-150"
-          style={{ color: "rgba(255,255,255,0.3)" }}
+          style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }}
           onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
-          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
+          onMouseLeave={e => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)")}
         >
           <Trash2 size={12} />
         </button>
@@ -77,7 +80,7 @@ function CourseCard({
       {/* Course name */}
       <p
         className="font-semibold text-sm leading-snug mb-1 pr-14 truncate"
-        style={{ color: "rgba(255,255,255,0.9)" }}
+        style={{ color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)" }}
       >
         {course.name}
       </p>
@@ -86,9 +89,9 @@ function CourseCard({
       <span
         className="inline-block text-[10px] font-semibold tracking-wide rounded-md px-1.5 py-0.5 mb-3"
         style={{
-  background: "#141414",
-  border: "1px solid rgba(255,255,255,0.06)",
-  borderLeft: course.color ? `3px solid ${course.color}` : "1px solid rgba(255,255,255,0.06)",
+  background: isDark ? "#141414" : "#ffffff",
+  border: isDark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)",
+  borderLeft: course.color ? `3px solid ${course.color}` : isDark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)",
 }}
       >
         {course.code}
@@ -97,13 +100,13 @@ function CourseCard({
       {/* Bottom row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <span className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.45)" }}>
             {course.credits} {course.credits === 1 ? "credit" : "credits"}
           </span>
           {(course.professor ?? course.instructor) && (
             <span
               className="text-xs truncate max-w-[100px]"
-              style={{ color: "rgba(255,255,255,0.3)" }}
+              style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)" }}
             >
               · {course.professor ?? course.instructor}
             </span>
@@ -113,9 +116,9 @@ function CourseCard({
           <span
             className="text-[10px] font-medium rounded-full px-2 py-0.5"
             style={{
-              background: "rgba(255,255,255,0.05)",
-              color: "rgba(255,255,255,0.3)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+              color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.35)",
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)"}`,
             }}
           >
             {course.semester.name}
@@ -126,7 +129,7 @@ function CourseCard({
       {course.description && (
         <p
           className="mt-2 text-xs line-clamp-2"
-          style={{ color: "rgba(255,255,255,0.3)" }}
+          style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)" }}
         >
           {course.description}
         </p>
@@ -136,6 +139,8 @@ function CourseCard({
 }
 
 export default function CoursesPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const toast = useToast();
   const { data: semesters } = useSemesters();
   const { data: allCourses, isLoading } = useCourses();
@@ -173,8 +178,8 @@ export default function CoursesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.9)" }}>Courses</h2>
-          <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>{filtered.length} course{filtered.length !== 1 ? "s" : ""}</p>
+          <h2 className="text-xl font-bold tracking-tight" style={{ color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)" }}>Courses</h2>
+          <p className="text-sm mt-0.5" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>{filtered.length} course{filtered.length !== 1 ? "s" : ""}</p>
         </div>
         <Button size="sm" onClick={() => setShowCreate(true)}>
           <Plus size={14} /> New course
@@ -212,7 +217,7 @@ export default function CoursesPage() {
       {/* Empty */}
       {!isLoading && filtered.length === 0 && (
         <EmptyState
-          icon={<BookOpen size={18} className="text-[#9ca3af]" strokeWidth={1.6} />}
+          icon={<BookOpen size={18} className={isDark ? "text-[#9ca3af]" : "text-[#6b7280]"} strokeWidth={1.6} />}
           title={search || semesterFilter ? "No courses match your filters" : "No courses yet"}
           description={
             search || semesterFilter

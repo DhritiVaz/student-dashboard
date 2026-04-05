@@ -346,7 +346,7 @@ export default function VtopSync({ variant = "full" }: { variant?: VtopSyncVaria
                         <td className="px-4 py-3 text-right text-neutral-300">{row.conducted}</td>
                         <td className="px-4 py-3 text-right">
                           <span className={`font-semibold ${
-                            row.attendancePercent >= 75 ? "text-green-400"
+                            row.attendancePercent >= 75 ? "text-green-500"
                               : row.attendancePercent >= 65 ? "text-yellow-400"
                               : "text-red-400"
                           }`}>

@@ -5,12 +5,14 @@ import { AnimatedPage } from "./AnimatedPage";
 import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { GlobalSearch } from "./GlobalSearch";
+import { useTheme } from "../ThemeContext";
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
 const SIDEBAR_START_COLLAPSED_KEY = "settings-sidebar-start-collapsed";
-const BG = "#0c0c0c";
 
 export function AppLayout() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {
@@ -35,6 +37,9 @@ export function AppLayout() {
     document.body.style.overflow = drawerOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [drawerOpen]);
+
+  const BG = isDark ? "#0c0c0c" : "#fafafa";
+  const borderColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: BG }}>
@@ -69,11 +74,11 @@ export function AppLayout() {
         <header className="flex-shrink-0 h-11 flex items-center gap-3 px-5"
           style={{
             background: BG,
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: `1px solid ${borderColor}`,
           }}>
           <button type="button" aria-label="Open menu"
             className="md:hidden p-1.5 rounded-lg transition-colors"
-            style={{ color: "rgba(255,255,255,0.4)" }}
+            style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)" }}
             onClick={() => setDrawerOpen(true)}>
             <Menu size={17} />
           </button>

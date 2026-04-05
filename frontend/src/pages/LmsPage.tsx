@@ -9,6 +9,7 @@ import {
   LmsCourse, LmsAssignment, LmsModule,
 } from "../hooks/api/lms";
 import LmsSync from "../components/lms/LmsSync";
+import { useTheme } from "../ThemeContext";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -26,10 +27,10 @@ function relDue(iso: string): { label: string; urgency: "overdue" | "today" | "t
 }
 
 const URGENCY_CLS: Record<string, string> = {
-  overdue:  "text-red-400 bg-red-500/10 border-red-500/20",
-  today:    "text-orange-400 bg-orange-500/10 border-orange-500/20",
-  tomorrow: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-  week:     "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  overdue:  "text-red-500 bg-red-500/10 border-red-500/20",
+  today:    "text-amber-600 bg-amber-500/10 border-amber-500/20",
+  tomorrow: "text-amber-500 bg-amber-500/10 border-amber-500/20",
+  week:     "text-green-600 bg-green-500/10 border-green-500/20",
   later:    "text-zinc-500 bg-zinc-500/10 border-zinc-500/20",
 };
 
@@ -42,24 +43,26 @@ function DueBadge({ iso }: { iso: string }) {
   );
 }
 
-function modIcon(modtype: string, size = 13) {
+function modIcon(modtype: string, size = 13, isDark = false) {
   switch (modtype) {
-    case "assign":   return <PenLine size={size} className="text-blue-400 flex-shrink-0" />;
-    case "quiz":     return <HelpCircle size={size} className="text-purple-400 flex-shrink-0" />;
-    case "resource": return <FileText size={size} className="text-amber-400 flex-shrink-0" />;
-    case "folder":   return <FolderOpen size={size} className="text-emerald-400 flex-shrink-0" />;
-    case "url":      return <LinkIcon size={size} className="text-sky-400 flex-shrink-0" />;
-    case "page":     return <FileText size={size} className="text-violet-400 flex-shrink-0" />;
-    default:         return <BookOpen size={size} className="text-neutral-400 flex-shrink-0" />;
+    case "assign":   return <PenLine size={size} className={isDark ? "text-blue-400 flex-shrink-0" : "text-blue-600 flex-shrink-0"} />;
+    case "quiz":     return <HelpCircle size={size} className={isDark ? "text-purple-400 flex-shrink-0" : "text-purple-600 flex-shrink-0"} />;
+    case "resource": return <FileText size={size} className={isDark ? "text-amber-400 flex-shrink-0" : "text-amber-600 flex-shrink-0"} />;
+    case "folder":   return <FolderOpen size={size} className={isDark ? "text-green-500/80 flex-shrink-0" : "text-green-600/80 flex-shrink-0"} />;
+    case "url":      return <LinkIcon size={size} className={isDark ? "text-sky-400 flex-shrink-0" : "text-sky-600 flex-shrink-0"} />;
+    case "page":     return <FileText size={size} className={isDark ? "text-violet-400 flex-shrink-0" : "text-violet-600 flex-shrink-0"} />;
+    default:         return <BookOpen size={size} className={isDark ? "text-neutral-400 flex-shrink-0" : "text-neutral-500 flex-shrink-0"} />;
   }
 }
 
 function EmptyState({ icon, title, sub }: { icon: React.ReactNode; title: string; sub?: React.ReactNode }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   return (
-    <div className="bg-[#141414] border border-neutral-800 rounded-xl p-10 text-center">
-      <div className="flex justify-center mb-3 text-neutral-700">{icon}</div>
-      <p className="text-sm text-neutral-500 mb-1">{title}</p>
-      {sub && <p className="text-xs text-neutral-600">{sub}</p>}
+    <div className="rounded-xl p-10 text-center" style={{ background: isDark ? "#141414" : "#ffffff", border: `1px solid ${isDark ? "#2a2a2a" : "rgba(0,0,0,0.08)"}`, borderTop: isDark ? "1px solid #333" : "1px solid #e5e7eb" }}>
+      <div className="flex justify-center mb-3" style={{ color: isDark ? "#2a2a2a" : "rgba(0,0,0,0.15)" }}>{icon}</div>
+      <p className="text-sm mb-1" style={{ color: isDark ? "#a1a1aa" : "#6b7280" }}>{title}</p>
+      {sub && <p className="text-xs" style={{ color: isDark ? "#71717a" : "#9ca3af" }}>{sub}</p>}
     </div>
   );
 }
@@ -74,10 +77,17 @@ function OverviewTab({
   modules: LmsModule[];
   onTabChange: (t: Tab) => void;
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const overdue  = upcoming.filter((a) => a.dueDate && relDue(a.dueDate).urgency === "overdue");
   const dueToday = upcoming.filter((a) => a.dueDate && relDue(a.dueDate).urgency === "today");
   const quizzes  = modules.filter((m) => m.modtype === "quiz");
   const files    = modules.filter((m) => ["resource", "folder", "url", "page"].includes(m.modtype));
+
+  const cardBg = isDark ? "#141414" : "#ffffff";
+  const cardBorder = isDark ? "#2a2a2a" : "rgba(0,0,0,0.08)";
+  const textColor = isDark ? "#f0f0f0" : "#111827";
+  const subtextColor = isDark ? "#6b7280" : "#9ca3af";
 
   const stats = [
     { label: "Enrolled Courses",   value: courses.length,   icon: <BookOpen size={16} />,      color: "text-blue-400" },

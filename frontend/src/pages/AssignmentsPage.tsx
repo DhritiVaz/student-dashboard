@@ -20,6 +20,7 @@ import {
   type Assignment,
 } from "../hooks/api/assignments";
 import { PLACEHOLDER_ASSIGNMENTS } from "../lib/placeholders";
+import { useTheme } from "../ThemeContext";
 
 type SortKey   = "dueDate" | "name" | "course";
 type StatusFilter = "all" | "submitted" | "pending" | "overdue";
@@ -48,6 +49,8 @@ function AssignmentRow({ assignment, onEdit, onDelete }: {
   assignment: Assignment; onEdit: () => void; onDelete: () => void;
 }) {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const uiStatus = deriveStatus(assignment);
   const sc = statusConfig(uiStatus);
 
@@ -55,34 +58,34 @@ function AssignmentRow({ assignment, onEdit, onDelete }: {
     <div
       className="group flex items-center gap-4 px-5 py-4 cursor-pointer transition-all duration-150"
       style={{
-        background: "#111111",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: isDark ? "#111111" : "#ffffff",
+        border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
         borderRadius: 10,
       }}
-      onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.11)"}
-      onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.06)"}
+      onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.border = `1px solid ${isDark ? "rgba(255,255,255,0.11)" : "rgba(0,0,0,0.11)"}`}
+      onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.border = `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`}
       onClick={() => navigate(`/assignments/${assignment.id}`)}
     >
       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sc.dot}`} />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium truncate" style={{ color: "rgba(255,255,255,0.85)" }}>
+          <span className="text-sm font-medium truncate" style={{ color: isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)" }}>
             {assignment.title}
           </span>
           {assignment.course && (
             <span className="text-[10px] font-semibold rounded-md px-1.5 py-0.5 tracking-wide flex-shrink-0"
-              style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}>
               {assignment.course.code}
             </span>
           )}
         </div>
         <div className="flex items-center gap-3 mt-1">
-          <span className="text-xs flex items-center gap-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+          <span className="text-xs flex items-center gap-1" style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)" }}>
             <Calendar size={11} /> {formatDue(assignment.dueDate)}
           </span>
           {assignment.weight > 0 && (
-            <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
+            <span className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)" }}>
               Weight: {assignment.weight}%
             </span>
           )}
@@ -100,25 +103,27 @@ function AssignmentRow({ assignment, onEdit, onDelete }: {
       >
         <button onClick={onEdit} aria-label="Edit"
           className="p-1.5 rounded-lg transition-colors"
-          style={{ color: "rgba(255,255,255,0.3)" }}
-          onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+          style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }}
+          onMouseEnter={e => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.7)")}
+          onMouseLeave={e => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)")}>
           <Pencil size={13} />
         </button>
         <button onClick={onDelete} aria-label="Delete"
           className="p-1.5 rounded-lg transition-colors"
-          style={{ color: "rgba(255,255,255,0.3)" }}
+          style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }}
           onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
-          onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+          onMouseLeave={e => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)")}>
           <Trash2 size={13} />
         </button>
-        <ChevronRight size={13} style={{ color: "rgba(255,255,255,0.15)" }} />
+        <ChevronRight size={13} style={{ color: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)" }} />
       </div>
     </div>
   );
 }
 
 export default function AssignmentsPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const toast = useToast();
   const { data: semesters }                  = useSemesters();
   const { data: allCourses }                 = useCourses();
@@ -188,12 +193,12 @@ export default function AssignmentsPage() {
     <div className="p-6 sm:p-8 w-full min-w-0">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold tracking-tight" style={{ color: "rgba(255,255,255,0.9)" }}>Assignments</h2>
-          <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <h2 className="text-xl font-bold tracking-tight" style={{ color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)" }}>Assignments</h2>
+          <p className="text-sm mt-0.5" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>
             {filtered.length} assignment{filtered.length !== 1 ? "s" : ""}
             {activeFilters > 0 && <span className="ml-1">· {activeFilters} filter{activeFilters > 1 ? "s" : ""} active</span>}
             {!isLoading && (allAssignments?.length ?? 0) === 0 && activeFilters === 0 && (
-              <span className="ml-1" style={{ color: "rgba(255,255,255,0.22)" }}>· sample below</span>
+              <span className="ml-1" style={{ color: isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.3)" }}>· sample below</span>
             )}
           </p>
         </div>
@@ -233,7 +238,7 @@ export default function AssignmentsPage() {
 
       {!isLoading && filtered.length === 0 && activeFilters > 0 && (
         <EmptyState
-          icon={<ClipboardList size={18} strokeWidth={1.6} style={{ color: "rgba(255,255,255,0.3)" }} />}
+          icon={<ClipboardList size={18} strokeWidth={1.6} style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.4)" }} />}
           title="No assignments match your filters"
           description="Try adjusting your search or filters."
         />
@@ -241,7 +246,7 @@ export default function AssignmentsPage() {
 
       {!isLoading && filtered.length === 0 && activeFilters === 0 && (
         <div className="py-12 text-center">
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.25)" }}>No assignments yet</p>
+          <p className="text-sm" style={{ color: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.35)" }}>No assignments yet</p>
         </div>
       )}
 
@@ -268,8 +273,8 @@ export default function AssignmentsPage() {
       </Modal>
 
       <Modal open={!!deletingAssignment} onClose={() => setDeletingId(null)} title="Delete assignment" maxWidth={400}>
-        <p className="text-sm mb-5" style={{ color: "rgba(255,255,255,0.5)" }}>
-          Delete <strong style={{ color: "rgba(255,255,255,0.85)" }}>{deletingAssignment?.title}</strong>? All grades will also be removed.
+        <p className="text-sm mb-5" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>
+          Delete <strong style={{ color: isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)" }}>{deletingAssignment?.title}</strong>? All grades will also be removed.
         </p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={() => setDeletingId(null)}>Cancel</Button>

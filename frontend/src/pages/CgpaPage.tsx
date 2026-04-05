@@ -4,16 +4,19 @@ import { Sigma, Calculator, ChevronDown, ChevronRight } from "lucide-react";
 import { useVtopGradesSummary } from "../hooks/api/vtop";
 import { useCourses } from "../hooks/api/courses";
 import { useSemesters } from "../hooks/api/semesters";
+import { useTheme } from "../ThemeContext";
 import { SkeletonCard } from "../components/ui/Skeleton";
 
 const MAX_GP = 10;
 
 function GpaBar({ gpa }: { gpa: number | null }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   if (gpa == null) return null;
   const pct = Math.min(100, (gpa / MAX_GP) * 100);
   return (
-    <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden flex-shrink-0">
-      <div className="h-full rounded-full bg-emerald-400 transition-all" style={{ width: `${pct}%` }} />
+    <div className={`w-24 h-1.5 rounded-full overflow-hidden flex-shrink-0 ${isDark ? "bg-white/10" : "bg-gray-200"}`}>
+      <div className={`h-full rounded-full transition-all ${isDark ? "bg-emerald-400/80" : "bg-green-500/70"}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }
@@ -41,6 +44,8 @@ function letterToGp(s: string): number | null {
 }
 
 export default function CgpaPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const { data: summary, loading, fetch } = useVtopGradesSummary();
   const { data: semesters }    = useSemesters();
   const { data: allCourses = [] } = useCourses();
@@ -94,29 +99,31 @@ export default function CgpaPage() {
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">
       <div className="flex items-center gap-2 mb-1">
-        <Sigma size={22} className="text-violet-400/90" />
-        <h1 className="text-2xl font-bold" style={{ color: "rgba(255,255,255,0.95)" }}>
+        <Sigma size={22} className={isDark ? "text-violet-400/90" : "text-violet-600/80"} />
+        <h1 className="text-2xl font-bold" style={{ color: isDark ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.95)" }}>
           CGPA & GPA
         </h1>
       </div>
-      <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>
+      <p className="text-sm mb-6" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>
         From VTOP grade history. Sync on the{" "}
-        <Link to="/dashboard" className="underline underline-offset-2 text-white/50 hover:text-white/80">
+        <Link to="/dashboard" className={`underline underline-offset-2 ${isDark ? "text-white/50 hover:text-white/80" : "text-zinc-400 hover:text-zinc-600"}`}>
           dashboard
         </Link>{" "}
         or{" "}
-        <Link to="/attendance" className="underline underline-offset-2 text-white/50 hover:text-white/80">
+        <Link to="/attendance" className={`underline underline-offset-2 ${isDark ? "text-white/50 hover:text-white/80" : "text-zinc-400 hover:text-zinc-600"}`}>
           attendance
         </Link>{" "}
         page.
       </p>
 
-      <div className="flex gap-1 p-1 rounded-lg w-fit mb-6" style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="flex gap-1 p-1 rounded-lg w-fit mb-6" style={{ background: isDark ? "#141414" : "#f3f4f6", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.12)"}` }}>
         <button
           type="button"
           onClick={() => setTab("record")}
           className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
-            tab === "record" ? "bg-white text-black" : "text-white/45 hover:text-white"
+            tab === "record"
+              ? (isDark ? "bg-white text-black" : "bg-zinc-900 text-white")
+              : (isDark ? "text-white/45 hover:text-white" : "text-zinc-500 hover:text-zinc-900")
           }`}
         >
           <Sigma size={14} />
@@ -126,7 +133,9 @@ export default function CgpaPage() {
           type="button"
           onClick={() => setTab("calc")}
           className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
-            tab === "calc" ? "bg-white text-black" : "text-white/45 hover:text-white"
+            tab === "calc"
+              ? (isDark ? "bg-white text-black" : "bg-zinc-900 text-white")
+              : (isDark ? "text-white/45 hover:text-white" : "text-zinc-500 hover:text-zinc-900")
           }`}
         >
           <Calculator size={14} />
@@ -142,57 +151,57 @@ export default function CgpaPage() {
               <SkeletonCard height={120} />
             </div>
           ) : !summary || summary.semesters.length === 0 ? (
-            <div className="rounded-xl p-10 text-center text-sm" style={{ color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="rounded-xl p-10 text-center text-sm" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}>
               No grade data yet. Run a VTOP sync first.
             </div>
           ) : (
             <>
               <div
                 className="rounded-xl p-5 mb-6 flex flex-wrap items-center justify-between gap-4"
-                style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ background: isDark ? "#141414" : "#ffffff", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}
               >
                 <div>
-                  <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "rgba(255,255,255,0.35)" }}>
+                  <p className="text-xs uppercase tracking-wider mb-1" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>
                     CGPA
                     {summary.cgpaFromPortal != null && (
-                      <span className="normal-case font-normal text-white/40 ml-1">(VTOP)</span>
+                      <span className="normal-case font-normal ml-1" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)" }}>(VTOP)</span>
                     )}
                   </p>
-                  <p className="text-3xl font-bold text-white">{summary.cgpa != null ? summary.cgpa.toFixed(2) : "—"}</p>
+                  <p className="text-3xl font-bold" style={{ color: isDark ? "#f0f0f0" : "#111827" }}>{summary.cgpa != null ? summary.cgpa.toFixed(2) : "\u2014"}</p>
                   {summary.cgpaFromPortal != null &&
                     summary.cgpaComputed != null &&
                     Math.abs(summary.cgpaFromPortal - summary.cgpaComputed) > 0.02 && (
-                      <p className="text-[11px] mt-1" style={{ color: "rgba(255,255,255,0.35)" }}>
+                      <p className="text-[11px] mt-1" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>
                         Calculated from grades: {summary.cgpaComputed.toFixed(2)}
                       </p>
                     )}
                 </div>
-                <div className="text-right text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+                <div className="text-right text-sm" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.5)" }}>
                   <div>Total credits: {summary.totalCredits.toFixed(1)}</div>
-                  <div>Σ weighted: {summary.totalWeightedScore.toFixed(1)}</div>
+                  <div>\u03a3 weighted: {summary.totalWeightedScore.toFixed(1)}</div>
                 </div>
                 <GpaBar gpa={summary.cgpa} />
               </div>
 
-              <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
-                <div className="px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.35)", background: "#1a1a1a" }}>
+              <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}>
+                <div className="px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)", background: isDark ? "#1a1a1a" : "#f9fafb" }}>
                   By semester
                 </div>
                 {summary.semesters.map((sem) => {
                   const key = sem.semesterLabel ?? "default";
                   const open = openSem[key] ?? true;
                   return (
-                    <div key={key} style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div key={key} style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}` }}>
                       <button
                         type="button"
-                        className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/[0.03]"
+                        className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-black/[0.03]"
                         onClick={() => setOpenSem((s) => ({ ...s, [key]: !open }))}
                       >
-                        {open ? <ChevronDown size={16} className="text-white/40" /> : <ChevronRight size={16} className="text-white/40" />}
-                        <span className="font-medium text-white flex-1 truncate">{sem.semesterLabel ?? "Grade history"}</span>
-                        <span className="text-sm text-emerald-400/90 tabular-nums" title={sem.gpaFromPortal != null ? "GPA from VTOP" : undefined}>
-                          {sem.gpa != null ? sem.gpa.toFixed(2) : "—"}
-                          {sem.gpaFromPortal != null && <span className="text-[10px] text-white/35 ml-1 font-normal">VTOP</span>}
+                        {open ? <ChevronDown size={16} className={isDark ? "text-white/40" : "text-zinc-400"} /> : <ChevronRight size={16} className={isDark ? "text-white/40" : "text-zinc-400"} />}
+                        <span className={`font-medium flex-1 truncate ${isDark ? "text-white" : "text-zinc-900"}`}>{sem.semesterLabel ?? "Grade history"}</span>
+                        <span className={`text-sm tabular-nums ${isDark ? "text-emerald-400/80" : "text-green-600/80"}`} title={sem.gpaFromPortal != null ? "GPA from VTOP" : undefined}>
+                          {sem.gpa != null ? sem.gpa.toFixed(2) : "\u2014"}
+                          {sem.gpaFromPortal != null && <span className={`text-[10px] ml-1 font-normal ${isDark ? "text-white/35" : "text-zinc-400"}`}>VTOP</span>}
                         </span>
                         <GpaBar gpa={sem.gpa} />
                       </button>
@@ -200,13 +209,13 @@ export default function CgpaPage() {
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                                <th className="text-left px-4 py-2 text-xs font-medium" style={{ color: "rgba(255,255,255,0.35)" }}>Course</th>
-                                <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: "rgba(255,255,255,0.35)" }}>#</th>
-                                <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: "rgba(255,255,255,0.35)" }}>Grade</th>
-                                <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: "rgba(255,255,255,0.35)" }}>Pt</th>
-                                <th className="text-left px-4 py-2 text-xs font-medium hidden lg:table-cell" style={{ color: "rgba(255,255,255,0.35)" }}>Faculty / slot</th>
-                                <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: "rgba(255,255,255,0.35)" }}>Σ</th>
+                              <tr style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}` }}>
+                                <th className="text-left px-4 py-2 text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Course</th>
+                                <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>#</th>
+                                <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Grade</th>
+                                <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Pt</th>
+                                <th className="text-left px-4 py-2 text-xs font-medium hidden lg:table-cell" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Faculty / slot</th>
+                                <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Total</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -215,30 +224,30 @@ export default function CgpaPage() {
                                 const gp = c.gradePoint ?? 0;
                                 const w = cr * gp;
                                 return (
-                                  <tr key={c.id} style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                                  <tr key={c.id} style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"}` }}>
                                     <td className="px-4 py-2">
-                                      <Link to="/courses" className="text-white hover:underline">
+                                      <Link to="/courses" style={{ color: isDark ? "#f0f0f0" : "#111827" }} className="hover:underline">
                                         <span className="font-medium">{c.courseCode}</span>
-                                        <span className="block text-xs text-white/40 truncate max-w-[220px]">{c.courseName}</span>
+                                        <span className="block text-xs truncate max-w-[220px]" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)" }}>{c.courseName}</span>
                                       </Link>
                                     </td>
-                                    <td className="px-4 py-2 text-right text-white/70">{cr || "—"}</td>
-                                    <td className="px-4 py-2 text-right text-white">{c.grade ?? "—"}</td>
-                                    <td className="px-4 py-2 text-right text-white/70">{c.gradePoint ?? "—"}</td>
-                                    <td className="px-4 py-2 text-left text-white/45 text-xs max-w-[200px] truncate hidden lg:table-cell">
-                                      {[c.faculty, c.slot].filter(Boolean).join(" · ") || (c.category ? c.category : "—")}
+                                    <td className="px-4 py-2 text-right" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)" }}>{cr || "\u2014"}</td>
+                                    <td className="px-4 py-2 text-right" style={{ color: isDark ? "#f0f0f0" : "#111827" }}>{c.grade ?? "\u2014"}</td>
+                                    <td className="px-4 py-2 text-right" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)" }}>{c.gradePoint ?? "\u2014"}</td>
+                                    <td className="px-4 py-2 text-left" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.5)" }}>
+                                      <span className="text-xs max-w-[200px] truncate inline-block">{[c.faculty, c.slot].filter(Boolean).join(" \u00b7 ") || (c.category ? c.category : "\u2014")}</span>
                                     </td>
-                                    <td className="px-4 py-2 text-right text-emerald-400/80">{cr && c.gradePoint != null ? w.toFixed(1) : "—"}</td>
+                                    <td className="px-4 py-2 text-right" style={{ color: isDark ? "#22c55e" : "#22c55e" }}>{cr && c.gradePoint != null ? w.toFixed(1) : "\u2014"}</td>
                                   </tr>
                                 );
                               })}
                             </tbody>
                             <tfoot>
-                              <tr style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                                <td className="px-4 py-2 text-xs font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>SUM</td>
-                                <td className="px-4 py-2 text-right text-xs font-semibold text-white">{sem.totalCredits.toFixed(1)}</td>
+                              <tr style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}>
+                                <td className="px-4 py-2 text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.5)" }}>SUM</td>
+                                <td className="px-4 py-2 text-right text-xs font-semibold" style={{ color: isDark ? "#f0f0f0" : "#111827" }}>{sem.totalCredits.toFixed(1)}</td>
                                 <td colSpan={3} />
-                                <td className="px-4 py-2 text-right text-xs font-semibold text-emerald-400">{sem.weightedScore.toFixed(1)}</td>
+                                <td className="px-4 py-2 text-right text-xs font-semibold" style={{ color: isDark ? "#4ade80" : "#16a34a" }}>{sem.weightedScore.toFixed(1)}</td>
                               </tr>
                             </tfoot>
                           </table>
@@ -254,9 +263,9 @@ export default function CgpaPage() {
       )}
 
       {tab === "calc" && (
-        <div className="rounded-xl overflow-hidden" style={{ background: "#141414", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div className="px-4 py-3 flex flex-wrap items-center gap-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <span className="text-sm font-medium text-white">Hypothetical semester GPA</span>
+        <div className="rounded-xl overflow-hidden" style={{ background: isDark ? "#141414" : "#ffffff", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}>
+          <div className="px-4 py-3 flex flex-wrap items-center gap-3" style={{ borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}` }}>
+            <span className="text-sm font-medium" style={{ color: isDark ? "#f0f0f0" : "#111827" }}>Hypothetical semester GPA</span>
             <button
               type="button"
               onClick={importCurrent}
@@ -283,18 +292,18 @@ export default function CgpaPage() {
             {calcRows.map((row) => (
               <div key={row.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:items-start">
                 <div className="sm:col-span-5">
-                  <label className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>Course</label>
+                  <label className="text-[10px] uppercase tracking-wider" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Course</label>
                   <input
                     value={row.title}
                     onChange={(e) => {
                       const v = e.target.value;
                       setCalcRows((rows) => rows.map((x) => (x.id === row.id ? { ...x, title: v } : x)));
                     }}
-                    className="w-full mt-1 rounded-lg px-3 py-2 text-sm bg-[#2a2a2a] border border-white/10 text-white"
+                    className={`w-full mt-1 rounded-lg px-3 py-2 text-sm ${isDark ? "bg-[#2a2a2a] border-white/10 text-white" : "bg-gray-100 border-gray-200 text-zinc-900"}`}
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>Credits</label>
+                  <label className="text-[10px] uppercase tracking-wider" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Credits</label>
                   <input
                     type="number"
                     min={0}
@@ -304,11 +313,11 @@ export default function CgpaPage() {
                       const v = parseFloat(e.target.value) || 0;
                       setCalcRows((rows) => rows.map((x) => (x.id === row.id ? { ...x, credits: v } : x)));
                     }}
-                    className="w-full mt-1 rounded-lg px-3 py-2 text-sm bg-[#2a2a2a] border border-white/10 text-white"
+                    className={`w-full mt-1 rounded-lg px-3 py-2 text-sm ${isDark ? "bg-[#2a2a2a] border-white/10 text-white" : "bg-gray-100 border-gray-200 text-zinc-900"}`}
                   />
                 </div>
                 <div className="sm:col-span-5">
-                  <label className="text-[10px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.35)" }}>Grade point (0–10) or letter</label>
+                  <label className="text-[10px] uppercase tracking-wider" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Grade point (0–10) or letter</label>
                   <div className="mt-1 flex gap-2 items-center">
                     <input
                       defaultValue=""
@@ -323,7 +332,7 @@ export default function CgpaPage() {
                           );
                         }
                       }}
-                      className="min-w-0 flex-1 rounded-lg px-3 py-2 text-sm bg-[#2a2a2a] border border-white/10 text-white"
+                      className={`min-w-0 flex-1 rounded-lg px-3 py-2 text-sm ${isDark ? "bg-[#2a2a2a] border-white/10 text-white" : "bg-gray-100 border-gray-200 text-zinc-900"}`}
                     />
                     <button
                       type="button"
@@ -333,15 +342,15 @@ export default function CgpaPage() {
                       Remove
                     </button>
                   </div>
-                  <span className="text-[11px] text-white/35 mt-0.5 block">Current: {row.gradePoint.toFixed(2)}</span>
+                  <span className="text-[11px] mt-0.5 block" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Current: {row.gradePoint.toFixed(2)}</span>
                 </div>
               </div>
             ))}
           </div>
-          <div className="px-4 py-4 flex items-center justify-between" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-            <span className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>Estimated semester GPA</span>
+          <div className="px-4 py-4 flex items-center justify-between" style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}` }}>
+            <span className="text-sm" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.5)" }}>Estimated semester GPA</span>
             <div className="flex items-center gap-3">
-              <span className="text-2xl font-bold text-emerald-400">{semGpaCalc != null ? semGpaCalc.toFixed(2) : "—"}</span>
+              <span className={`text-2xl font-bold ${isDark ? "text-emerald-400/80" : "text-green-600/80"}`}>{semGpaCalc != null ? semGpaCalc.toFixed(2) : "\u2014"}</span>
               <GpaBar gpa={semGpaCalc} />
             </div>
           </div>

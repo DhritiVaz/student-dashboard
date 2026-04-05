@@ -9,6 +9,7 @@ import { useSemesters } from "../hooks/api/semesters";
 import { useAssignments } from "../hooks/api/assignments";
 import { useTasks } from "../hooks/api/tasks";
 import { useVtopAcademicEvents, useVtopTimetable, type VtopTimetableEntry } from "../hooks/api/vtop";
+import { useTheme } from "../ThemeContext";
 import type { Course } from "../hooks/api/courses";
 import {
   useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent,
@@ -36,24 +37,34 @@ function formatCompactTimeRange(start: string, end: string): string {
   return `${left}–${right}`;
 }
 
-type ItemStyle = { dot: string; bg: string; text: string; border: string; label: string };
+type ItemStyle = { dotColor: string; bg: string; text: string; border: string; label: string };
 
-const TYPE_STYLE: Record<string, ItemStyle> = {
-  class:      { dot: "bg-blue-500",    bg: "bg-blue-950",     text: "text-blue-400",    border: "border-blue-900",    label: "Class" },
-  exam:       { dot: "bg-red-500",     bg: "bg-red-50",       text: "text-red-700",     border: "border-red-100",     label: "Exam" },
-  deadline:   { dot: "bg-orange-500",  bg: "bg-orange-50",    text: "text-orange-700",  border: "border-orange-100",  label: "Deadline" },
-  personal:   { dot: "bg-violet-500",  bg: "bg-violet-50",    text: "text-violet-700",  border: "border-violet-100",  label: "Personal" },
-  assignment: { dot: "bg-sky-500",     bg: "bg-sky-50",       text: "text-sky-700",     border: "border-sky-100",     label: "Assignment" },
-  task:       { dot: "bg-purple-500",  bg: "bg-purple-50",    text: "text-purple-700",  border: "border-purple-100",  label: "Task" },
-  holiday:    { dot: "bg-emerald-500", bg: "bg-emerald-950",  text: "text-emerald-400", border: "border-emerald-900", label: "Holiday" },
-  exam_vtop:  { dot: "bg-red-500",     bg: "bg-red-950",      text: "text-red-400",     border: "border-red-900",     label: "Exam" },
+const TYPE_STYLE: Record<string, { dark: ItemStyle; light: ItemStyle }> = {
+  class:      { dark: { dotColor: "#3b82f6", bg: "rgba(23,37,84,1)",     text: "#60a5fa", border: "rgba(30,58,138,1)",  label: "Class" },
+                light: { dotColor: "#3b82f6", bg: "rgba(239,246,255,1)", text: "#1d4ed8", border: "rgba(191,219,254,1)", label: "Class" } },
+  exam:       { dark: { dotColor: "#ef4444", bg: "rgba(254,242,242,1)",  text: "#f87171", border: "rgba(254,202,202,1)", label: "Exam" },
+                light: { dotColor: "#ef4444", bg: "rgba(254,242,242,1)", text: "#dc2626", border: "rgba(254,202,202,1)", label: "Exam" } },
+  deadline:   { dark: { dotColor: "#f97316", bg: "rgba(255,247,237,1)",  text: "#fb923c", border: "rgba(254,215,170,1)", label: "Deadline" },
+                light: { dotColor: "#f97316", bg: "rgba(255,247,237,1)", text: "#c2410c", border: "rgba(254,215,170,1)", label: "Deadline" } },
+  personal:   { dark: { dotColor: "#8b5cf6", bg: "rgba(245,243,255,1)",  text: "#a78bfa", border: "rgba(221,214,254,1)", label: "Personal" },
+                light: { dotColor: "#8b5cf6", bg: "rgba(245,243,255,1)", text: "#6d28d9", border: "rgba(221,214,254,1)", label: "Personal" } },
+  assignment: { dark: { dotColor: "#0ea5e9", bg: "rgba(240,249,255,1)",  text: "#38bdf8", border: "rgba(186,230,253,1)", label: "Assignment" },
+                light: { dotColor: "#0ea5e9", bg: "rgba(240,249,255,1)", text: "#0369a1", border: "rgba(186,230,253,1)", label: "Assignment" } },
+  task:       { dark: { dotColor: "#a855f7", bg: "rgba(250,245,255,1)",  text: "#c084fc", border: "rgba(233,213,255,1)", label: "Task" },
+                light: { dotColor: "#a855f7", bg: "rgba(250,245,255,1)", text: "#7e22ce", border: "rgba(233,213,255,1)", label: "Task" } },
+  holiday:    { dark: { dotColor: "#10b981", bg: "rgba(2,44,34,1)",      text: "#34d399", border: "rgba(5,150,105,1)",    label: "Holiday" },
+                light: { dotColor: "#10b981", bg: "rgba(236,253,245,1)", text: "#047857", border: "rgba(167,243,208,1)", label: "Holiday" } },
+  exam_vtop:  { dark: { dotColor: "#ef4444", bg: "rgba(69,10,10,1)",     text: "#f87171", border: "rgba(127,29,29,1)",    label: "Exam" },
+                light: { dotColor: "#ef4444", bg: "rgba(254,242,242,1)", text: "#dc2626", border: "rgba(254,202,202,1)", label: "Exam" } },
 };
 
-function getStyle(type: "event" | "assignment" | "task", eventType?: EventType, customColor?: string | null): ItemStyle {
-  if (type === "assignment") return TYPE_STYLE.assignment;
-  if (type === "task")       return TYPE_STYLE.task;
-  const base = TYPE_STYLE[eventType ?? "personal"] ?? TYPE_STYLE.personal;
-  if (customColor) return { ...base, dot: "", bg: "", text: "", border: "" };
+function getStyle(type: "event" | "assignment" | "task", eventType?: EventType, customColor?: string | null, isDark?: boolean): ItemStyle {
+  const theme = isDark ? "dark" : "light";
+  const styleMap = (type === "assignment" ? TYPE_STYLE.assignment
+    : type === "task" ? TYPE_STYLE.task
+    : TYPE_STYLE[eventType ?? "personal"] ?? TYPE_STYLE.personal);
+  const base = styleMap[theme];
+  if (customColor) return { ...base, dotColor: customColor, bg: "", text: "", border: "" };
   return base;
 }
 
@@ -102,59 +113,69 @@ function getCalendarCells(year: number, month: number): Date[] {
   return days;
 }
 
-function EventPill({ item, onClick }: { item: CalItem; onClick: () => void }) {
-  const s = getStyle(item.type, item.eventType, item.customColor);
+function EventPill({ item, onClick, isDark }: { item: CalItem; onClick: () => void; isDark: boolean }) {
+  const s = getStyle(item.type, item.eventType, item.customColor, isDark);
   const dotStyle = item.customColor ? { background: item.customColor } : undefined;
   return (
     <button
       onClick={e => { e.stopPropagation(); onClick(); }}
-      className={`w-full flex items-center gap-1 text-left px-1.5 py-0.5 rounded text-[10px] truncate transition-opacity hover:opacity-80 ${s.bg} ${s.text}`}
+      style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", textAlign: "left", padding: "2px 6px", borderRadius: 4, fontSize: 10, background: s.bg, color: s.text, overflow: "hidden", whiteSpace: "nowrap", transition: "opacity 0.1s" }}
+      className="transition-opacity hover:opacity-80"
     >
-      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotStyle ? "" : s.dot}`} style={dotStyle} />
-      <span className="truncate">{item.title}</span>
+      <span style={{ ...dotStyle, background: dotStyle?.background ?? s.dotColor, width: 6, height: 6, borderRadius: "9999px", flexShrink: 0 }} />
+      <span style={{ overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>{item.title}</span>
     </button>
   );
 }
 
-function DayCell({ date, items, isCurrentMonth, isSelected, onClick, onItemClick }: {
+function DayCell({ date, items, isCurrentMonth, isSelected, onClick, onItemClick, isDark }: {
   date: Date; items: CalItem[]; isCurrentMonth: boolean; isSelected: boolean;
-  onClick: () => void; onItemClick: (item: CalItem) => void;
+  onClick: () => void; onItemClick: (item: CalItem) => void; isDark: boolean;
 }) {
   const today   = isToday(date);
   const visible = items.slice(0, 3);
   const overflow = items.length - 3;
+
+  const borderColor  = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)";
+  const selBg         = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)";
+  const hoverBg       = isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)";
+  const todayBg       = isDark ? "rgba(255,255,255,0.9)" : "#e87040";
+  const todayText     = isDark ? "#0a0a0a" : "#ffffff";
+  const dateText      = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
+  const overflowText  = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+  const overflowHover = isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)";
 
   return (
     <div
       onClick={onClick}
       className="min-h-[96px] p-1.5 cursor-pointer transition-colors duration-100"
       style={{
-        borderRight: "1px solid rgba(255,255,255,0.05)",
-        borderBottom: "1px solid rgba(255,255,255,0.05)",
-        background: isSelected ? "rgba(255,255,255,0.04)" : "transparent",
+        borderRight: `1px solid ${borderColor}`,
+        borderBottom: `1px solid ${borderColor}`,
+        background: isSelected ? selBg : "transparent",
         opacity: !isCurrentMonth ? 0.3 : 1,
       }}
-      onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.02)"; }}
+      onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = hoverBg; }}
       onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
     >
       <div className="flex justify-end mb-1">
         <span
           className="text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full"
-          style={today ? { background: "rgba(255,255,255,0.9)", color: "#0a0a0a", fontWeight: 700 } : { color: "rgba(255,255,255,0.4)" }}
+          style={today ? { background: todayBg, color: todayText, fontWeight: 700 } : { color: dateText }}
         >
           {date.getDate()}
         </span>
       </div>
       <div className="space-y-0.5">
         {visible.map(item => (
-          <EventPill key={`${item.type}-${item.id}`} item={item} onClick={() => onItemClick(item)} />
+          <EventPill key={`${item.type}-${item.id}`} item={item} onClick={() => onItemClick(item)} isDark={isDark} />
         ))}
         {overflow > 0 && (
           <button onClick={e => { e.stopPropagation(); onClick(); }}
             className="text-[10px] pl-1.5"
-            style={{ color: "rgba(255,255,255,0.3)" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
-            onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}
+            style={{ color: overflowText }}
+            onMouseEnter={e => (e.currentTarget.style.color = overflowHover)}
+            onMouseLeave={e => (e.currentTarget.style.color = overflowText)}
           >
             +{overflow} more
           </button>
@@ -164,18 +185,30 @@ function DayCell({ date, items, isCurrentMonth, isSelected, onClick, onItemClick
   );
 }
 
-function DayPanel({ date, items, onItemClick, onClose, onCreateEvent }: {
-  date: Date; items: CalItem[]; onItemClick: (item: CalItem) => void; onClose: () => void; onCreateEvent: () => void;
+function DayPanel({ date, items, onItemClick, onClose, onCreateEvent, isDark }: {
+  date: Date; items: CalItem[]; onItemClick: (item: CalItem) => void; onClose: () => void; onCreateEvent: () => void; isDark: boolean;
 }) {
   const grouped: Record<CalItemType, CalItem[]> = { event: [], assignment: [], task: [] };
   items.forEach(i => grouped[i.type].push(i));
   const panelLabel = isToday(date) ? "Today" : date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
   const groupLabels: Record<CalItemType, string> = { event: "Events", assignment: "Assignments", task: "Tasks" };
+  const iconColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
   const groupIcons: Record<CalItemType, React.ReactNode> = {
-    event: <Calendar size={12} style={{ color: "rgba(255,255,255,0.3)" }} />,
-    assignment: <ClipboardList size={12} style={{ color: "rgba(255,255,255,0.3)" }} />,
-    task: <CheckSquare size={12} style={{ color: "rgba(255,255,255,0.3)" }} />,
+    event: <Calendar size={12} style={{ color: iconColor }} />,
+    assignment: <ClipboardList size={12} style={{ color: iconColor }} />,
+    task: <CheckSquare size={12} style={{ color: iconColor }} />,
   };
+
+  const cardBg        = isDark ? "#111111" : "#ffffff";
+  const cardBorder    = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const textColor     = isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)";
+  const secondaryText = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+  const titleText     = isDark ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.85)";
+  const hoverBg       = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
+  const badgeBg       = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const badgeText     = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
+  const badgeBorder   = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  const btnHoverCol   = isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)";
 
   function Group({ type, list }: { type: CalItemType; list: CalItem[] }) {
     if (!list.length) return null;
@@ -184,30 +217,30 @@ function DayPanel({ date, items, onItemClick, onClose, onCreateEvent }: {
       <div>
         <div className="flex items-center gap-1.5 mb-1.5">
           {groupIcons[type]}
-          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>{groupLabels[type]}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: secondaryText }}>{groupLabels[type]}</span>
         </div>
         <div className="space-y-1">
           {list.map(item => {
-            const s = getStyle(item.type, item.eventType, item.customColor);
+            const s = getStyle(item.type, item.eventType, item.customColor, isDark);
             const dotStyle = item.customColor ? { background: item.customColor } : undefined;
             return (
               <div key={`${item.type}-${item.id}`}
                 className="flex items-center gap-2 p-2 rounded-lg transition-colors cursor-pointer group"
-                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = "rgba(255,255,255,0.04)"}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = hoverBg}
                 onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = "transparent"}
                 onClick={() => onItemClick(item)}>
-                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotStyle ? "" : s.dot}`} style={dotStyle} />
+                <span style={{ background: dotStyle?.background ?? s.dotColor, width: 8, height: 8, borderRadius: "9999px", flexShrink: 0 }} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium truncate" style={{ color: "rgba(255,255,255,0.85)" }}>{item.title}</p>
-                  {item.time && <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>{item.time}</p>}
+                  <p className="text-xs font-medium truncate" style={{ color: titleText }}>{item.title}</p>
+                  {item.time && <p className="text-[10px]" style={{ color: secondaryText }}>{item.time}</p>}
                   {item.courseCode && (
-                    <span className="text-[9px] font-semibold rounded px-1 py-0.5" style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    <span className="text-[9px] font-semibold rounded px-1 py-0.5" style={{ background: badgeBg, color: badgeText, border: `1px solid ${badgeBorder}` }}>
                       {item.courseCode}
                     </span>
                   )}
                 </div>
                 {linkTo && (
-                  <Link to={linkTo} onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  <Link to={linkTo} onClick={e => e.stopPropagation()} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: secondaryText }}>
                     <ExternalLink size={11} />
                   </Link>
                 )}
@@ -220,23 +253,23 @@ function DayPanel({ date, items, onItemClick, onClose, onCreateEvent }: {
   }
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <span className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>{panelLabel}</span>
+    <div className="rounded-xl overflow-hidden" style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${cardBorder}` }}>
+        <span className="text-sm font-semibold" style={{ color: textColor }}>{panelLabel}</span>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={onCreateEvent} className="p-1 rounded-lg" style={{ color: "rgba(255,255,255,0.3)" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")} onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+          <button type="button" onClick={onCreateEvent} className="p-1 rounded-lg" style={{ color: secondaryText }}
+            onMouseEnter={e => (e.currentTarget.style.color = btnHoverCol)} onMouseLeave={e => (e.currentTarget.style.color = secondaryText)}>
             <Plus size={14} />
           </button>
-          <button type="button" onClick={onClose} className="p-1 rounded-lg" style={{ color: "rgba(255,255,255,0.3)" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")} onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.3)")}>
+          <button type="button" onClick={onClose} className="p-1 rounded-lg" style={{ color: secondaryText }}
+            onMouseEnter={e => (e.currentTarget.style.color = btnHoverCol)} onMouseLeave={e => (e.currentTarget.style.color = secondaryText)}>
             <X size={14} />
           </button>
         </div>
       </div>
       <div className="p-4 space-y-4" style={{ maxHeight: 400, overflowY: "auto" }}>
         {!items.length ? (
-          <p className="text-xs text-center py-4" style={{ color: "rgba(255,255,255,0.3)" }}>Nothing scheduled.</p>
+          <p className="text-xs text-center py-4" style={{ color: secondaryText }}>Nothing scheduled.</p>
         ) : (
           <>
             <Group type="event" list={grouped.event} />
@@ -249,7 +282,7 @@ function DayPanel({ date, items, onItemClick, onClose, onCreateEvent }: {
   );
 }
 
-function UpcomingSidebar({ items, onItemClick }: { items: CalItem[]; onItemClick: (item: CalItem) => void }) {
+function UpcomingSidebar({ items, onItemClick, isDark }: { items: CalItem[]; onItemClick: (item: CalItem) => void; isDark: boolean }) {
   const now    = new Date();
   const next10 = items
     .filter(i => new Date(i.dateKey) >= new Date(dateKey(now)))
@@ -257,6 +290,13 @@ function UpcomingSidebar({ items, onItemClick }: { items: CalItem[]; onItemClick
     .slice(0, 10);
   const byDate = new Map<string, CalItem[]>();
   next10.forEach(i => { if (!byDate.has(i.dateKey)) byDate.set(i.dateKey, []); byDate.get(i.dateKey)!.push(i); });
+
+  const cardBg        = isDark ? "#111111" : "#ffffff";
+  const cardBorder    = isDark ? "rgba(255,255,255,0.06)" : "#e5e7eb";
+  const headerBorder  = isDark ? "rgba(255,255,255,0.06)" : "#f0f0f0";
+  const textColor     = isDark ? "rgba(255,255,255,0.9)" : "#111";
+  const secondaryText = isDark ? "rgba(255,255,255,0.4)" : "#9ca3af";
+  const hoverBg       = isDark ? "rgba(255,255,255,0.04)" : "#f5f5f5";
 
   function dateLabel(key: string) {
     const d = new Date(key + "T00:00:00");
@@ -266,30 +306,31 @@ function UpcomingSidebar({ items, onItemClick }: { items: CalItem[]; onItemClick
   }
 
   return (
-    <div className="bg-white border border-[#e5e7eb] rounded-card overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-      <div className="px-4 py-3 border-b border-[#f0f0f0]">
-        <span className="text-sm font-semibold text-[#111]">Upcoming</span>
+    <div className="rounded-card overflow-hidden" style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+      <div className="px-4 py-3" style={{ borderBottom: `1px solid ${headerBorder}` }}>
+        <span className="text-sm font-semibold" style={{ color: textColor }}>Upcoming</span>
       </div>
       <div className="p-3 max-h-[520px] overflow-y-auto space-y-4">
         {!next10.length ? (
-          <p className="text-xs text-[#9ca3af] text-center py-6">Nothing coming up.</p>
+          <p className="text-xs text-center py-6" style={{ color: secondaryText }}>Nothing coming up.</p>
         ) : (
           [...byDate.entries()].map(([key, dayItems]) => (
             <div key={key}>
-              <p className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider mb-1.5">{dateLabel(key)}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: secondaryText }}>{dateLabel(key)}</p>
               <div className="space-y-1">
                 {dayItems.map(item => {
-                  const s = getStyle(item.type, item.eventType, item.customColor);
-                  const dotStyle = item.customColor ? { background: item.customColor } : undefined;
+                  const s = getStyle(item.type, item.eventType, item.customColor, isDark);
                   return (
                     <button key={`${item.type}-${item.id}`} onClick={() => onItemClick(item)}
-                      className="w-full flex items-center gap-2 p-2 rounded-lg text-left hover:bg-[#f5f5f5] transition-colors">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotStyle ? "" : s.dot}`} style={dotStyle} />
+                      className="w-full flex items-center gap-2 p-2 rounded-lg text-left transition-colors"
+                      onMouseEnter={e => (e.currentTarget.style.background = hoverBg)}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                      <span style={{ background: s.dotColor, width: 8, height: 8, borderRadius: "9999px", flexShrink: 0 }} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-[#111] truncate">{item.title}</p>
-                        <p className="text-[10px] text-[#9ca3af]">{item.time ?? (item.isAllDay ? "All day" : "")}{item.courseCode && ` · ${item.courseCode}`}</p>
+                        <p className="text-xs font-medium truncate" style={{ color: textColor }}>{item.title}</p>
+                        <p className="text-[10px]" style={{ color: secondaryText }}>{item.time ?? (item.isAllDay ? "All day" : "")}{item.courseCode && ` · ${item.courseCode}`}</p>
                       </div>
-                      <span className={`text-[9px] font-semibold border rounded-full px-1.5 py-0.5 flex-shrink-0 ${s.text} ${s.bg} ${s.border}`}>{s.label}</span>
+                      <span className="text-[9px] font-semibold border rounded-full px-1.5 py-0.5 flex-shrink-0" style={{ color: s.text, background: s.bg, borderColor: s.border }}>{s.label}</span>
                     </button>
                   );
                 })}
@@ -302,34 +343,38 @@ function UpcomingSidebar({ items, onItemClick }: { items: CalItem[]; onItemClick
   );
 }
 
-function EventDetailModal({ item, onEdit, onDelete, onClose, deleting }: {
-  item: CalItem; onEdit: () => void; onDelete: () => void; onClose: () => void; deleting: boolean;
+function EventDetailModal({ item, onEdit, onDelete, onClose, deleting, isDark }: {
+  item: CalItem; onEdit: () => void; onDelete: () => void; onClose: () => void; deleting: boolean; isDark: boolean;
 }) {
-  const s = getStyle(item.type, item.eventType, item.customColor);
+  const s = getStyle(item.type, item.eventType, item.customColor, isDark);
   const dotStyle = item.customColor ? { background: item.customColor } : undefined;
   const ev = item.rawEvent;
+  const textColor    = isDark ? "rgba(255,255,255,0.9)" : "#111";
+  const secondaryText = isDark ? "rgba(255,255,255,0.4)" : "#6b7280";
+  const mutedText    = isDark ? "rgba(255,255,255,0.35)" : "#9ca3af";
+  const borderColor  = isDark ? "rgba(255,255,255,0.06)" : "#f0f0f0";
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-3">
-        <span className={`w-3 h-3 rounded-full flex-shrink-0 mt-1 ${dotStyle ? "" : s.dot}`} style={dotStyle} />
+        <span style={{ background: dotStyle?.background ?? s.dotColor, width: 12, height: 12, borderRadius: "9999px", flexShrink: 0, marginTop: 4 }} />
         <div className="flex-1 min-w-0">
-          <p className="text-base font-semibold text-[#111] leading-tight">{item.title}</p>
-          <span className={`inline-block mt-1 text-[10px] font-semibold border rounded-full px-2 py-0.5 ${s.text} ${s.bg} ${s.border}`}>{s.label}</span>
+          <p className="text-base font-semibold leading-tight" style={{ color: textColor }}>{item.title}</p>
+          <span className="inline-block mt-1 text-[10px] font-semibold border rounded-full px-2 py-0.5" style={{ color: s.text, background: s.bg, borderColor: s.border }}>{s.label}</span>
         </div>
       </div>
-      {item.time && <p className="text-sm text-[#6b7280]">{item.time}</p>}
+      {item.time && <p className="text-sm" style={{ color: secondaryText }}>{item.time}</p>}
       {ev && (
-        <div className="space-y-2 text-sm text-[#6b7280]">
+        <div className="space-y-2 text-sm" style={{ color: secondaryText }}>
           <div className="flex items-start gap-2">
-            <Calendar size={14} className="text-[#9ca3af] mt-0.5 flex-shrink-0" />
+            <Calendar size={14} style={{ color: mutedText, marginTop: 2, flexShrink: 0 }} />
             <span>{ev.isAllDay ? fmtShortDate(ev.startDate) : `${fmtShortDate(ev.startDate)}, ${fmtTime(ev.startDate)} – ${fmtTime(ev.endDate)}`}</span>
           </div>
-          {ev.course && <p className="text-xs text-[#9ca3af]">{ev.course.name} ({ev.course.code})</p>}
-          {ev.description && <p className="text-sm text-[#6b7280] leading-relaxed border-t border-[#f0f0f0] pt-3">{ev.description}</p>}
+          {ev.course && <p className="text-xs" style={{ color: mutedText }}>{ev.course.name} ({ev.course.code})</p>}
+          {ev.description && <p className="text-sm leading-relaxed pt-3" style={{ color: secondaryText, borderTop: `1px solid ${borderColor}` }}>{ev.description}</p>}
         </div>
       )}
-      {item.type !== "event" && <p className="text-sm text-[#6b7280]">{item.type === "assignment" ? "Assignment due" : "Task due"} — {fmtShortDate(item.dateKey)}</p>}
-      <div className="flex items-center justify-between pt-2 border-t border-[#f0f0f0]">
+      {item.type !== "event" && <p className="text-sm" style={{ color: secondaryText }}>{item.type === "assignment" ? "Assignment due" : "Task due"} — {fmtShortDate(item.dateKey)}</p>}
+      <div className="flex items-center justify-between pt-2" style={{ borderTop: `1px solid ${borderColor}` }}>
         <div className="flex items-center gap-2 flex-wrap">
           {item.courseId && (
             <Link to={`/courses/${item.courseId}`}>
@@ -339,7 +384,7 @@ function EventDetailModal({ item, onEdit, onDelete, onClose, deleting }: {
           {item.type === "event" && item.rawEvent && (
             <>
               <Button variant="secondary" size="sm" onClick={onEdit}><Pencil size={13} /> Edit</Button>
-              <Button variant="ghost" size="sm" loading={deleting} onClick={onDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50"><Trash2 size={13} /> Delete</Button>
+              <Button variant="ghost" size="sm" loading={deleting} onClick={onDelete} style={{ color: "#ef4444" }} className="hover:bg-red-50 hover:text-red-600"><Trash2 size={13} /> Delete</Button>
             </>
           )}
           {item.type === "assignment" && <Link to={`/assignments/${item.id}`}><Button variant="secondary" size="sm"><ExternalLink size={13} /> View assignment</Button></Link>}
@@ -363,7 +408,7 @@ function courseColorFromCode(code: string, courses: Course[] | undefined): strin
   return match?.color ?? null;
 }
 
-function TimetableGrid({ entries, courses }: { entries: VtopTimetableEntry[]; courses: Course[] | undefined }) {
+function TimetableGrid({ entries, courses, isDark }: { entries: VtopTimetableEntry[]; courses: Course[] | undefined; isDark: boolean }) {
   const codeToId = useMemo(() => {
     const m = new Map<string, string>();
     (courses ?? []).forEach((c) => {
@@ -387,22 +432,34 @@ function TimetableGrid({ entries, courses }: { entries: VtopTimetableEntry[]; co
   const days = [1, 2, 3, 4, 5, 6];
   const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+  const cardBg      = isDark ? "#111111" : "#ffffff";
+  const cardBorder  = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const headerBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const rowBorder   = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
+  const stickyBg    = isDark ? "#111" : "#ffffff";
+  const timeText    = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
+  const headerText  = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)";
+  const dayHeaderText = isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)";
+  const courseText  = isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)";
+  const detailText  = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)";
+  const defaultBorder = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)";
+
   if (!entries.length) {
     return (
-      <p className="text-sm py-16 text-center rounded-xl" style={{ color: "rgba(255,255,255,0.35)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <p className="text-sm py-16 text-center rounded-xl" style={{ color: headerText, border: `1px solid ${cardBorder}` }}>
         No timetable synced yet. Run VTOP sync from the dashboard.
       </p>
     );
   }
 
   return (
-    <div className="rounded-xl overflow-auto" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+    <div className="rounded-xl overflow-auto" style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
       <table className="w-full text-xs min-w-[720px]">
         <thead>
-          <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <th className="text-left p-3 font-semibold sticky left-0 z-10" style={{ background: "#111", color: "rgba(255,255,255,0.35)" }}>Time</th>
+          <tr style={{ borderBottom: `1px solid ${headerBorder}` }}>
+            <th className="text-left p-3 font-semibold sticky left-0 z-10" style={{ background: stickyBg, color: headerText }}>Time</th>
             {days.map((d, i) => (
-              <th key={d} className="p-3 text-center font-semibold border-l border-white/5" style={{ color: "rgba(255,255,255,0.55)" }}>
+              <th key={d} className="p-3 text-center font-semibold" style={{ color: dayHeaderText, borderLeft: `1px solid ${rowBorder}` }}>
                 {labels[i]}
               </th>
             ))}
@@ -413,23 +470,23 @@ function TimetableGrid({ entries, courses }: { entries: VtopTimetableEntry[]; co
             const rowKey = `${startTime}-${endTime}`;
             const timeLabel = formatCompactTimeRange(startTime, endTime);
             return (
-            <tr key={rowKey} style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-              <td className="p-3 font-mono text-[11px] sticky left-0 z-10 whitespace-nowrap" style={{ background: "#111", color: "rgba(255,255,255,0.4)" }}>{timeLabel}</td>
+            <tr key={rowKey} style={{ borderTop: `1px solid ${rowBorder}` }}>
+              <td className="p-3 font-mono text-[11px] sticky left-0 z-10 whitespace-nowrap" style={{ background: stickyBg, color: timeText }}>{timeLabel}</td>
               {days.map((day) => {
                 const hits = entries.filter(
                   (e) => e.startTime === startTime && e.endTime === endTime && e.dayOfWeek === day
                 );
                 return (
-                  <td key={`${rowKey}-${day}`} className="p-1.5 align-top border-l border-white/5 min-w-[108px]">
+                  <td key={`${rowKey}-${day}`} className="p-1.5 align-top min-w-[108px]" style={{ borderLeft: `1px solid ${rowBorder}` }}>
                     {hits.map((h) => {
                       const cid = codeToId.get(h.courseCode.replace(/\s/g, "").toUpperCase());
                       const inner = (
-                        <div className="rounded-lg p-2" style={{ 
-                          background: "rgba(255,255,255,0.04)",
-                          borderLeft: `3px solid ${courseColorFromCode(h.courseCode, courses) ?? "rgba(255,255,255,0.15)"}`,
+                        <div className="rounded-lg p-2" style={{
+                          background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
+                          borderLeft: `3px solid ${courseColorFromCode(h.courseCode, courses) ?? defaultBorder}`,
                         }}>
-                          <div className="font-semibold" style={{ color: "rgba(255,255,255,0.9)" }}>{h.courseCode}</div>
-                          <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>{h.courseType} · {h.venue}</div>
+                          <div className="font-semibold" style={{ color: courseText }}>{h.courseCode}</div>
+                          <div className="text-[10px]" style={{ color: detailText }}>{h.courseType} · {h.venue}</div>
                         </div>
                       );
                       return cid ? (
@@ -635,38 +692,76 @@ export default function CalendarPage() {
   function goToday() { setYear(today.getFullYear()); setMonth(today.getMonth()); setSelectedDate(today); }
 
   const selectedItems = selectedDate ? (itemsByDate.get(dateKey(selectedDate)) ?? []) : [];
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  const tabBorder     = isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb";
+  const tabBg         = isDark ? "rgba(255,255,255,0.06)" : "#fafafa";
+  const tabActiveBg   = isDark ? "#222222" : "#ffffff";
+  const tabActiveText = isDark ? "rgba(255,255,255,0.9)" : "#111";
+  const tabInactiveText = isDark ? "rgba(255,255,255,0.4)" : "#6b7280";
+  const pageTitle     = isDark ? "rgba(255,255,255,0.9)" : "#111";
+  const btnIcon       = isDark ? "rgba(255,255,255,0.4)" : "#6b7280";
+  const btnIconHover  = isDark ? "rgba(255,255,255,0.8)" : "#111";
+  const btnBorder     = isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb";
+
+  const toggleBg       = isDark ? "rgba(59,130,246,0.15)" : "rgba(59,130,246,0.1)";
+  const toggleBorder   = isDark ? "rgba(59,130,246,0.3)" : "rgba(59,130,246,0.4)";
+  const toggleTextOn   = isDark ? "#60a5fa" : "#2563eb";
+  const toggleBorderOff = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.12)";
+  const toggleTextOff  = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)";
+  const toggleTextHover = isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)";
+  const toggleBorderHover = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+
+  const legendText   = isDark ? "rgba(255,255,255,0.4)" : "#9ca3af";
+
+  const cardBg       = isDark ? "#111111" : "#ffffff";
+  const cardBorder   = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const headerText   = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+
+  const detailMuted  = isDark ? "rgba(255,255,255,0.4)" : "#6b7280";
 
   return (
     <div className="p-6 sm:p-8 w-full min-w-0">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex rounded-lg p-0.5 border border-[#e5e7eb] bg-[#fafafa]">
+          <div className="flex rounded-lg p-0.5 border" style={{ borderColor: tabBorder, background: tabBg }}>
             <button
               type="button"
               onClick={() => setMainView("calendar")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                mainView === "calendar" ? "bg-white text-[#111] shadow-sm" : "text-[#6b7280] hover:text-[#111]"
-              }`}
+              className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+              style={{
+                background: mainView === "calendar" ? tabActiveBg : "transparent",
+                color: mainView === "calendar" ? tabActiveText : tabInactiveText,
+                boxShadow: mainView === "calendar" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              }}
             >
               Calendar
             </button>
             <button
               type="button"
               onClick={() => setMainView("timetable")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
-                mainView === "timetable" ? "bg-white text-[#111] shadow-sm" : "text-[#6b7280] hover:text-[#111]"
-              }`}
+              className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1"
+              style={{
+                background: mainView === "timetable" ? tabActiveBg : "transparent",
+                color: mainView === "timetable" ? tabActiveText : tabInactiveText,
+                boxShadow: mainView === "timetable" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              }}
             >
               <Grid3X3 size={12} /> Timetable
             </button>
           </div>
           {mainView === "calendar" && (
             <>
-              <h2 className="text-xl font-bold text-[#111] tracking-tight">{MONTHS[month]} {year}</h2>
+              <h2 className="text-xl font-bold tracking-tight" style={{ color: pageTitle }}>{MONTHS[month]} {year}</h2>
               <div className="flex items-center gap-1">
-                <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors"><ChevronLeft size={16} /></button>
-                <button type="button" onClick={goToday} className="text-xs font-medium text-[#6b7280] hover:text-[#111] px-3 py-1.5 rounded-lg hover:bg-[#f5f5f5] transition-colors border border-[#e5e7eb]">Today</button>
-                <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors"><ChevronRight size={16} /></button>
+                <button type="button" onClick={prevMonth} className="p-1.5 rounded-lg transition-colors"
+                  style={{ color: btnIcon }} onMouseEnter={e => (e.currentTarget.style.color = btnIconHover)} onMouseLeave={e => (e.currentTarget.style.color = btnIcon)}><ChevronLeft size={16} /></button>
+                <button type="button" onClick={goToday} className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors border"
+                  style={{ color: btnIcon, borderColor: btnBorder }}
+                  onMouseEnter={e => { e.currentTarget.style.color = btnIconHover; }} onMouseLeave={e => { e.currentTarget.style.color = btnIcon; }}>Today</button>
+                <button type="button" onClick={nextMonth} className="p-1.5 rounded-lg transition-colors"
+                  style={{ color: btnIcon }} onMouseEnter={e => (e.currentTarget.style.color = btnIconHover)} onMouseLeave={e => (e.currentTarget.style.color = btnIcon)}><ChevronRight size={16} /></button>
               </div>
             </>
           )}
@@ -677,23 +772,30 @@ export default function CalendarPage() {
             <button
               type="button"
               onClick={() => setShowTimetable((t) => !t)}
-              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-                showTimetable
-                  ? "bg-blue-500/20 border-blue-500/40 text-blue-400"
-                  : "border-neutral-700 text-neutral-500 hover:text-white hover:border-neutral-500"
-              }`}
+              className="text-xs px-3 py-1.5 rounded-lg border transition-colors"
+              style={{
+                background: showTimetable ? toggleBg : "transparent",
+                borderColor: showTimetable ? toggleBorder : toggleBorderOff,
+                color: showTimetable ? toggleTextOn : toggleTextOff,
+              }}
+              onMouseEnter={e => { if (!showTimetable) { e.currentTarget.style.color = toggleTextHover; e.currentTarget.style.borderColor = toggleBorderHover; } }}
+              onMouseLeave={e => { if (!showTimetable) { e.currentTarget.style.color = toggleTextOff; e.currentTarget.style.borderColor = toggleBorderOff; } }}
             >
               {showTimetable ? "Hide Classes" : "Show Classes"}
             </button>
           )}
 
           <div className="hidden md:flex items-center gap-3">
-            {(["class","exam","deadline","personal","assignment","task","holiday"] as const).map(t => (
-              <span key={t} className="flex items-center gap-1 text-[10px] text-[#9ca3af]">
-                <span className={`w-2 h-2 rounded-full ${TYPE_STYLE[t].dot}`} />
-                {TYPE_STYLE[t].label}
-              </span>
-            ))}
+            {(["class","exam","deadline","personal","assignment","task","holiday"] as const).map(t => {
+              const ts = TYPE_STYLE[t];
+              const s = isDark ? ts.dark : ts.light;
+              return (
+                <span key={t} className="flex items-center gap-1 text-[10px]" style={{ color: legendText }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: s.dotColor }} />
+                  {s.label}
+                </span>
+              );
+            })}
           </div>
 
           <Button size="sm" onClick={() => { setDefaultDate(undefined); setShowCreate(true); }}>
@@ -703,12 +805,12 @@ export default function CalendarPage() {
       </div>
 
       {mainView === "timetable" ? (
-        <TimetableGrid entries={timetableInSemester} courses={coursesInSemester} />
+        <TimetableGrid entries={timetableInSemester} courses={coursesInSemester} isDark={isDark} />
       ) : (
         <div className="flex gap-5 items-start">
-          <div className="flex-1 min-w-0 rounded-xl overflow-hidden" style={{ background: "#111111", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
-            <div className="grid grid-cols-7" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              {WEEKDAYS.map(d => <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>{d}</div>)}
+          <div className="flex-1 min-w-0 rounded-xl overflow-hidden" style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+            <div className="grid grid-cols-7" style={{ borderBottom: `1px solid ${cardBorder}` }}>
+              {WEEKDAYS.map(d => <div key={d} className="py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider" style={{ color: headerText }}>{d}</div>)}
             </div>
             <div className="grid grid-cols-7">
               {cells.map(cell => {
@@ -716,7 +818,8 @@ export default function CalendarPage() {
                 const items = itemsByDate.get(key) ?? [];
                 const inMonth = cell.getMonth() === month;
                 const isSel   = selectedDate ? isSameDay(cell, selectedDate) : false;
-                return <DayCell key={key} date={cell} items={items} isCurrentMonth={inMonth} isSelected={isSel} onClick={() => setSelectedDate(isSel ? null : cell)} onItemClick={item => setSelectedItem(item)} />;
+                const cellDate = cell;
+                return <DayCell key={key} date={cellDate} items={items} isCurrentMonth={inMonth} isSelected={isSel} onClick={() => setSelectedDate(isSel ? null : cellDate)} onItemClick={item => setSelectedItem(item)} isDark={isDark} />;
               })}
             </div>
           </div>
@@ -725,9 +828,10 @@ export default function CalendarPage() {
             {selectedDate ? (
               <DayPanel date={selectedDate} items={selectedItems} onItemClick={item => setSelectedItem(item)} onClose={() => setSelectedDate(null)}
                 onCreateEvent={() => { setDefaultDate(dateKey(selectedDate)); setShowCreate(true); }}
+                isDark={isDark}
               />
             ) : (
-              <UpcomingSidebar items={allItems} onItemClick={item => setSelectedItem(item)} />
+              <UpcomingSidebar items={allItems} onItemClick={item => setSelectedItem(item)} isDark={isDark} />
             )}
           </div>
         </div>
@@ -747,12 +851,13 @@ export default function CalendarPage() {
             onEdit={() => { if (selectedItem.rawEvent) { setEditingEvent(selectedItem.rawEvent); setSelectedItem(null); } }}
             onDelete={() => { if (selectedItem.rawEvent) setShowDeleteId(selectedItem.rawEvent.id); }}
             onClose={() => setSelectedItem(null)} deleting={deleteEvent.isPending}
+            isDark={isDark}
           />
         )}
       </Modal>
 
       <Modal open={!!showDeleteId} onClose={() => setShowDeleteId(null)} title="Delete event" maxWidth={400}>
-        <p className="text-sm text-[#6b7280] mb-5">Delete this event? This cannot be undone.</p>
+        <p className="text-sm mb-5" style={{ color: detailMuted }}>Delete this event? This cannot be undone.</p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={() => setShowDeleteId(null)}>Cancel</Button>
           <Button variant="danger" size="sm" loading={deleteEvent.isPending}
