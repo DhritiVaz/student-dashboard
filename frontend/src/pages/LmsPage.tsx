@@ -11,6 +11,14 @@ import {
 import LmsSync from "../components/lms/LmsSync";
 import { useTheme } from "../ThemeContext";
 
+/* helpers for card bg / border that react to theme */
+function cardBg(isDark: boolean) { return isDark ? "#141414" : "#ffffff"; }
+function cardBorder(isDark: boolean) { return isDark ? "#2a2a2a" : "rgba(0,0,0,0.08)"; }
+function textColor(isDark: boolean) { return isDark ? "#f0f0f0" : "#111827"; }
+function textMuted(isDark: boolean) { return isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)"; }
+function textSubtle(isDark: boolean) { return isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)"; }
+function borderSubtle(isDark: boolean) { return isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"; }
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function relDue(iso: string): { label: string; urgency: "overdue" | "today" | "tomorrow" | "week" | "later" } {
@@ -31,7 +39,7 @@ const URGENCY_CLS: Record<string, string> = {
   today:    "text-amber-600 bg-amber-500/10 border-amber-500/20",
   tomorrow: "text-amber-500 bg-amber-500/10 border-amber-500/20",
   week:     "text-green-600 bg-green-500/10 border-green-500/20",
-  later:    "text-zinc-500 bg-zinc-500/10 border-zinc-500/20",
+  later:    "text-zinc-500/70 bg-zinc-500/10 border-zinc-500/20",
 };
 
 function DueBadge({ iso }: { iso: string }) {
@@ -70,12 +78,13 @@ function EmptyState({ icon, title, sub }: { icon: React.ReactNode; title: string
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
 function OverviewTab({
-  courses, upcoming, modules, onTabChange,
+  courses, upcoming, modules, onTabChange, isDark,
 }: {
   courses: LmsCourse[];
   upcoming: LmsAssignment[];
   modules: LmsModule[];
   onTabChange: (t: Tab) => void;
+  isDark: boolean;
 }) {
   const overdue = upcoming.filter((a) => a.dueDate && relDue(a.dueDate).urgency === "overdue");
   const dueToday = upcoming.filter((a) => a.dueDate && relDue(a.dueDate).urgency === "today");
@@ -97,10 +106,10 @@ function OverviewTab({
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {stats.map((s) => (
-          <div key={s.label} className="bg-[#141414] border border-neutral-800 rounded-xl px-4 py-4">
+          <div key={s.label} className="rounded-xl px-4 py-4" style={{ background: cardBg(isDark), border: `1px solid ${cardBorder(isDark)}` }}>
             <div className={`mb-2 ${s.color}`}>{s.icon}</div>
-            <p className="text-2xl font-bold text-white">{s.value}</p>
-            <p className="text-xs text-neutral-500 mt-0.5">{s.label}</p>
+            <p className="text-2xl font-bold" style={{ color: textColor(isDark) }}>{s.value}</p>
+            <p className="text-xs mt-0.5" style={{ color: textMuted(isDark) }}>{s.label}</p>
           </div>
         ))}
       </div>
@@ -112,13 +121,13 @@ function OverviewTab({
             <AlertTriangle size={13} className="text-red-400" />
             <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">Overdue ({overdue.length})</span>
           </div>
-          <div className="bg-[#141414] border border-red-500/20 rounded-xl overflow-hidden">
+          <div className="rounded-xl overflow-hidden" style={{ background: cardBg(isDark), border: `1px solid ${isDark ? "rgba(248,113,113,0.2)" : "rgba(248,113,113,0.25)"}` }}>
             {overdue.map((a, i) => (
-              <div key={a.id} className={`flex items-start gap-3 px-4 py-3 ${i < overdue.length - 1 ? "border-b border-neutral-800/50" : ""}`}>
+              <div key={a.id} className={`flex items-start gap-3 px-4 py-3 ${i < overdue.length - 1 ? "border-b" : ""}`} style={{ borderBottomColor: borderSubtle(isDark) }}>
                 <PenLine size={12} className="text-red-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{a.name}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">{a.course?.shortName ?? a.course?.fullName}</p>
+                  <p className="text-sm truncate" style={{ color: textColor(isDark) }}>{a.name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: textMuted(isDark) }}>{a.course?.shortName ?? a.course?.fullName}</p>
                 </div>
                 {a.dueDate && <DueBadge iso={a.dueDate} />}
               </div>
@@ -134,15 +143,15 @@ function OverviewTab({
             <Clock size={13} className="text-orange-400" />
             <span className="text-xs font-semibold text-orange-400 uppercase tracking-wider">Due Today ({dueToday.length})</span>
           </div>
-          <div className="bg-[#141414] border border-orange-500/20 rounded-xl overflow-hidden">
+          <div className="rounded-xl overflow-hidden" style={{ background: cardBg(isDark), border: `1px solid ${isDark ? "rgba(251,146,60,0.2)" : "rgba(251,146,60,0.25)"}` }}>
             {dueToday.map((a, i) => (
-              <div key={a.id} className={`flex items-start gap-3 px-4 py-3 ${i < dueToday.length - 1 ? "border-b border-neutral-800/50" : ""}`}>
+              <div key={a.id} className={`flex items-start gap-3 px-4 py-3 ${i < dueToday.length - 1 ? "border-b" : ""}`} style={{ borderBottomColor: borderSubtle(isDark) }}>
                 <PenLine size={12} className="text-orange-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white truncate">{a.name}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">{a.course?.shortName ?? a.course?.fullName}</p>
+                  <p className="text-sm truncate" style={{ color: textColor(isDark) }}>{a.name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: textMuted(isDark) }}>{a.course?.shortName ?? a.course?.fullName}</p>
                   {a.dueDate && (
-                    <p className="text-xs text-neutral-600 mt-0.5">
+                    <p className="text-xs mt-0.5" style={{ color: textSubtle(isDark) }}>
                       {new Date(a.dueDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   )}
@@ -155,9 +164,9 @@ function OverviewTab({
 
       {/* All clear */}
       {overdue.length === 0 && dueToday.length === 0 && upcoming.length === 0 && courses.length > 0 && (
-        <div className="bg-[#141414] border border-neutral-800 rounded-xl p-8 text-center">
-          <CheckCircle2 size={28} className="text-emerald-600 mx-auto mb-2" />
-          <p className="text-sm text-neutral-400">All caught up — no pending assignments.</p>
+        <div className="rounded-xl p-8 text-center" style={{ background: cardBg(isDark), border: `1px solid ${cardBorder(isDark)}` }}>
+          <CheckCircle2 size={28} className="text-emerald-500 mx-auto mb-2" />
+          <p className="text-sm" style={{ color: textMuted(isDark) }}>All caught up — no pending assignments.</p>
         </div>
       )}
 
@@ -283,6 +292,8 @@ function DeadlinesTab({ courses }: { courses: LmsCourse[] }) {
 // ─── Quizzes Tab ──────────────────────────────────────────────────────────────
 
 function QuizzesTab({ modules, courses }: { modules: LmsModule[]; courses: LmsCourse[] }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const quizzes = modules.filter((m) => m.modtype === "quiz");
 
   const byCourse = quizzes.reduce<Record<string, LmsModule[]>>((acc, m) => {
@@ -298,29 +309,33 @@ function QuizzesTab({ modules, courses }: { modules: LmsModule[]; courses: LmsCo
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-neutral-500">{quizzes.length} quiz{quizzes.length !== 1 ? "zes" : ""} across {Object.keys(byCourse).length} course{Object.keys(byCourse).length !== 1 ? "s" : ""}</p>
+      <p className="text-xs" style={{ color: textMuted(isDark) }}>{quizzes.length} quiz{quizzes.length !== 1 ? "zes" : ""} across {Object.keys(byCourse).length} course{Object.keys(byCourse).length !== 1 ? "s" : ""}</p>
       {Object.entries(byCourse).map(([courseId, items]) => {
         const course = courseMap[courseId];
         return (
-          <div key={courseId} className="bg-[#141414] border border-neutral-800 rounded-xl overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-neutral-800/60 flex items-center gap-2">
+          <div key={courseId} className="rounded-xl overflow-hidden" style={{ background: cardBg(isDark), border: `1px solid ${cardBorder(isDark)}` }}>
+            <div className="px-4 py-2.5 flex items-center gap-2" style={{ borderBottom: `1px solid ${borderSubtle(isDark)}` }}>
               <HelpCircle size={12} className="text-purple-400" />
-              <span className="text-xs font-medium text-neutral-300 truncate">
+              <span className="text-xs font-medium truncate" style={{ color: textColor(isDark) }}>
                 {course?.shortName ?? course?.fullName ?? courseId}
               </span>
-              <span className="text-xs text-neutral-600 ml-auto flex-shrink-0">{items.length}</span>
+              <span className="text-xs ml-auto flex-shrink-0" style={{ color: textMuted(isDark) }}>{items.length}</span>
             </div>
             {items.map((m, i) => (
-              <div key={m.id} className={`flex items-center gap-3 px-4 py-2.5 ${i < items.length - 1 ? "border-b border-neutral-800/40" : ""}`}>
+              <div key={m.id} className={`flex items-center gap-3 px-4 py-2.5 ${i < items.length - 1 ? "border-b" : ""}`} style={{ borderBottomColor: borderSubtle(isDark) }}>
                 <HelpCircle size={13} className="text-purple-400 flex-shrink-0" />
-                <p className={`flex-1 text-sm truncate ${m.accessible ? "text-white" : "text-neutral-500"}`}>{m.name}</p>
+                <p className="flex-1 text-sm truncate" style={{ color: m.accessible ? textColor(isDark) : textMuted(isDark) }}>{m.name}</p>
                 {m.accessible && m.href ? (
                   <a href={m.href} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors flex-shrink-0">
+                    className="flex items-center gap-1 text-xs transition-colors flex-shrink-0"
+                    style={{ color: isDark ? "#c084fc" : "#a855f7" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = isDark ? "#e9d5ff" : "#9333ea")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = isDark ? "#c084fc" : "#a855f7")}
+                  >
                     Open <ExternalLink size={11} />
                   </a>
                 ) : (
-                  <Lock size={11} className="text-neutral-700 flex-shrink-0" />
+                  <Lock size={11} className={isDark ? "text-neutral-700 flex-shrink-0" : "text-neutral-400 flex-shrink-0"} />
                 )}
               </div>
             ))}
@@ -366,7 +381,7 @@ function FilesTab({ modules, courses }: { modules: LmsModule[]; courses: LmsCour
   const tabActiveBg = isDark ? "bg-white/10" : "bg-gray-200";
   const tabActiveText = isDark ? "text-white" : "text-zinc-900";
   const tabInactiveText = isDark ? "text-neutral-500 hover:text-neutral-300" : "text-zinc-500 hover:text-zinc-700";
-  const tabCountText = isDark ? "text-neutral-600" : "text-zinc-400";
+  const tabCountStyle = { color: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.25)" };
   return (
     <div className="space-y-4">
       <div className="flex gap-1 rounded-lg p-1 w-fit flex-wrap" style={{ background: isDark ? "#141414" : "#f3f4f6", border: isDark ? `1px solid #2a2a2a` : `1px solid rgba(0,0,0,0.12)` }}>
@@ -380,7 +395,7 @@ function FilesTab({ modules, courses }: { modules: LmsModule[]; courses: LmsCour
           >
             {FILE_TYPE_LABELS[t]}
             {t !== "all" && (
-              <span className={`ml-1 ${tabCountText}`}>({allFiles.filter((m) => m.modtype === t).length})</span>
+              <span className="ml-1" style={tabCountStyle}>({allFiles.filter((m) => m.modtype === t).length})</span>
             )}
           </button>
         ))}
@@ -393,25 +408,29 @@ function FilesTab({ modules, courses }: { modules: LmsModule[]; courses: LmsCour
           {Object.entries(byCourse).map(([courseId, items]) => {
             const course = courseMap[courseId];
             return (
-              <div key={courseId} className="bg-[#141414] border border-neutral-800 rounded-xl overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-neutral-800/60 flex items-center gap-2">
-                  <BookOpen size={12} className="text-neutral-500" />
-                  <span className="text-xs font-medium text-neutral-300 truncate">
+              <div key={courseId} className="rounded-xl overflow-hidden" style={{ background: cardBg(isDark), border: `1px solid ${cardBorder(isDark)}` }}>
+                <div className="px-4 py-2.5 flex items-center gap-2" style={{ borderBottom: `1px solid ${borderSubtle(isDark)}` }}>
+                  <BookOpen size={12} className={isDark ? "text-neutral-500" : "text-neutral-400"} />
+                  <span className="text-xs font-medium truncate" style={{ color: textColor(isDark) }}>
                     {course?.shortName ?? course?.fullName ?? courseId}
                   </span>
-                  <span className="text-xs text-neutral-600 ml-auto flex-shrink-0">{items.length}</span>
+                  <span className="text-xs ml-auto flex-shrink-0" style={{ color: textMuted(isDark) }}>{items.length}</span>
                 </div>
                 {items.map((m, i) => (
-                  <div key={m.id} className={`flex items-center gap-3 px-4 py-2.5 ${i < items.length - 1 ? "border-b border-neutral-800/40" : ""}`}>
-                    {modIcon(m.modtype)}
-                    <p className={`flex-1 text-sm truncate ${m.accessible ? "text-white" : "text-neutral-500"}`}>{m.name}</p>
+                  <div key={m.id} className={`flex items-center gap-3 px-4 py-2.5 ${i < items.length - 1 ? "border-b" : ""}`} style={{ borderBottomColor: borderSubtle(isDark) }}>
+                    {modIcon(m.modtype, 13, isDark)}
+                    <p className="flex-1 text-sm truncate" style={{ color: m.accessible ? textColor(isDark) : textMuted(isDark) }}>{m.name}</p>
                     {m.accessible && m.href ? (
                       <a href={m.href} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-200 transition-colors flex-shrink-0">
+                        className="flex items-center gap-1 text-xs transition-colors flex-shrink-0"
+                        style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = isDark ? "#f0f0f0" : "#111")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)")}
+                      >
                         Open <ExternalLink size={11} />
                       </a>
                     ) : (
-                      <Lock size={11} className="text-neutral-700 flex-shrink-0" />
+                      <Lock size={11} className={isDark ? "text-neutral-700 flex-shrink-0" : "text-neutral-400 flex-shrink-0"} />
                     )}
                   </div>
                 ))}
@@ -427,6 +446,8 @@ function FilesTab({ modules, courses }: { modules: LmsModule[]; courses: LmsCour
 // ─── Courses Tab ──────────────────────────────────────────────────────────────
 
 function CoursesTab({ courses, modules }: { courses: LmsCourse[]; modules: LmsModule[] }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [openId, setOpenId] = useState<string | null>(null);
 
   if (courses.length === 0) {
@@ -435,7 +456,7 @@ function CoursesTab({ courses, modules }: { courses: LmsCourse[]; modules: LmsMo
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-neutral-500">{courses.length} enrolled course{courses.length !== 1 ? "s" : ""}</p>
+      <p className="text-xs" style={{ color: textMuted(isDark) }}>{courses.length} enrolled course{courses.length !== 1 ? "s" : ""}</p>
       {courses.map((course) => {
         const pending   = course.assignments.filter((a) => !a.submitted && a.dueDate);
         const courseModules = modules.filter((m) => m.lmsCourseId === course.lmsCourseId);
@@ -446,14 +467,21 @@ function CoursesTab({ courses, modules }: { courses: LmsCourse[]; modules: LmsMo
         const isOpen = openId === course.lmsCourseId;
 
         return (
-          <div key={course.id} className="bg-[#141414] border border-neutral-800 rounded-xl overflow-hidden">
+          <div key={course.id} className="rounded-xl overflow-hidden" style={{ background: cardBg(isDark), border: `1px solid ${cardBorder(isDark)}` }}>
             <button
               onClick={() => setOpenId(isOpen ? null : course.lmsCourseId)}
-              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-white/[0.02] transition-colors text-left"
+              className="w-full flex items-center justify-between px-4 py-3.5 transition-colors text-left"
+              style={{
+                backgroundColor: isOpen
+                  ? (isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)")
+                  : "transparent",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = isOpen ? (isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)") : "transparent")}
             >
               <div className="min-w-0">
-                <p className="text-sm font-medium text-white truncate">{course.fullName}</p>
-                {course.shortName && <p className="text-xs text-neutral-500 mt-0.5">{course.shortName}</p>}
+                <p className="text-sm font-medium truncate" style={{ color: textColor(isDark) }}>{course.fullName}</p>
+                {course.shortName && <p className="text-xs mt-0.5" style={{ color: textMuted(isDark) }}>{course.shortName}</p>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 ml-3">
                 {pending.length > 0 && (
@@ -462,22 +490,22 @@ function CoursesTab({ courses, modules }: { courses: LmsCourse[]; modules: LmsMo
                   </span>
                 )}
                 {courseModules.length > 0 && (
-                  <span className="text-xs text-neutral-600">{courseModules.length} items</span>
+                  <span className="text-xs" style={{ color: textMuted(isDark) }}>{courseModules.length} items</span>
                 )}
-                {isOpen ? <ChevronDown size={14} className="text-neutral-600" /> : <ChevronRight size={14} className="text-neutral-600" />}
+                {isOpen ? <ChevronDown size={14} className={isDark ? "text-neutral-600" : "text-gray-400"} /> : <ChevronRight size={14} className={isDark ? "text-neutral-600" : "text-gray-400"} />}
               </div>
             </button>
 
             {isOpen && (
-              <div className="border-t border-neutral-800/60 px-4 py-3 space-y-3">
+              <div className="px-4 py-3 space-y-3" style={{ borderTop: `1px solid ${borderSubtle(isDark)}` }}>
                 {/* Module type breakdown */}
                 {courseModules.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(byType).map(([type, count]) => (
-                      <div key={type} className="flex items-center gap-1.5 bg-white/5 rounded-md px-2.5 py-1">
-                        {modIcon(type, 11)}
-                        <span className="text-xs text-neutral-400 capitalize">{type}</span>
-                        <span className="text-xs text-neutral-600">({count})</span>
+                      <div key={type} className="flex items-center gap-1.5 rounded-md px-2.5 py-1" style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)" }}>
+                        {modIcon(type, 11, isDark)}
+                        <span className="text-xs capitalize" style={{ color: textMuted(isDark) }}>{type}</span>
+                        <span className="text-xs" style={{ color: textSubtle(isDark) }}>({count})</span>
                       </div>
                     ))}
                   </div>
@@ -486,7 +514,7 @@ function CoursesTab({ courses, modules }: { courses: LmsCourse[]; modules: LmsMo
                 {/* Assignment status */}
                 {course.assignments.length > 0 && (
                   <div className="space-y-1">
-                    <p className="text-xs text-neutral-600 font-medium">Assignments</p>
+                    <p className="text-xs font-medium" style={{ color: textMuted(isDark) }}>Assignments</p>
                     {course.assignments
                       .sort((a, b) => {
                         if (!a.dueDate && !b.dueDate) return 0;
@@ -496,10 +524,10 @@ function CoursesTab({ courses, modules }: { courses: LmsCourse[]; modules: LmsMo
                       })
                       .map((a) => (
                         <div key={a.id} className="flex items-center gap-2 py-1">
-                          <PenLine size={11} className={a.submitted ? "text-neutral-600" : "text-blue-400"} />
-                          <span className={`text-xs flex-1 truncate ${a.submitted ? "line-through text-neutral-600" : "text-neutral-300"}`}>{a.name}</span>
+                          <PenLine size={11} className={a.submitted ? (isDark ? "text-neutral-600" : "text-gray-400") : "text-blue-400"} />
+                          <span className="text-xs flex-1 truncate" style={{ color: a.submitted ? textMuted(isDark) : textColor(isDark), textDecoration: a.submitted ? "line-through" : "none" }}>{a.name}</span>
                           {a.submitted ? (
-                            <CheckCircle2 size={11} className="text-emerald-600 flex-shrink-0" />
+                            <CheckCircle2 size={11} className="text-emerald-500 flex-shrink-0" />
                           ) : a.dueDate ? (
                             <DueBadge iso={a.dueDate} />
                           ) : null}
@@ -509,7 +537,7 @@ function CoursesTab({ courses, modules }: { courses: LmsCourse[]; modules: LmsMo
                 )}
 
                 {course.assignments.length === 0 && courseModules.length === 0 && (
-                  <p className="text-xs text-neutral-600">No data — run a sync.</p>
+                  <p className="text-xs" style={{ color: textMuted(isDark) }}>No data — run a sync.</p>
                 )}
               </div>
             )}
@@ -592,12 +620,12 @@ export default function LmsPage() {
       {/* Tab content */}
       {!loading && (
         <>
-          {tab === "overview"  && <OverviewTab courses={courses} upcoming={upcoming} modules={modules} onTabChange={setTab} />}
+          {tab === "overview"  && <OverviewTab courses={courses} upcoming={upcoming} modules={modules} onTabChange={setTab} isDark={isDark} />}
           {tab === "deadlines" && <DeadlinesTab courses={courses} />}
           {tab === "quizzes"   && <QuizzesTab modules={modules} courses={courses} />}
           {tab === "files"     && <FilesTab modules={modules} courses={courses} />}
           {tab === "courses"   && <CoursesTab courses={courses} modules={modules} />}
-          {tab === "sync"      && <div className="max-w-xl mx-auto"><LmsSync /></div>}
+          {tab === "sync"      && <div className="max-w-xl sm:max-w-xl lg:max-w-2xl"><LmsSync /></div>}
         </>
       )}
     </div>

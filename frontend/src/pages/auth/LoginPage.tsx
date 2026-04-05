@@ -99,10 +99,10 @@ export default function LoginPage() {
     >
 
       <div className="field-1 mb-8">
-        <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)" }}>
-          Continue where you left off
+        <h1 className="font-extrabold tracking-tight" style={{ fontSize: 36, color: isDark ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.95)" }}>
+          Student Dashboard
         </h1>
-        <p className="mt-1.5 text-sm" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>Sign in to continue</p>
+        <p className="mt-2 text-sm" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>Sign in to continue</p>
       </div>
 
       <form onSubmit={handleSubmit} noValidate>

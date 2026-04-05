@@ -90,11 +90,11 @@ function fmtDate(d: string | null) {
 }
 
 /* ─── Section header ─────────────────────────────────────────── */
-function SectionLabel({ icon, label }: { icon: React.ReactNode; label: string }) {
+function SectionLabel({ icon, label, isDark }: { icon: React.ReactNode; label: string; isDark: boolean }) {
   return (
     <div
       className="flex items-center gap-1.5 px-3 pt-3 pb-1"
-      style={{ color: "rgba(255,255,255,0.3)" }}
+      style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.35)" }}
     >
       {icon}
       <span className="text-[10px] font-semibold uppercase tracking-widest">
@@ -111,12 +111,14 @@ function ResultRow({
   active,
   onMouseEnter,
   onClick,
+  isDark,
 }: {
   primary: string;
   secondary: string;
   active: boolean;
   onMouseEnter: () => void;
   onClick: () => void;
+  isDark: boolean;
 }) {
   return (
     <button
@@ -124,19 +126,19 @@ function ResultRow({
       onClick={onClick}
       className="w-full flex items-center justify-between px-3 py-2 gap-3 text-left transition-colors"
       style={{
-        background: active ? "rgba(255,255,255,0.08)" : "transparent",
+        background: active ? (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)") : "transparent",
         borderRadius: 6,
       }}
     >
       <span
         className="text-[13px] font-medium truncate"
-        style={{ color: active ? "#fff" : "rgba(255,255,255,0.75)" }}
+        style={{ color: active ? (isDark ? "#fff" : "#111") : (isDark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.75)") }}
       >
         {primary}
       </span>
       <span
         className="text-[11px] shrink-0"
-        style={{ color: "rgba(255,255,255,0.35)" }}
+        style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)" }}
       >
         {secondary}
       </span>
@@ -341,10 +343,10 @@ export function GlobalSearch() {
             top: "calc(100% + 6px)",
             width: 380,
             maxHeight: 420,
-            background: "#141414",
-            border: "1px solid rgba(255,255,255,0.1)",
+            background: isDark ? "#141414" : "#ffffff",
+            border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.12)",
             borderRadius: 10,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4)",
+            boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4)" : "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
             zIndex: 9999,
             padding: "4px 4px 8px",
           }}
@@ -353,7 +355,7 @@ export function GlobalSearch() {
           {isFetching && !data && (
             <div
               className="flex items-center gap-2 px-3 py-4 text-[13px]"
-              style={{ color: "rgba(255,255,255,0.3)" }}
+              style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }}
             >
               <Clock size={13} /> Searching…
             </div>
@@ -363,10 +365,10 @@ export function GlobalSearch() {
           {!isFetching && debounced && !hasResults && (
             <div
               className="px-3 py-4 text-[13px]"
-              style={{ color: "rgba(255,255,255,0.3)" }}
+              style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }}
             >
               No results for{" "}
-              <span style={{ color: "rgba(255,255,255,0.55)" }}>"{debounced}"</span>
+              <span style={{ color: isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)" }}>"{debounced}"</span>
             </div>
           )}
 
@@ -376,6 +378,7 @@ export function GlobalSearch() {
               <SectionLabel
                 icon={<BookOpen size={10} />}
                 label="Courses"
+                isDark={isDark}
               />
               {data.courses.map((c, i) => {
                 const idx = courseOffset + i;
@@ -387,6 +390,7 @@ export function GlobalSearch() {
                       active={active === idx}
                       onMouseEnter={() => setActive(idx)}
                       onClick={() => goTo({ kind: "course", data: c })}
+                      isDark={isDark}
                     />
                   </div>
                 );
@@ -400,6 +404,7 @@ export function GlobalSearch() {
               <SectionLabel
                 icon={<ClipboardList size={10} />}
                 label="Assignments"
+                isDark={isDark}
               />
               {data.assignments.map((a, i) => {
                 const idx = assignOffset + i;
@@ -411,6 +416,7 @@ export function GlobalSearch() {
                       active={active === idx}
                       onMouseEnter={() => setActive(idx)}
                       onClick={() => goTo({ kind: "assignment", data: a })}
+                      isDark={isDark}
                     />
                   </div>
                 );
@@ -424,6 +430,7 @@ export function GlobalSearch() {
               <SectionLabel
                 icon={<FileText size={10} />}
                 label="Notes"
+                isDark={isDark}
               />
               {data.notes.map((n, i) => {
                 const idx = noteOffset + i;
@@ -435,6 +442,7 @@ export function GlobalSearch() {
                       active={active === idx}
                       onMouseEnter={() => setActive(idx)}
                       onClick={() => goTo({ kind: "note", data: n })}
+                      isDark={isDark}
                     />
                   </div>
                 );
@@ -448,6 +456,7 @@ export function GlobalSearch() {
               <SectionLabel
                 icon={<CheckSquare size={10} />}
                 label="Tasks"
+                isDark={isDark}
               />
               {data.tasks.map((t, i) => {
                 const idx = taskOffset + i;
@@ -460,6 +469,7 @@ export function GlobalSearch() {
                       active={active === idx}
                       onMouseEnter={() => setActive(idx)}
                       onClick={() => goTo({ kind: "task", data: t })}
+                      isDark={isDark}
                     />
                   </div>
                 );
@@ -472,8 +482,8 @@ export function GlobalSearch() {
             <div
               className="flex items-center gap-3 px-3 pt-3 mt-1"
               style={{
-                borderTop: "1px solid rgba(255,255,255,0.06)",
-                color: "rgba(255,255,255,0.2)",
+                borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
+                color: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
               }}
             >
               <span className="text-[10px]">↑↓ navigate</span>

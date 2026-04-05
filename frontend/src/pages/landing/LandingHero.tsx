@@ -23,7 +23,7 @@ export function LandingHero() {
 
   return (
     <section
-      className="relative min-h-screen flex flex-col items-center justify-center px-4 pt-24 pb-20 overflow-hidden"
+      className="relative min-h-screen flex flex-col items-center justify-center px-4 pt-24 pb-12 overflow-hidden"
       style={{ background: bg }}
     >
       <div className="relative z-10 max-w-4xl mx-auto text-center">

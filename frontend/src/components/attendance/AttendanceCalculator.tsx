@@ -44,7 +44,6 @@ export function AttendanceCalculator({
     border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)"}`,
     color: isDark ? "#ffffff" : "#111827",
   } : undefined;
-  const pctLabelStyle = variant === "page" ? { color: isDark ? "#ffffff" : "#111827" } : undefined;
   const labelStyle = variant === "vtop" ? undefined : { color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.5)" };
   const titleStyle = variant === "page" ? { color: isDark ? "rgba(255,255,255,0.9)" : "#111827" } : undefined;
   const subtitleStyle = variant === "page" ? { color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)" } : undefined;

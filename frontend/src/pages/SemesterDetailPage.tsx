@@ -8,6 +8,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { SemesterForm } from "../components/semesters/SemesterForm";
 import { CourseForm } from "../components/courses/CourseForm";
 import { useToast } from "../hooks/useToast";
+import { useTheme } from "../ThemeContext";
 import { useSemester, useUpdateSemester, useDeleteSemester } from "../hooks/api/semesters";
 import {
   useCourses,
@@ -32,21 +33,23 @@ function CourseCard({
   onDelete: () => void;
 }) {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   return (
     <div
-      className="group card-hover bg-white rounded-card p-5 cursor-pointer
-           hover:border-[#d1d5db] transition-all duration-150 flex flex-col gap-3"
-        style={{ 
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-          border: "1px solid #e5e7eb",
-          borderLeft: course.color ? `3px solid ${course.color}` : "1px solid #e5e7eb",
-        }}
+      className="group card-hover rounded-card p-5 cursor-pointer transition-all duration-150 flex flex-col gap-3"
+      style={{
+        boxShadow: isDark ? "0 1px 3px rgba(0,0,0,0.3)" : "0 1px 3px rgba(0,0,0,0.05)",
+        background: isDark ? "#141414" : "#ffffff",
+        border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e5e7eb",
+        borderLeft: course.color ? `3px solid ${course.color}` : (isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid #e5e7eb"),
+      }}
       onClick={() => navigate(`/courses/${course.id}`)}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-semibold text-[#111] text-sm truncate">{course.name}</p>
-          <span className="inline-block mt-1 text-[10px] font-semibold text-[#6b7280] bg-[#f5f5f5] border border-[#e5e7eb] rounded-md px-1.5 py-0.5 tracking-wide">
+          <p className="font-semibold text-sm truncate" style={{ color: isDark ? "#f0f0f0" : "#111" }}>{course.name}</p>
+          <span className="inline-block mt-1 text-[10px] font-semibold rounded-md px-1.5 py-0.5 tracking-wide" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "#6b7280", background: isDark ? "rgba(255,255,255,0.05)" : "#f5f5f5", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#e5e7eb"}` }}>
             {course.code}
           </span>
         </div>
@@ -54,20 +57,26 @@ function CourseCard({
           className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
           onClick={(e) => e.stopPropagation()}
         >
-          <button onClick={onEdit} aria-label="Edit course" className="p-1.5 rounded-lg text-[#9ca3af] hover:text-[#111] hover:bg-[#f5f5f5] transition-colors">
+          <button onClick={onEdit} aria-label="Edit course" className="p-1.5 rounded-lg transition-colors" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}
+            onMouseEnter={(e) => { (e.target as HTMLElement).style.color = isDark ? "#f0f0f0" : "#111"; (e.target as HTMLElement).style.background = isDark ? "rgba(255,255,255,0.05)" : "#f5f5f5"; }}
+            onMouseLeave={(e) => { (e.target as HTMLElement).style.color = isDark ? "rgba(255,255,255,0.4)" : "#9ca3af"; (e.target as HTMLElement).style.background = "transparent"; }}
+          >
             <Pencil size={13} aria-hidden />
           </button>
-          <button onClick={onDelete} aria-label="Delete course" className="group/btn p-1.5 rounded-lg text-[#9ca3af] hover:text-red-500 hover:bg-red-50 transition-colors">
-            <Trash2 size={13} aria-hidden className="text-inherit group-hover/btn:text-red-500" />
+          <button onClick={onDelete} aria-label="Delete course" className="group/btn p-1.5 rounded-lg transition-colors" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}
+            onMouseEnter={(e) => { (e.target as HTMLElement).style.color = "#f87171"; (e.target as HTMLElement).style.background = isDark ? "rgba(248,113,113,0.1)" : "#fef2f2"; }}
+            onMouseLeave={(e) => { (e.target as HTMLElement).style.color = isDark ? "rgba(255,255,255,0.4)" : "#9ca3af"; (e.target as HTMLElement).style.background = "transparent"; }}
+          >
+            <Trash2 size={13} aria-hidden />
           </button>
         </div>
       </div>
-      <div className="flex items-center gap-3 text-xs text-[#9ca3af]">
+      <div className="flex items-center gap-3 text-xs" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}>
         <span>{course.credits} {course.credits === 1 ? "credit" : "credits"}</span>
         {(course.professor ?? course.instructor) && <span className="truncate">{course.professor ?? course.instructor}</span>}
       </div>
       {course.description && (
-        <p className="mt-2 text-xs text-[#6b7280] line-clamp-2">{course.description}</p>
+        <p className="mt-2 text-xs line-clamp-2" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "#6b7280" }}>{course.description}</p>
       )}
     </div>
   );
@@ -77,6 +86,8 @@ export default function SemesterDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate    = useNavigate();
   const toast       = useToast();
+  const { theme }   = useTheme();
+  const isDark      = theme === "dark";
 
   const { data: semester, isLoading: loadingSemester } = useSemester(id);
   const { data: courses,  isLoading: loadingCourses  } = useCourses(id);
@@ -105,7 +116,7 @@ export default function SemesterDetailPage() {
   }
 
   if (!semester) {
-    return <div className="p-8 text-sm text-[#9ca3af]">Semester not found.</div>;
+    return <div className="p-8 text-sm" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}>Semester not found.</div>;
   }
 
   return (
@@ -113,7 +124,10 @@ export default function SemesterDetailPage() {
       {/* Back */}
       <button
         onClick={() => navigate("/semesters")}
-        className="flex items-center gap-1.5 text-xs text-[#9ca3af] hover:text-[#111] transition-colors mb-6"
+        className="flex items-center gap-1.5 text-xs transition-colors mb-6"
+        style={{ color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = isDark ? "#f0f0f0" : "#111")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.4)" : "#9ca3af")}
       >
         <ArrowLeft size={13} /> Back to semesters
       </button>
@@ -121,8 +135,8 @@ export default function SemesterDetailPage() {
       {/* Semester header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h2 className="text-xl font-bold text-[#111] tracking-tight">{semester.name}</h2>
-          <p className="text-sm text-[#9ca3af] mt-1">
+          <h2 className="text-xl font-bold tracking-tight" style={{ color: isDark ? "#f0f0f0" : "#111" }}>{semester.name}</h2>
+          <p className="text-sm mt-1" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}>
             {semester.year}
             {(semester.startDate || semester.endDate) && (
               <> {formatDate(semester.startDate)}{semester.startDate && semester.endDate && " → "}{formatDate(semester.endDate)}</>
@@ -141,7 +155,7 @@ export default function SemesterDetailPage() {
 
       {/* Courses sub-header */}
       <div className="flex items-center justify-between mb-4">
-        <p className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-widest">
+        <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}>
           Courses · {courses?.length ?? 0}
         </p>
         <Button size="sm" onClick={() => setShowAddCourse(true)}>
