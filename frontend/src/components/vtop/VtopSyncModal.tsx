@@ -23,6 +23,7 @@ export function VtopSyncModal({ open, onClose }: { open: boolean; onClose: () =>
   const [syncSuccess, setSyncSuccess] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [needCredentials, setNeedCredentials] = useState(false);
+  const [credsChecked, setCredsChecked] = useState(false);
 
   const { fetchCaptcha, loading: loadingCaptcha } = useFetchCaptcha();
   const { sync: quickSync, loading: syncing, error: syncError } = useVtopQuickSync();
@@ -36,23 +37,30 @@ export function VtopSyncModal({ open, onClose }: { open: boolean; onClose: () =>
 
   useEffect(() => {
     if (open) {
-      fetchCreds();
+      setCredsChecked(false);
       setCaptchaImage(null);
       setCaptchaStr("");
       setSyncSuccess(false);
       setSyncMessage(null);
       setUsername("");
       setPassword("");
+      setNeedCredentials(false);
+      fetchCreds();
     }
   }, [open]);
 
   useEffect(() => {
-    if (open && credData.hasCredentials) {
-      loadCaptcha();
-    } else {
-      setNeedCredentials(true);
+    if (credsChecked) return;
+    if (open && credData.hasCredentials !== false) {
+      setCredsChecked(true);
+      if (credData.hasCredentials) {
+        setUsername(credData.username ?? "");
+        loadCaptcha();
+      } else if (!credData.hasCredentials) {
+        setNeedCredentials(true);
+      }
     }
-  }, [credData.hasCredentials, open]);
+  }, [credData.hasCredentials, open, credsChecked, credData.username]);
 
   async function loadCaptcha() {
     setCaptchaImage(null);
