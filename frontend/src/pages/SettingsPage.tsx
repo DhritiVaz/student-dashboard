@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { User, ShieldCheck, Palette, LayoutDashboard, GraduationCap, LogOut } from "lucide-react";
+import { User, ShieldCheck, Palette, LayoutDashboard, GraduationCap, LogOut, Wifi, Trash2, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { FloatingInput } from "../components/ui/FloatingInput";
 import { Button } from "../components/ui/Button";
 import { useToast } from "../hooks/useToast";
@@ -14,16 +14,18 @@ import {
   PREF_ATTENDANCE_SAFE, PREF_ATTENDANCE_WARN, PREF_ATTENDANCE_TARGET,
   readBool, readNum, writeBool, writeNum, writeStr,
 } from "../lib/prefs";
+import { useFetchCaptcha, useVtopCredentials } from "../hooks/api/vtop";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-type Tab = "profile" | "appearance" | "dashboard" | "academics" | "account";
+type Tab = "profile" | "appearance" | "dashboard" | "academics" | "vtop" | "account";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "profile",    label: "Profile",    icon: User },
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "dashboard",  label: "Dashboard",  icon: LayoutDashboard },
   { id: "academics",  label: "Academics",  icon: GraduationCap },
+  { id: "vtop",       label: "VTOP",       icon: Wifi },
   { id: "account",    label: "Account",    icon: ShieldCheck },
 ];
 
@@ -570,6 +572,109 @@ function AccountTab() {
   );
 }
 
+// ─── VTOP tab ──────────────────────────────────────────────────────────────
+function VtopTab() {
+  const toast = useToast();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const [editing, setEditing] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const { fetchCaptcha, loading: loadingCaptcha } = useFetchCaptcha();
+  const { data: credData, fetch, save, remove, loading, error } = useVtopCredentials();
+
+  const [captchaImage, setCaptchaImage] = useState<string | null>(null);
+  const [captchaStr, setCaptchaStr] = useState("");
+
+  useEffect(() => { fetch(); }, []);
+  useEffect(() => { if (credData.hasCredentials && credData.username) setUsername(credData.username); }, [credData]);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!username.trim() || !password.trim()) return;
+    try {
+      await save(username.trim(), password);
+      toast.success("VTOP credentials saved.");
+      setPassword("");
+    } catch {
+      toast.error("Could not save credentials.");
+    }
+  }
+
+  async function handleLoadCaptcha(e: React.FormEvent) {
+    e.preventDefault();
+    if (!username.trim()) return;
+    try {
+      const res = await fetchCaptcha();
+      if (res.hasCaptcha && res.captchaImage) setCaptchaImage(res.captchaImage);
+    } catch {
+      toast.error("Failed to load captcha.");
+    }
+  }
+
+  async function handleRemove() {
+    try {
+      await remove();
+      setUsername("");
+      setCaptchaImage(null);
+      setEditing(false);
+      toast.success("VTOP credentials removed.");
+    } catch {
+      toast.error("Could not remove credentials.");
+    }
+  }
+
+  const masked = credData.username
+    ? credData.username.slice(0, 2) + "•".repeat(Math.max(0, credData.username.length - 2))
+    : "";
+
+  return (
+    <div className="space-y-4">
+      <Card title="VTOP Connection" desc="Your VIT credentials are encrypted and stored securely.">
+        {credData.hasCredentials && !editing && (
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)" }}>
+                Username: <span className="font-mono">{masked}</span>
+              </p>
+              <p className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.5)" }}>Credentials stored</p>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>Update</Button>
+              <Button size="sm" variant="danger" onClick={handleRemove}><Trash2 size={12} /></Button>
+            </div>
+          </div>
+        )}
+
+        {(editing || !credData.hasCredentials) && (
+          <form onSubmit={handleSave} className="space-y-3">
+            <FloatingInput dark={isDark} label="VIT Username" value={username} onChange={setUsername} autoComplete="username" />
+            <div className="relative">
+              <FloatingInput dark={isDark} label="VTOP Password" type={showPassword ? "text" : "password"} passwordToggle value={password} onChange={setPassword} autoComplete="current-password" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(p => !p)}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }}
+              >
+                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              {editing && <Button size="sm" variant="secondary" onClick={() => { setEditing(false); setUsername(credData.username ?? ""); setPassword(""); }}>Cancel</Button>}
+              <Button size="sm" type="submit" loading={loading} disabled={!username.trim() || !password.trim()}>
+                {credData.hasCredentials ? "Update" : "Save"} credentials
+              </Button>
+            </div>
+          </form>
+        )}
+      </Card>
+    </div>
+  );
+}
+
 // ─── Main page ─────────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>("profile");
@@ -618,6 +723,7 @@ export default function SettingsPage() {
           {tab === "appearance" && <AppearanceTab />}
           {tab === "dashboard"  && <DashboardTab />}
           {tab === "academics"  && <AcademicsTab />}
+          {tab === "vtop"       && <VtopTab />}
           {tab === "account"    && <AccountTab />}
         </div>
       </div>

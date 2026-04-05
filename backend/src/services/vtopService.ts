@@ -1,3 +1,4 @@
+import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import puppeteerExtra from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { load } from "cheerio";
@@ -13,6 +14,34 @@ import {
   type ParsedGradeCourse,
 } from "../lib/parseVtopGradeHistory";
 import { parseSemesterSelectOptions } from "../lib/parseVtopSemesterDropdown";
+
+// ─── Encryption helpers ─────────────────────────────────────────────────────
+
+const CIPHER_KEY = Buffer.from(
+  process.env.VTOP_ENCRYPTION_KEY ?? "0000000000000000000000000000000000000000000000000000000000000000",
+  "hex"
+);
+
+export function encryptPassword(plain: string): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", CIPHER_KEY, iv);
+  let encrypted = cipher.update(plain, "utf8");
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  return Buffer.concat([iv, authTag, encrypted]).toString("base64");
+}
+
+export function decryptPassword(encrypted: string): string {
+  const buf = Buffer.from(encrypted, "base64");
+  const iv = buf.subarray(0, 12);
+  const authTag = buf.subarray(12, 28);
+  const ciphertext = buf.subarray(28);
+  const decipher = createDecipheriv("aes-256-gcm", CIPHER_KEY, iv);
+  decipher.setAuthTag(authTag);
+  let decrypted = decipher.update(ciphertext);
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+  return decrypted.toString("utf8");
+}
 
 puppeteerExtra.use(StealthPlugin());
 
@@ -1665,4 +1694,41 @@ export async function getVtopAcademicEvents(userId: string) {
 
 export async function getVtopTimetable(userId: string) {
   return prisma.vtopTimetable.findMany({ where: { userId }, orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }] });
+}
+
+// ─── VTOP Credential management ─────────────────────────────────────────────
+
+export async function storeVtopCredentials(
+  userId: string,
+  username: string,
+  password: string
+): Promise<{ success: true }> {
+  const encrypted = encryptPassword(password);
+  await prisma.vtopCredential.upsert({
+    where: { userId },
+    update: { username, password: encrypted },
+    create: { userId, username, password: encrypted },
+  });
+  return { success: true };
+}
+
+export async function getVtopCredentials(userId: string): Promise<{
+  hasCredentials: boolean;
+  username?: string;
+}> {
+  const cred = await prisma.vtopCredential.findUnique({ where: { userId } });
+  if (!cred) return { hasCredentials: false };
+  return { hasCredentials: true, username: cred.username };
+}
+
+export async function deleteVtopCredentials(userId: string): Promise<{ success: true }> {
+  await prisma.vtopCredential.deleteMany({ where: { userId } });
+  return { success: true };
+}
+
+export async function quickSyncVtop(userId: string, captchaStr: string): Promise<VtopSyncResult> {
+  const cred = await prisma.vtopCredential.findUnique({ where: { userId } });
+  if (!cred) throw new Error("No VTOP credentials stored. Please enter credentials first.");
+  const password = decryptPassword(cred.password);
+  return syncVtopData(userId, cred.username, password, captchaStr);
 }

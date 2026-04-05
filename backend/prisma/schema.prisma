@@ -52,6 +52,7 @@ model User {
   vtopTimetable VtopTimetable[]
   vtopMarks     VtopMark[]
   vtopStudentMetrics VtopStudentMetrics?
+  vtopCredential VtopCredential?
   vtopSemesterMetrics VtopSemesterMetrics[]
   studentFiles      StudentFile[]
   mindspaceEntries  MindspaceEntry[]
@@ -327,6 +328,18 @@ model VtopSemesterMetrics {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, semesterLabel])
+  @@index([userId])
+}
+
+model VtopCredential {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  username  String
+  password  String
+  syncedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 

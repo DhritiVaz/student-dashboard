@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { AnimatedPage } from "./AnimatedPage";
-import { Menu } from "lucide-react";
+import { Menu, Wifi } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { GlobalSearch } from "./GlobalSearch";
+import { VtopSyncModal } from "./vtop/VtopSyncModal";
 import { useTheme } from "../ThemeContext";
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
@@ -40,6 +41,7 @@ export function AppLayout() {
 
   const BG = isDark ? "#0c0c0c" : "#fafafa";
   const borderColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const [vtopOpen, setVtopOpen] = useState(false);
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: BG }}>
@@ -83,8 +85,30 @@ export function AppLayout() {
             <Menu size={17} />
           </button>
           <div className="flex-1" />
+          <button
+            type="button"
+            onClick={() => setVtopOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 h-8 rounded-lg text-[12px] font-medium transition-all shrink-0"
+            style={{
+              color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)",
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)"}`,
+              background: "transparent",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)";
+              (e.currentTarget as HTMLButtonElement).style.background = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
+              (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+            }}
+          >
+            <Wifi size={13} />
+            <span className="hidden sm:inline">VTOP Sync</span>
+          </button>
           <GlobalSearch />
         </header>
+        <VtopSyncModal open={vtopOpen} onClose={() => setVtopOpen(false)} />
 
         {/* Content */}
         <main id="main-content" role="main"

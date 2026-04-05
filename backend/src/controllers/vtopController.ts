@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   getVtopCaptcha,
   syncVtopData,
+  quickSyncVtop,
   getVtopAttendance,
   getVtopGrades,
   getVtopGradesSummary,
@@ -10,6 +11,9 @@ import {
   getVtopMarks,
   getVtopAcademicEvents,
   getVtopTimetable,
+  storeVtopCredentials,
+  getVtopCredentials,
+  deleteVtopCredentials,
 } from "../services/vtopService";
 
 export async function getCaptchaHandler(req: Request, res: Response) {
@@ -111,5 +115,49 @@ export async function getTimetableHandler(req: Request, res: Response) {
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function storeCredentialsHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId;
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ success: false, error: "Username and password are required" });
+    const result = await storeVtopCredentials(userId, username.trim(), password);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getCredentialsHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId;
+    const result = await getVtopCredentials(userId);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function deleteCredentialsHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId;
+    const result = await deleteVtopCredentials(userId);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function quickSyncHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId;
+    const { captchaStr } = req.body;
+    if (!captchaStr) return res.status(400).json({ success: false, error: "Captcha is required" });
+    const result = await quickSyncVtop(userId, captchaStr.trim());
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
   }
 }

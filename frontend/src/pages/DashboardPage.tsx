@@ -17,7 +17,6 @@ import { useNotes } from "../hooks/api/notes";
 import { PLACEHOLDER_ASSIGNMENTS, PLACEHOLDER_NOTES, PLACEHOLDER_TASKS } from "../lib/placeholders";
 import { useEvents } from "../hooks/api/events";
 import { useVtopAttendance, useVtopGradesSummary } from "../hooks/api/vtop";
-import VtopSync from "../components/vtop/VtopSync";
 import { useTheme } from "../ThemeContext";
 
 function getGreeting() {
@@ -501,13 +500,6 @@ export default function DashboardPage() {
             })
           )}
         </Card>
-      </div>
-
-      <div className="mt-4 rounded-xl overflow-hidden"
-        style={{ background: isDark ? "#141414" : "#ffffff", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}>
-        <div className="p-5">
-          <VtopSync variant="dashboard" />
-        </div>
       </div>
     </div>
   );

@@ -241,3 +241,77 @@ export function useVtopTimetable() {
 
   return { data, loading, fetch };
 }
+
+export function useVtopCredentials() {
+  const [data, setData] = useState<{ hasCredentials: boolean; username?: string }>({ hasCredentials: false });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function fetch() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get("/vtop/credentials");
+      setData(res.data.data ?? { hasCredentials: false });
+    } catch (err: any) {
+      setError(err?.response?.data?.message ?? "Failed to load credentials");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function save(username: string, password: string) {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.put("/vtop/credentials", { username, password });
+      setData({ hasCredentials: true, username });
+      return res.data;
+    } catch (err: any) {
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Failed to save credentials";
+      setError(msg);
+      throw new Error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function remove() {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.delete("/vtop/credentials");
+      setData({ hasCredentials: false });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? "Failed to remove credentials";
+      setError(msg);
+      throw new Error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { data, loading, error, fetch, save, remove };
+}
+
+export function useVtopQuickSync() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function sync(captchaStr: string) {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.post("/vtop/sync-quick", { captchaStr });
+      return res.data;
+    } catch (err: any) {
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? "Sync failed";
+      setError(msg);
+      throw new Error(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { sync, loading, error };
+}
