@@ -24,6 +24,7 @@ export function SearchInput({ value, onChange, placeholder = "Search…", "aria-
           background: isDark ? "#1e1e1e" : "#ffffff",
           border: `1px solid ${isDark ? "#333" : "rgba(0,0,0,0.15)"}`,
           color: isDark ? "#f0f0f0" : "#111",
+          caretColor: isDark ? "#f0f0f0" : "#111",
         }}
         onFocus={e => {
           e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.3)";

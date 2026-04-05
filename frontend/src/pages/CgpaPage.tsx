@@ -122,7 +122,7 @@ export default function CgpaPage() {
           onClick={() => setTab("record")}
           className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
             tab === "record"
-              ? (isDark ? "bg-white text-black" : "bg-zinc-900 text-white")
+              ? (isDark ? "bg-white text-black" : "bg-zinc-900 text-zinc-100")
               : (isDark ? "text-white/45 hover:text-white" : "text-zinc-500 hover:text-zinc-900")
           }`}
         >
@@ -134,7 +134,7 @@ export default function CgpaPage() {
           onClick={() => setTab("calc")}
           className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
             tab === "calc"
-              ? (isDark ? "bg-white text-black" : "bg-zinc-900 text-white")
+              ? (isDark ? "bg-white text-black" : "bg-zinc-900 text-zinc-100")
               : (isDark ? "text-white/45 hover:text-white" : "text-zinc-500 hover:text-zinc-900")
           }`}
         >
@@ -178,7 +178,7 @@ export default function CgpaPage() {
                 </div>
                 <div className="text-right text-sm" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.5)" }}>
                   <div>Total credits: {summary.totalCredits.toFixed(1)}</div>
-                  <div>\u03a3 weighted: {summary.totalWeightedScore.toFixed(1)}</div>
+                  <div>Weighted: {summary.totalWeightedScore.toFixed(1)}</div>
                 </div>
                 <GpaBar gpa={summary.cgpa} />
               </div>

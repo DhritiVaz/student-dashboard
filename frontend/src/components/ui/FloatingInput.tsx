@@ -64,6 +64,7 @@ export function FloatingInput({
           fontSize: "0.875rem",
           lineHeight: "1.25rem",
           color: dark ? "#fff" : "#111",
+          caretColor: dark ? "#fff" : "#111",
           background: dark ? (disabled ? "#1a1a1a" : "#1a1a1a") : disabled ? "#f4f4f5" : "#ffffff",
           border: `1.5px solid ${
             error ? "#f87171" : focused ? (dark ? "rgba(255,255,255,0.5)" : "#111") : dark ? "rgba(255,255,255,0.15)" : "#d1d5db"

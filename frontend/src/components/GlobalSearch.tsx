@@ -16,6 +16,7 @@ import {
   Clock,
 } from "lucide-react";
 import { api } from "../lib/api";
+import { useTheme } from "../ThemeContext";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 interface CoursResult {
@@ -149,6 +150,20 @@ export function GlobalSearch() {
   const inputRef  = useRef<HTMLInputElement>(null);
   const listRef   = useRef<HTMLDivElement>(null);
   const wrapRef   = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const inputBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.9)";
+  const inputBgOpen = isDark ? "rgba(255,255,255,0.08)" : "#ffffff";
+  const inputBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.12)";
+  const inputBorderOpen = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)";
+  const inputText = isDark ? "rgba(255,255,255,0.8)" : "#111";
+  const inputCaret = isDark ? "#fff" : "#111";
+  const searchIcon = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.4)";
+  const kbdBg = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const kbdBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.12)";
+  const kbdText = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
+  const spinnerBorder = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+  const spinnerTop = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)";
 
   const [query,    setQuery]    = useState("");
   const [debounced, setDebounced] = useState("");
@@ -264,12 +279,12 @@ export function GlobalSearch() {
       <div
         className="flex items-center gap-2 px-3 h-8 rounded-lg transition-all"
         style={{
-          background: open ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)",
-          border: open ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.08)",
-          boxShadow: open ? "0 0 0 3px rgba(255,255,255,0.04)" : "none",
+          background: open ? inputBgOpen : inputBg,
+          border: open ? `1px solid ${inputBorderOpen}` : `1px solid ${inputBorder}`,
+          boxShadow: open ? (isDark ? "0 0 0 3px rgba(255,255,255,0.04)" : "0 0 0 3px rgba(0,0,0,0.06)") : "none",
         }}
       >
-        <Search size={13} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+        <Search size={13} style={{ color: searchIcon, flexShrink: 0 }} />
         <input
           ref={inputRef}
           type="search"
@@ -284,7 +299,7 @@ export function GlobalSearch() {
           onKeyDown={onKeyDown}
           placeholder="Search…"
           className="flex-1 bg-transparent outline-none text-[13px]"
-          style={{ color: "rgba(255,255,255,0.8)", caretColor: "#fff" }}
+          style={{ color: inputText, caretColor: inputCaret }}
           spellCheck={false}
           autoComplete="off"
         />
@@ -293,9 +308,9 @@ export function GlobalSearch() {
           <kbd
             className="hidden sm:flex items-center text-[10px] px-1 rounded gap-0.5"
             style={{
-              background: "rgba(255,255,255,0.06)",
-              color: "rgba(255,255,255,0.3)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: kbdBg,
+              color: kbdText,
+              border: `1px solid ${kbdBorder}`,
               fontFamily: "inherit",
               lineHeight: "16px",
             }}
@@ -308,8 +323,8 @@ export function GlobalSearch() {
           <div
             className="w-3 h-3 rounded-full animate-spin flex-shrink-0"
             style={{
-              border: "1.5px solid rgba(255,255,255,0.1)",
-              borderTopColor: "rgba(255,255,255,0.5)",
+              border: `1.5px solid ${spinnerBorder}`,
+              borderTopColor: spinnerTop,
             }}
           />
         )}

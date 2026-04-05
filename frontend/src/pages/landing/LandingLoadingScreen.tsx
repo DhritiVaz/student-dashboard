@@ -4,11 +4,11 @@ export function LandingLoadingScreen() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const bg = isDark ? "#0a0a0a" : "#f5f4f2";
-  const text = isDark ? "#6b7280" : "#9ca3af";
+  const ringColor = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)";
+  const textColor = isDark ? "#9ca3af" : "#6b7280";
 
   return (
     <div
-      className="landing-loading-spinner w-8 h-8 rounded-full border-2"
       style={{
         background: bg,
         display: "flex",
@@ -20,10 +20,23 @@ export function LandingLoadingScreen() {
         position: "fixed",
         inset: 0,
         zIndex: 100,
+        transition: "background 200ms ease",
       }}
     >
-      <div style={{ borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)", borderTopColor: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)" }} />
-      <p className="mt-6 text-sm font-medium" style={{ color: text }}>Student Dashboard</p>
+      {/* Small circle spinner */}
+      <div
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: 9999,
+          border: `2.5px solid ${ringColor}`,
+          borderTopColor: isDark ? "#ffffff" : "#111827",
+          animation: "spin 600ms linear infinite",
+        }}
+      />
+      <p className="mt-4 text-xs font-medium tracking-wide" style={{ color: textColor }}>
+        Student Dashboard
+      </p>
     </div>
   );
 }

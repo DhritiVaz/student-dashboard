@@ -184,6 +184,8 @@ function OverviewTab({
 type DeadlineFilter = "pending" | "submitted" | "all";
 
 function DeadlinesTab({ courses }: { courses: LmsCourse[] }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [filter, setFilter] = useState<DeadlineFilter>("pending");
 
   const allAssignments = courses
@@ -218,16 +220,18 @@ function DeadlinesTab({ courses }: { courses: LmsCourse[] }) {
     { key: "all",       label: "All" },
   ];
 
+  // Active tab: dark bg + white text in dark mode, light bg + dark text in light mode
+  const tabActiveBg = isDark ? "bg-white/10" : "bg-gray-200";
+  const tabActiveText = isDark ? "text-white" : "text-zinc-900";
+  const tabInactiveText = isDark ? "text-neutral-500 hover:text-neutral-300" : "text-zinc-500 hover:text-zinc-700";
   return (
     <div className="space-y-4">
-      <div className="flex gap-1 bg-[#141414] border border-neutral-800 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 rounded-lg p-1 w-fit flex-wrap" style={{ background: isDark ? "#141414" : "#f3f4f6", border: isDark ? `1px solid #2a2a2a` : `1px solid rgba(0,0,0,0.12)` }}>
         {filterBtns.map((b) => (
           <button
             key={b.key}
             onClick={() => setFilter(b.key)}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              filter === b.key ? "bg-white/10 text-white" : "text-neutral-500 hover:text-neutral-300"
-            }`}
+            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${filter === b.key ? `${tabActiveBg} ${tabActiveText}` : tabInactiveText}`}
           >
             {b.label}
           </button>
@@ -338,6 +342,8 @@ function QuizzesTab({ modules, courses }: { modules: LmsModule[]; courses: LmsCo
 type FileFilter = "all" | "resource" | "folder" | "url" | "page";
 
 function FilesTab({ modules, courses }: { modules: LmsModule[]; courses: LmsCourse[] }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [filter, setFilter] = useState<FileFilter>("all");
 
   const FILE_TYPES: FileFilter[] = ["all", "resource", "folder", "url", "page"];
@@ -363,20 +369,24 @@ function FilesTab({ modules, courses }: { modules: LmsModule[]; courses: LmsCour
     return <EmptyState icon={<FileText size={28} />} title="No files or resources found." sub="Run a sync to fetch course materials." />;
   }
 
+  const tabActiveBg = isDark ? "bg-white/10" : "bg-gray-200";
+  const tabActiveText = isDark ? "text-white" : "text-zinc-900";
+  const tabInactiveText = isDark ? "text-neutral-500 hover:text-neutral-300" : "text-zinc-500 hover:text-zinc-700";
+  const tabCountText = isDark ? "text-neutral-600" : "text-zinc-400";
   return (
     <div className="space-y-4">
-      <div className="flex gap-1 bg-[#141414] border border-neutral-800 rounded-lg p-1 w-fit flex-wrap">
+      <div className="flex gap-1 rounded-lg p-1 w-fit flex-wrap" style={{ background: isDark ? "#141414" : "#f3f4f6", border: isDark ? `1px solid #2a2a2a` : `1px solid rgba(0,0,0,0.12)` }}>
         {availableTypes.map((t) => (
           <button
             key={t}
             onClick={() => setFilter(t)}
             className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-              filter === t ? "bg-white/10 text-white" : "text-neutral-500 hover:text-neutral-300"
+              filter === t ? `${tabActiveBg} ${tabActiveText}` : tabInactiveText
             }`}
           >
             {FILE_TYPE_LABELS[t]}
             {t !== "all" && (
-              <span className="ml-1 text-neutral-600">({allFiles.filter((m) => m.modtype === t).length})</span>
+              <span className={`ml-1 ${tabCountText}`}>({allFiles.filter((m) => m.modtype === t).length})</span>
             )}
           </button>
         ))}
@@ -530,6 +540,8 @@ const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
 ];
 
 export default function LmsPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [tab, setTab] = useState<Tab>("overview");
   const { data: courses,  fetch: fetchCourses,  loading: loadingCourses  } = useLmsCourses();
   const { data: upcoming, fetch: fetchUpcoming, loading: loadingUpcoming } = useLmsUpcoming();
@@ -553,21 +565,23 @@ export default function LmsPage() {
     <div className="p-6 sm:p-8 w-full min-w-0">
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
-        <BookMarked size={20} className="text-white/40" />
-        <h1 className="text-2xl font-bold" style={{ color: "rgba(255,255,255,0.95)" }}>LMS</h1>
+        <BookMarked size={20} className={isDark ? "text-white/40" : "text-zinc-400"} />
+        <h1 className="text-2xl font-bold" style={{ color: isDark ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.95)" }}>LMS</h1>
       </div>
-      <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.35)" }}>
+      <p className="text-sm mb-6" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>
         lms.vit.ac.in — courses, deadlines, quizzes, and files
       </p>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-[#141414] border border-neutral-800 rounded-lg p-1 w-fit mb-6 flex-wrap">
+      <div className="flex gap-1 rounded-lg p-1 w-fit mb-6 flex-wrap" style={{ background: isDark ? "#141414" : "#f3f4f6", border: `1px solid ${isDark ? "#2a2a2a" : "rgba(0,0,0,0.12)"}` }}>
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              tab === t.key ? "bg-white text-black" : "text-neutral-400 hover:text-white"
+              tab === t.key
+                ? (isDark ? "bg-white text-black" : "bg-zinc-900 text-zinc-100")
+                : (isDark ? "text-neutral-400 hover:text-neutral-200" : "text-zinc-500 hover:text-zinc-900")
             }`}
           >
             {t.icon}
