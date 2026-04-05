@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
+import { useTheme } from "../../ThemeContext";
 
 interface ModalProps {
   open: boolean;
@@ -16,6 +17,8 @@ const FOCUSABLE =
   'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export function Modal({ open, onClose, title, children, maxWidth = 480 }: ModalProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const reduced = useReducedMotion();
   const panelRef = useRef<HTMLDivElement>(null);
   const previousActiveRef = useRef<HTMLElement | null>(null);
@@ -87,10 +90,11 @@ export function Modal({ open, onClose, title, children, maxWidth = 480 }: ModalP
           className="relative rounded-card w-full"
           style={{
             maxWidth,
-            background: "#1a1a1a",
-            border: "1px solid #2e2e2e",
-            boxShadow:
-              "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
+            background: isDark ? "#1a1a1a" : "#ffffff",
+            border: isDark ? "1px solid #2e2e2e" : "1px solid rgba(0,0,0,0.1)",
+            boxShadow: isDark
+              ? "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)"
+              : "0 32px 80px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)",
           }}
           initial={
             reduced
@@ -108,12 +112,12 @@ export function Modal({ open, onClose, title, children, maxWidth = 480 }: ModalP
           {title && (
             <div
               className="flex items-center justify-between px-6 py-4"
-              style={{ borderBottom: "1px solid #252525" }}
+              style={{ borderBottom: isDark ? "1px solid #252525" : "1px solid rgba(0,0,0,0.08)" }}
             >
               <h3
                 id={titleId}
                 className="text-sm font-semibold"
-                style={{ color: "#f0f0f0" }}
+                style={{ color: isDark ? "#f0f0f0" : "#111" }}
               >
                 {title}
               </h3>
@@ -122,12 +126,12 @@ export function Modal({ open, onClose, title, children, maxWidth = 480 }: ModalP
                 onClick={onClose}
                 aria-label="Close"
                 className="p-1.5 rounded-lg transition-colors duration-150"
-                style={{ color: "#52525b" }}
+                style={{ color: isDark ? "#52525b" : "rgba(0,0,0,0.4)" }}
                 onMouseEnter={(e) =>
-                  (e.currentTarget.style.color = "#a1a1aa")
+                  (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)")
                 }
                 onMouseLeave={(e) =>
-                  (e.currentTarget.style.color = "#52525b")
+                  (e.currentTarget.style.background = "transparent")
                 }
               >
                 <X size={15} aria-hidden />

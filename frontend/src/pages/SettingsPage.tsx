@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { User, ShieldCheck, Palette, LayoutDashboard, GraduationCap, LogOut, Wifi, Trash2, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { User, ShieldCheck, Palette, LayoutDashboard, GraduationCap, LogOut, Wifi, Trash2, Eye, EyeOff } from "lucide-react";
 import { FloatingInput } from "../components/ui/FloatingInput";
 import { Button } from "../components/ui/Button";
 import { useToast } from "../hooks/useToast";
@@ -14,7 +14,7 @@ import {
   PREF_ATTENDANCE_SAFE, PREF_ATTENDANCE_WARN, PREF_ATTENDANCE_TARGET,
   readBool, readNum, writeBool, writeNum, writeStr,
 } from "../lib/prefs";
-import { useFetchCaptcha, useVtopCredentials } from "../hooks/api/vtop";
+import { useVtopCredentials } from "../hooks/api/vtop";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -582,11 +582,7 @@ function VtopTab() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const { fetchCaptcha, loading: loadingCaptcha } = useFetchCaptcha();
-  const { data: credData, fetch, save, remove, loading, error } = useVtopCredentials();
-
-  const [captchaImage, setCaptchaImage] = useState<string | null>(null);
-  const [captchaStr, setCaptchaStr] = useState("");
+  const { data: credData, fetch, save, remove, loading } = useVtopCredentials();
 
   useEffect(() => { fetch(); }, []);
   useEffect(() => { if (credData.hasCredentials && credData.username) setUsername(credData.username); }, [credData]);
@@ -603,22 +599,11 @@ function VtopTab() {
     }
   }
 
-  async function handleLoadCaptcha(e: React.FormEvent) {
-    e.preventDefault();
-    if (!username.trim()) return;
-    try {
-      const res = await fetchCaptcha();
-      if (res.hasCaptcha && res.captchaImage) setCaptchaImage(res.captchaImage);
-    } catch {
-      toast.error("Failed to load captcha.");
-    }
-  }
 
   async function handleRemove() {
     try {
       await remove();
       setUsername("");
-      setCaptchaImage(null);
       setEditing(false);
       toast.success("VTOP credentials removed.");
     } catch {

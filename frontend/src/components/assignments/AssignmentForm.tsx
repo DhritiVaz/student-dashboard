@@ -6,6 +6,7 @@ import { Select } from "../ui/Select";
 import type { Assignment, AssignmentPayload } from "../../hooks/api/assignments";
 import type { Course } from "../../hooks/api/courses";
 import { isoToLocalDatetime } from "../../lib/dateUtils";
+import { useTheme } from "../../ThemeContext";
 
 interface AssignmentFormProps {
   initial?: Assignment;
@@ -18,6 +19,8 @@ interface AssignmentFormProps {
 export function AssignmentForm({
   initial, courses, defaultCourseId, onSubmit, onCancel,
 }: AssignmentFormProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [title, setTitle]           = useState(initial?.title ?? "");
   const [description, setDesc]      = useState(initial?.description ?? "");
   const [dueDate, setDueDate]       = useState(isoToLocalDatetime(initial?.dueDate));
@@ -87,14 +90,14 @@ export function AssignmentForm({
             onClick={() => !loading && setSubmitted(v => !v)}
             className="w-9 h-5 rounded-full border transition-colors duration-150 flex items-center px-0.5 flex-shrink-0"
             style={isSubmitted
-              ? { background: "rgba(255,255,255,0.85)", borderColor: "rgba(255,255,255,0.6)" }
-              : { background: "transparent", borderColor: "#444" }}
+              ? { background: isDark ? "rgba(255,255,255,0.85)" : "#E87040", borderColor: isDark ? "rgba(255,255,255,0.6)" : "#E87040" }
+              : { background: "transparent", borderColor: isDark ? "#444" : "#ccc" }}
           >
             <div
-              className={`w-4 h-4 rounded-full shadow transition-transform duration-150 ${
+              className={`w-4 h-4 rounded-full transition-transform duration-150 ${
                 isSubmitted ? "translate-x-4" : "translate-x-0"
               }`}
-              style={{ background: isSubmitted ? "#0a0a0a" : "#555" }}
+              style={{ background: isSubmitted ? (isDark ? "#0a0a0a" : "#fff") : (isDark ? "#555" : "#999") }}
             />
           </div>
           <span className="text-sm text-[#6b7280]">Mark as submitted</span>

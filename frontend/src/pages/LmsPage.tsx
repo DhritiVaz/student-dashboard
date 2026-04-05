@@ -77,17 +77,11 @@ function OverviewTab({
   modules: LmsModule[];
   onTabChange: (t: Tab) => void;
 }) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
-  const overdue  = upcoming.filter((a) => a.dueDate && relDue(a.dueDate).urgency === "overdue");
+  const overdue = upcoming.filter((a) => a.dueDate && relDue(a.dueDate).urgency === "overdue");
   const dueToday = upcoming.filter((a) => a.dueDate && relDue(a.dueDate).urgency === "today");
   const quizzes  = modules.filter((m) => m.modtype === "quiz");
   const files    = modules.filter((m) => ["resource", "folder", "url", "page"].includes(m.modtype));
 
-  const cardBg = isDark ? "#141414" : "#ffffff";
-  const cardBorder = isDark ? "#2a2a2a" : "rgba(0,0,0,0.08)";
-  const textColor = isDark ? "#f0f0f0" : "#111827";
-  const subtextColor = isDark ? "#6b7280" : "#9ca3af";
 
   const stats = [
     { label: "Enrolled Courses",   value: courses.length,   icon: <BookOpen size={16} />,      color: "text-blue-400" },

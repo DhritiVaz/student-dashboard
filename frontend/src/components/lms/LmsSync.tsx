@@ -2,10 +2,13 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, CheckCircle, AlertCircle, Eye, EyeOff, BookMarked } from "lucide-react";
 import { useLmsSync, useLmsCourses } from "../../hooks/api/lms";
+import { useTheme } from "../../ThemeContext";
 
 const LMS_USERNAME_KEY = "lms-remember-username";
 
 export default function LmsSync() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [username, setUsername] = useState(() => {
     try { return localStorage.getItem(LMS_USERNAME_KEY) ?? ""; } catch { return ""; }
   });
@@ -43,36 +46,48 @@ export default function LmsSync() {
     }
   }
 
+  const cardBg = isDark ? "#141414" : "#ffffff";
+  const cardBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  const inputBg = isDark ? "#0c0c0c" : "#f5f5f5";
+  const inputBorderColor = isDark ? "border-neutral-800" : "border-gray-200";
+  const inputText = isDark ? "text-white" : "text-gray-900";
+  const inputPlaceholder = isDark ? "placeholder-neutral-600" : "placeholder-gray-400";
+  const labelColor = isDark ? "text-neutral-400" : "text-gray-500";
+  const titleColor = isDark ? "text-white" : "text-gray-900";
+  const subtitleColor = isDark ? "text-neutral-500" : "text-gray-500";
+  const iconColor = isDark ? "text-neutral-400" : "text-gray-600";
+  const checkboxColor = isDark ? "border-neutral-600" : "border-gray-400";
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-          <BookMarked size={18} className="text-neutral-400" />
+        <h2 className={`text-lg font-semibold flex items-center gap-2 ${titleColor}`}>
+          <BookMarked size={18} className={iconColor} />
           LMS Sync
         </h2>
-        <p className="text-sm text-neutral-500 mt-1">
+        <p className={`text-sm mt-1 ${subtitleColor}`}>
           Connect your LMS credentials to sync courses, assignments, quizzes, files, and deadlines.
           Your password is never stored.
         </p>
       </div>
 
-      <div className="bg-[#141414] border border-neutral-800 rounded-xl p-5 space-y-4">
+      <div className="rounded-xl p-5 space-y-4" style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
         {lastSynced && (
-          <p className="text-xs text-neutral-500">Last synced: {lastSynced}</p>
+          <p className={`text-xs ${subtitleColor}`}>Last synced: {lastSynced}</p>
         )}
 
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-neutral-400 mb-1 block">LMS Username</label>
+            <label className={`text-xs mb-1 block ${labelColor}`}>LMS Username</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="e.g. 24bce1723@vitstudent.ac.in"
               autoComplete="username"
-              className="w-full bg-[#0c0c0c] border border-neutral-800 rounded-lg px-3 py-2
-                         text-sm text-white placeholder-neutral-600
-                         focus:outline-none focus:border-neutral-600 transition-colors"
+              className={`w-full rounded-lg px-3 py-2 text-sm border ${inputBg} ${inputBorderColor} ${inputText} ${inputPlaceholder} focus:outline-none transition-colors`}
+              onFocus={(e) => (e.target.style.borderColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)")}
+              onBlur={(e) => (e.target.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.15)")}
             />
             <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
               <input
@@ -86,14 +101,14 @@ export default function LmsSync() {
                     else if (username.trim()) localStorage.setItem(LMS_USERNAME_KEY, username.trim());
                   } catch { /* ignore */ }
                 }}
-                className="rounded border-neutral-600"
+                className={`rounded ${checkboxColor}`}
               />
-              <span className="text-xs text-neutral-500">Remember username on this device</span>
+              <span className={`text-xs ${subtitleColor}`}>Remember username on this device</span>
             </label>
           </div>
 
           <div>
-            <label className="text-xs text-neutral-400 mb-1 block">LMS Password</label>
+            <label className={`text-xs mb-1 block ${labelColor}`}>LMS Password</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -101,14 +116,15 @@ export default function LmsSync() {
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSync()}
                 placeholder="Your LMS password"
-                className="w-full bg-[#0c0c0c] border border-neutral-800 rounded-lg px-3 py-2 pr-10
-                           text-sm text-white placeholder-neutral-600
-                           focus:outline-none focus:border-neutral-600 transition-colors"
+                className={`w-full rounded-lg px-3 py-2 pr-10 text-sm border ${inputBg} ${inputBorderColor} ${inputText} ${inputPlaceholder} focus:outline-none transition-colors`}
+                onFocus={(e) => (e.target.style.borderColor = isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)")}
+                onBlur={(e) => (e.target.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.15)")}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((p) => !p)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)" }}
               >
                 {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
@@ -143,10 +159,7 @@ export default function LmsSync() {
         <button
           onClick={handleSync}
           disabled={syncing || !username.trim() || !password.trim()}
-          className="w-full flex items-center justify-center gap-2 bg-white text-black
-                     text-sm font-medium rounded-lg py-2 px-4
-                     hover:bg-neutral-200 transition-colors
-                     disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 bg-[#E87040] text-white text-sm font-medium rounded-lg py-2 px-4 hover:bg-[#d4603a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
           {syncing ? "Syncing LMS..." : "Sync LMS"}
@@ -154,14 +167,21 @@ export default function LmsSync() {
       </div>
 
       {/* Info about what gets synced */}
-      <div className="bg-[#141414] border border-neutral-800 rounded-xl p-4 space-y-2">
-        <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">What gets synced</p>
-        <ul className="space-y-1.5 text-xs text-neutral-500">
-          <li className="flex items-center gap-2"><span className="text-blue-400">●</span> All enrolled courses</li>
-          <li className="flex items-center gap-2"><span className="text-orange-400">●</span> Assignments and deadlines from the LMS calendar</li>
-          <li className="flex items-center gap-2"><span className="text-purple-400">●</span> Quizzes from each course page</li>
-          <li className="flex items-center gap-2"><span className="text-amber-400">●</span> Uploaded files, folders, and resources</li>
-          <li className="flex items-center gap-2"><span className="text-sky-400">●</span> External links and pages</li>
+      <div className="rounded-xl p-4 space-y-2" style={{ background: cardBg, border: `1px solid ${cardBorder}` }}>
+        <p className={`text-xs font-semibold uppercase tracking-wider ${subtitleColor}`}>What gets synced</p>
+        <ul className="space-y-1.5 text-xs">
+          {[
+            { color: "#3b82f6", label: "All enrolled courses" },
+            { color: isDark ? "#f97316" : "#ea580c", label: "Assignments and deadlines from the LMS calendar" },
+            { color: "#a855f7", label: "Quizzes from each course page" },
+            { color: "#f59e0b", label: "Uploaded files, folders, and resources" },
+            { color: "#0ea5e9", label: "External links and pages" },
+          ].map((item, i) => (
+            <li key={i} className="flex items-center gap-2">
+              <span style={{ color: item.color }}>●</span>
+              <span className={labelColor}>{item.label}</span>
+            </li>
+          ))}
         </ul>
       </div>
     </div>

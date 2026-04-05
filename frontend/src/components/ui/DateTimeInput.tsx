@@ -2,36 +2,39 @@ import { useState, forwardRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { CustomTimeSelect } from "./CustomTimeSelect";
+import { useTheme } from "../../ThemeContext";
 
 interface DateTimeInputProps {
   label: string;
-  value: string; // "YYYY-MM-DDTHH:mm" or ""
+  value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   error?: string;
 }
-
-const baseInputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "22px 16px 8px",
-  fontSize: "0.875rem",
-  lineHeight: "1.25rem",
-  color: "#fff",
-  background: "#1a1a1a",
-  borderRadius: "10px",
-  outline: "none",
-  cursor: "pointer",
-};
 
 interface CustomInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   value?: string;
   onClick?: () => void;
   focused?: boolean;
   error?: boolean;
+  dark?: boolean;
 }
 
 const CustomInput = forwardRef<HTMLInputElement, CustomInputProps>(
-  function CustomInput({ value, onClick, disabled, focused, error, ...props }, ref) {
+  function CustomInput({ dark, value, onClick, disabled, focused, error, ...props }, ref) {
+    const textColor = dark ? "#fff" : "#111";
+    const bg = dark ? "#1a1a1a" : "#ffffff";
+    const border = error
+      ? "#f87171"
+      : focused
+        ? dark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.3)"
+        : dark ? "rgba(255,255,255,0.15)" : "#d1d5db";
+    const shadow = error
+      ? "0 0 0 3px rgba(239,68,68,0.12)"
+      : focused
+        ? dark ? "0 0 0 3px rgba(255,255,255,0.1)" : "0 0 0 3px rgba(0,0,0,0.08)"
+        : dark ? "none" : "0 1px 2px rgba(0,0,0,0.05)";
+
     return (
       <input
         ref={ref}
@@ -41,15 +44,19 @@ const CustomInput = forwardRef<HTMLInputElement, CustomInputProps>(
         onClick={onClick}
         disabled={disabled}
         style={{
-          ...baseInputStyle,
-          border: `1.5px solid ${error ? "#f87171" : focused ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.15)"}`,
-          boxShadow: error
-            ? "0 0 0 3px rgba(239,68,68,0.12)"
-            : focused
-              ? "0 0 0 3px rgba(255,255,255,0.1)"
-              : "none",
-          opacity: disabled ? 0.5 : 1,
+          width: "100%",
+          padding: "22px 16px 8px",
+          fontSize: "0.875rem",
+          lineHeight: "1.25rem",
+          color: textColor,
+          caretColor: textColor,
+          background: bg,
+          borderRadius: "10px",
+          border: `1.5px solid ${border}`,
+          boxShadow: shadow,
+          outline: "none",
           cursor: disabled ? "not-allowed" : "pointer",
+          opacity: disabled ? 0.5 : 1,
         }}
         {...props}
       />
@@ -59,16 +66,21 @@ const CustomInput = forwardRef<HTMLInputElement, CustomInputProps>(
 
 export function DateTimeInput({ label, value, onChange, disabled, error }: DateTimeInputProps) {
   const [open, setOpen] = useState(false);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const date = value ? new Date(value) : null;
   const hasValue = !!value && value.length >= 16;
   const floated = hasValue || open;
 
+  const labelColor = error
+    ? "#f87171"
+    : open
+      ? isDark ? "rgba(255,255,255,0.7)" : "#111"
+      : isDark ? "rgba(255,255,255,0.4)" : "#71717a";
+
   const handleChange = (d: Date | null) => {
-    if (!d) {
-      onChange("");
-      return;
-    }
+    if (!d) { onChange(""); return; }
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
     const day = String(d.getDate()).padStart(2, "0");
@@ -97,10 +109,7 @@ export function DateTimeInput({ label, value, onChange, disabled, error }: DateT
         minDate={new Date(2000, 0, 1)}
         maxDate={new Date(2100, 11, 31)}
         customInput={
-          <CustomInput
-            focused={open}
-            error={!!error}
-          />
+          <CustomInput dark={isDark} focused={open} error={!!error} />
         }
         className="datetime-picker-dark"
         popperClassName="datetime-picker-dark-popper"
@@ -121,14 +130,14 @@ export function DateTimeInput({ label, value, onChange, disabled, error }: DateT
                 fontSize: "11px",
                 fontWeight: 500,
                 letterSpacing: "0.03em",
-                color: error ? "#f87171" : open ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.4)",
+                color: labelColor,
               }
             : {
                 top: "50%",
                 transform: "translateY(-50%)",
                 fontSize: "14px",
                 fontWeight: 400,
-                color: "rgba(255,255,255,0.4)",
+                color: isDark ? "rgba(255,255,255,0.4)" : "#71717a",
               }),
         }}
       >

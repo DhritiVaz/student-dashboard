@@ -1,5 +1,6 @@
 import { InputHTMLAttributes, useState, useId } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useTheme } from "../../ThemeContext";
 
 interface FloatingInputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange" | "value" | "type"> {
@@ -22,13 +23,15 @@ export function FloatingInput({
   onKeyDown,
   error,
   hint,
-  dark = true,
+  dark,
   type = "text",
   passwordToggle = false,
   disabled,
   id,
   ...props
 }: FloatingInputProps) {
+  const { theme } = useTheme();
+  const isDark = dark ?? (theme === "dark");
   const [focused, setFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
@@ -147,7 +150,7 @@ export function FloatingInput({
       )}
 
       {error ? (
-        <p id={errorId} className="error-slide mt-1.5 text-xs text-red-400" role="alert">
+        <p id={errorId} className="error-slide mt-1.5 text-xs" style={{ color: isDark ? "#f87171" : "#dc2626" }} role="alert">
           {error}
         </p>
       ) : hint ? (

@@ -108,36 +108,12 @@ export function VtopSyncModal({ open, onClose }: { open: boolean; onClose: () =>
     }
   }
 
-  async function handleSyncWithCreds() {
-    if (!captchaStr.trim()) return;
-    try {
-      await saveCreds(username.trim(), password);
-      setNeedCredentials(false);
-      // Need to load captcha for the same browser session
-      setCaptchaStr("");
-      setCaptchaImage(null);
-      try {
-        const res = await fetchCaptcha();
-        if (res.hasCaptcha && res.captchaImage) {
-          setCaptchaImage(res.captchaImage);
-          // User has to enter captcha, then click sync again
-          setPassword("");
-        }
-      } catch {
-        // error handled
-      }
-    } catch {
-      // error via credsError
-    }
-  }
-
   if (!open) return null;
 
   const bg = isDark ? "#0d0d0d" : "#ffffff";
   const borderColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.12)";
   const inputBg = isDark ? "rgba(255,255,255,0.05)" : "#f5f5f5";
   const inputBorder = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)";
-  const inputBorderFocus = isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.25)";
   const inputText = isDark ? "rgba(255,255,255,0.8)" : "#111";
   const labelColor = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.5)";
   const titleColor = isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)";
