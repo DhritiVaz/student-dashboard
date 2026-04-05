@@ -5,6 +5,7 @@ import { BrandingPanel } from "./BrandingPanel";
 import { AnimatedPage } from "./AnimatedPage";
 import { LandingLoadingScreen } from "../pages/landing/LandingLoadingScreen";
 import { useTheme } from "../ThemeContext";
+import { ThemeToggle } from "./ui/ThemeToggle";
 
 export function AuthLayout() {
   const location = useLocation();
@@ -29,11 +30,15 @@ export function AuthLayout() {
 
       {/* Right panel */}
       <div
-        className="auth-form-panel flex-1 flex items-center justify-center p-6 sm:p-8 overflow-y-auto"
-        style={{ background: isDark ? "#0e0e0e" : "#fafafa" }}
+        className="auth-form-panel relative flex-1 flex items-center justify-center p-6 sm:p-8 overflow-y-auto"
+        style={{ background: isDark ? "#0e0e0e" : "#fafafa", transition: "background 200ms ease" }}
       >
+        {/* Theme toggle — visible at top-right of panel */}
+        <div className="absolute top-6 right-6 z-20">
+          <ThemeToggle className="shadow-lg" />
+        </div>
+
         <AnimatedPage key={location.pathname} fillHeight={false}>
-          {/* motion.div is w-full; center the form inside the right panel (was left-aligned) */}
           <div className="w-full flex justify-center">
             <Outlet />
           </div>

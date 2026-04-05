@@ -170,8 +170,8 @@ export default function RegisterPage() {
           )}
 
           <div className="pt-1">
-            <button type="submit" disabled={busy} className="btn-solid btn-auth w-full flex items-center justify-center gap-2.5 rounded-[10px] font-semibold" style={{ padding: "11px 14px", fontSize: "15px", letterSpacing: "0.01em" }}>
-              {status === "loading" ? (<><span className="css-spinner" /> Creating account…</>) :
+            <button type="submit" disabled={busy} className="btn-solid w-full flex items-center justify-center gap-2.5 rounded-[10px] font-semibold" style={{ padding: "11px 14px", fontSize: "15px", letterSpacing: "0.01em", background: isDark ? "#ffffff" : "#111", color: isDark ? "#111" : "#fff" }}>
+              {status === "loading" ? (<><span style={{ width: 17, height: 17, borderRadius: 9999, border: `2px solid ${isDark ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.15)"}`, borderTopColor: isDark ? "#111" : "#fff", animation: "spin 600ms linear infinite", flexShrink: 0 }} /> Creating account…</>) :
                status === "success" ? (<><svg className="check-pop w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg> Account created!</>) :
                "Create account"}
             </button>

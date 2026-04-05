@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react";
+import { useTheme } from "../../ThemeContext";
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
@@ -112,20 +113,35 @@ export function ContinueWithGoogleButton({ disabled, loading, onCredential }: Pr
     }
   }, [disabled, loading]);
 
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const btnBorder = isDark ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.12)";
+  const btnBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)";
+  const btnTextColor = isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.8)";
+  const btnHoverBg = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)";
+  const btnHoverBorder = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.18)";
+  const helperText = isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)";
+
   if (!CLIENT_ID?.trim()) {
     return (
       <div className="space-y-2">
         <button
           type="button"
           disabled
-          className="w-full flex items-center justify-center gap-3 rounded-[10px] font-semibold border transition-colors
-            border-white/[0.14] bg-white/[0.04] text-white/90 opacity-45 cursor-not-allowed"
-          style={{ padding: "11px 14px", fontSize: 15, letterSpacing: "0.01em" }}
+          className="w-full flex items-center justify-center gap-3 rounded-[10px] font-semibold border transition-colors opacity-45 cursor-not-allowed"
+          style={{
+            padding: "11px 14px",
+            fontSize: 15,
+            letterSpacing: "0.01em",
+            borderColor: btnBorder,
+            background: btnBg,
+            color: btnTextColor,
+          }}
         >
           <GoogleMark className="w-[22px] h-[22px] shrink-0" />
           Continue with Google
         </button>
-        <p className="text-xs text-center px-2" style={{ color: "rgba(255,255,255,0.35)" }}>
+        <p className="text-xs text-center px-2" style={{ color: helperText }}>
           Add <code className="text-[10px]">VITE_GOOGLE_CLIENT_ID</code> (same as backend{" "}
           <code className="text-[10px]">GOOGLE_CLIENT_ID</code>) to enable Google sign-in.
         </p>
@@ -141,10 +157,25 @@ export function ContinueWithGoogleButton({ disabled, loading, onCredential }: Pr
       disabled={busy}
       onClick={handleClick}
       className="w-full flex items-center justify-center gap-3 rounded-[10px] font-semibold border transition-colors
-        border-white/[0.14] bg-white/[0.04] text-white/90
-        hover:bg-white/[0.08] hover:border-white/25
-        disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:bg-white/[0.04]"
-      style={{ padding: "11px 14px", fontSize: 15, letterSpacing: "0.01em" }}
+        disabled:opacity-45 disabled:cursor-not-allowed"
+      style={{
+        padding: "11px 14px",
+        fontSize: 15,
+        letterSpacing: "0.01em",
+        borderColor: btnBorder,
+        background: btnBg,
+        color: btnTextColor,
+      }}
+      onMouseEnter={(e) => {
+        if (!busy) {
+          e.currentTarget.style.background = btnHoverBg;
+          e.currentTarget.style.borderColor = btnHoverBorder;
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = btnBg;
+        e.currentTarget.style.borderColor = btnBorder;
+      }}
     >
       {loading ? (
         <>

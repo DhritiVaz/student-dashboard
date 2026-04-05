@@ -63,9 +63,8 @@ export default function LoginPage() {
   }
 
   const formLocked = status === "loading" || status === "success" || googleBusy;
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
   const isDark = theme === "dark";
-  const iconColor = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)";
 
   async function handleGoogleCredential(idToken: string) {
     if (status === "success") return;
@@ -98,21 +97,6 @@ export default function LoginPage() {
       ref={formRef}
       className={`auth-form-container w-full max-w-[380px] form-enter${shaking ? " form-shake" : ""}${leaving ? " page-leave" : ""}`}
     >
-      {/* Theme toggle */}
-      <button
-        type="button"
-        onClick={() => setTheme(isDark ? "light" : "dark")}
-        className="absolute top-4 right-4 p-2 rounded-lg transition-colors"
-        style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)", color: iconColor }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.8)")}
-        title={isDark ? "Switch to light" : "Switch to dark"}
-      >
-        {isDark ? (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-        ) : (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        )}
-      </button>
 
       <div className="field-1 mb-8">
         <h1 className="font-bold tracking-tight" style={{ fontSize: 28, color: isDark ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.9)" }}>
@@ -165,12 +149,23 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={formLocked}
-              className="btn-solid btn-auth w-full flex items-center justify-center gap-2.5 rounded-[10px] font-semibold"
-              style={{ padding: "11px 14px", fontSize: "15px", letterSpacing: "0.01em" }}
+              className="btn-solid w-full flex items-center justify-center gap-2.5 rounded-[10px] font-semibold"
+              style={{
+                padding: "11px 14px",
+                fontSize: "15px",
+                letterSpacing: "0.01em",
+                background: isDark ? "#ffffff" : "#111",
+                color: isDark ? "#111" : "#fff",
+              }}
             >
               {status === "loading" ? (
                 <>
-                  <span className="css-spinner" />
+                  <span style={{
+                    width: 17, height: 17, borderRadius: 9999,
+                    border: `2px solid ${isDark ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.15)"}`,
+                    borderTopColor: isDark ? "#111" : "#fff",
+                    animation: "spin 600ms linear infinite", flexShrink: 0,
+                  }} />
                   Signing in…
                 </>
               ) : status === "success" ? (
