@@ -327,17 +327,17 @@ export default function DashboardPage() {
           sub={currentSemester ? `${semesterCourses.length} courses` : "Create one to start"}
           loading={loadingS || loadingC} to="/semesters" />
         <StatCard
-          icon={<BarChart2 size={13} style={{ color: isDark ? "#4ade80" : "#22c55e" }} strokeWidth={1.8} />}
+          icon={<BarChart2 size={13} style={{ color: isDark ? "#4ade80" : "#16a34a" }} strokeWidth={1.8} />}
           label="Attendance"
           value={overallAttendance != null ? `${overallAttendance.toFixed(1)}%` : "—"}
-          sub={overallAttendance != null ? "Overall average" : "Sync VTOP to see"}
+          sub={overallAttendance != null ? "Overall average" : "No data yet"}
           to="/attendance"
           accent={isDark ? "rgba(74,222,128,0.12)" : "rgba(34,197,94,0.2)"} />
         <StatCard
           icon={<GraduationCap size={13} style={{ color: "#a78bfa" }} strokeWidth={1.8} />}
           label="CGPA"
           value={cgpa != null ? cgpa.toFixed(2) : "—"}
-          sub={cgpa != null ? "From VTOP grade history" : "Sync VTOP to see"}
+          sub={cgpa != null ? "From grade history" : "No data yet"}
           loading={loadingGrades}
           to="/cgpa"
           accent={isDark ? "rgba(167,139,250,0.12)" : "rgba(167,139,250,0.2)"} />

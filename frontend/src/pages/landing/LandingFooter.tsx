@@ -37,7 +37,17 @@ export function LandingFooter() {
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div>
-            <Link to="/" className="block font-semibold mb-4" style={{ color: titleColor }}>
+            <Link
+              to="/"
+              className="block mb-4"
+              style={{
+                fontFamily: "'Playfair Display Variable', 'Playfair Display', Georgia, serif",
+                fontWeight: 700,
+                fontSize: "17px",
+                letterSpacing: "-0.01em",
+                color: titleColor,
+              }}
+            >
               Student Dashboard
             </Link>
             <p className="text-sm max-w-[200px]" style={{ color: mutedColor }}>

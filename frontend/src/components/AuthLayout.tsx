@@ -31,7 +31,7 @@ export function AuthLayout() {
       {/* Right panel */}
       <div
         className="auth-form-panel relative flex-1 flex items-center justify-center p-6 sm:p-8 overflow-y-auto"
-        style={{ background: isDark ? "#0e0e0e" : "#fafafa", transition: "background 200ms ease" }}
+        style={{ background: isDark ? "#0e0e0e" : "#ffffff", transition: "background 200ms ease" }}
       >
         {/* Theme toggle — visible at top-right of panel */}
         <div className="absolute top-6 right-6 z-20">

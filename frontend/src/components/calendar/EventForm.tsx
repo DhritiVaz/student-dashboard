@@ -8,6 +8,7 @@ import type { CalendarEvent, EventPayload, EventType } from "../../hooks/api/eve
 import type { Course } from "../../hooks/api/courses";
 import { isoToLocalDate, isoToLocalDatetime } from "../../lib/dateUtils";
 import { toErrorString } from "../../lib/api";
+import { useTheme } from "../../ThemeContext";
 
 interface EventFormProps {
   initial?: CalendarEvent;
@@ -30,6 +31,8 @@ const PRESET_COLORS = [
 ];
 
 export function EventForm({ initial, defaultDate, courses, onSubmit, onCancel }: EventFormProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const todayDate = defaultDate ?? new Date().toISOString().slice(0, 10);
 
   const [title,      setTitle]      = useState(initial?.title ?? "");
@@ -115,12 +118,18 @@ export function EventForm({ initial, defaultDate, courses, onSubmit, onCancel }:
             onClick={() => !loading && handleAllDayToggle(!isAllDay)}
             className="w-9 h-5 rounded-full border transition-colors duration-150 flex items-center px-0.5 flex-shrink-0"
             style={isAllDay
-              ? { background: "rgba(255,255,255,0.85)", borderColor: "rgba(255,255,255,0.6)" }
-              : { background: "transparent", borderColor: "#444" }}
+              ? isDark
+                ? { background: "rgba(255,255,255,0.85)", borderColor: "rgba(255,255,255,0.6)" }
+                : { background: "#E87040", borderColor: "rgba(232,112,64,0.6)" }
+              : isDark
+                ? { background: "transparent", borderColor: "#444" }
+                : { background: "transparent", borderColor: "rgba(0,0,0,0.2)" }}
           >
             <div
               className={`w-4 h-4 rounded-full shadow transition-transform duration-150 ${isAllDay ? "translate-x-4" : "translate-x-0"}`}
-              style={{ background: isAllDay ? "#0a0a0a" : "#555" }}
+              style={{ background: isAllDay
+                ? (isDark ? "#0a0a0a" : "#ffffff")
+                : (isDark ? "#555" : "rgba(0,0,0,0.35)") }}
             />
           </div>
           <span className="text-sm text-[#6b7280]">All-day event</span>

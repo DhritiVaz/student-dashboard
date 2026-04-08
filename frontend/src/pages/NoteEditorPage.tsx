@@ -5,6 +5,7 @@ import MDEditor from "@uiw/react-md-editor";
 import { ArrowLeft, X, Check, AlertCircle, Columns2, Eye, FileEdit } from "lucide-react";
 import { useNote, useUpdateNote } from "../hooks/api/notes";
 import { useToast } from "../hooks/useToast";
+import { useTheme } from "../ThemeContext";
 
 import "@uiw/react-md-editor/markdown-editor.css";
 
@@ -53,11 +54,25 @@ function SaveIndicator({ status }: { status: SaveStatus }) {
 function TagInput({
   tags,
   onChange,
+  isDark,
 }: {
   tags: string[];
   onChange: (tags: string[]) => void;
+  isDark: boolean;
 }) {
   const [input, setInput] = useState("");
+
+  const tagBg = isDark ? "#1e1e1e" : "#f3f4f6";
+  const tagBorder = isDark ? "#333" : "#d1d5db";
+  const tagText = isDark ? "#a1a1aa" : "#374151";
+  const tagRemove = isDark ? "#52525b" : "#9ca3af";
+  const tagRemoveHover = isDark ? "#f0f0f0" : "#111827";
+  const inputBg = isDark ? "#1a1a1a" : "#ffffff";
+  const inputBorder = isDark ? "#333" : "#d1d5db";
+  const inputText = isDark ? "#f0f0f0" : "#111827";
+  const inputBorderFocus = isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)";
+  const inputBgFocus = isDark ? "#1e1e1e" : "#f9fafb";
+  const labelColor = isDark ? "#52525b" : "#9ca3af";
 
   function add(val: string) {
     const t = val.trim().toLowerCase().replace(/,/g, "");
@@ -69,7 +84,7 @@ function TagInput({
     <div>
       <p
         className="text-[10px] font-semibold uppercase tracking-widest mb-2"
-        style={{ color: "#52525b" }}
+        style={{ color: labelColor }}
       >
         Tags
       </p>
@@ -78,20 +93,16 @@ function TagInput({
           <span
             key={t}
             className="inline-flex items-center gap-1 text-xs rounded-full px-2.5 py-0.5"
-            style={{
-              background: "#1e1e1e",
-              border: "1px solid #333",
-              color: "#a1a1aa",
-            }}
+            style={{ background: tagBg, border: `1px solid ${tagBorder}`, color: tagText }}
           >
             {t}
             <button
               type="button"
               onClick={() => onChange(tags.filter((x) => x !== t))}
               aria-label={`Remove tag ${t}`}
-              style={{ color: "#52525b" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#f0f0f0")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#52525b")}
+              style={{ color: tagRemove }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = tagRemoveHover)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = tagRemove)}
             >
               <X size={9} />
             </button>
@@ -114,18 +125,18 @@ function TagInput({
         placeholder="Add tag…"
         className="w-full text-xs rounded-lg px-3 py-2 outline-none transition-all duration-150"
         style={{
-          background: "#1a1a1a",
-          border: "1px solid #333",
-          color: "#f0f0f0",
-          colorScheme: "dark",
+          background: inputBg,
+          border: `1px solid ${inputBorder}`,
+          color: inputText,
+          colorScheme: isDark ? "dark" : "light",
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = "rgba(255,255,255,0.45)";
-          e.currentTarget.style.background = "#1e1e1e";
+          e.currentTarget.style.borderColor = inputBorderFocus;
+          e.currentTarget.style.background = inputBgFocus;
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = "#333";
-          e.currentTarget.style.background = "#1a1a1a";
+          e.currentTarget.style.borderColor = inputBorder;
+          e.currentTarget.style.background = inputBg;
           if (input.trim()) add(input);
         }}
       />
@@ -139,10 +150,20 @@ function TagInput({
 function ModeToggle({
   mode,
   onChange,
+  isDark,
 }: {
   mode: EditorMode;
   onChange: (m: EditorMode) => void;
+  isDark: boolean;
 }) {
+  const containerBg = isDark ? "#1a1a1a" : "#f3f4f6";
+  const containerBorder = isDark ? "#2e2e2e" : "#e5e7eb";
+  const activeBg = isDark ? "#2e2e2e" : "#ffffff";
+  const activeColor = isDark ? "#f0f0f0" : "#111827";
+  const activeBorder = isDark ? "#3a3a3a" : "#d1d5db";
+  const inactiveColor = isDark ? "#52525b" : "#6b7280";
+  const inactiveHover = isDark ? "#a1a1aa" : "#374151";
+
   const opts: { key: EditorMode; icon: React.ReactNode; label: string }[] = [
     { key: "write", icon: <FileEdit size={13} />, label: "Write" },
     { key: "split", icon: <Columns2 size={13} />, label: "Split" },
@@ -151,7 +172,7 @@ function ModeToggle({
   return (
     <div
       className="inline-flex items-center rounded-lg p-0.5 gap-0.5"
-      style={{ background: "#1a1a1a", border: "1px solid #2e2e2e" }}
+      style={{ background: containerBg, border: `1px solid ${containerBorder}` }}
     >
       {opts.map((o) => (
         <button
@@ -160,23 +181,14 @@ function ModeToggle({
           className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md transition-all duration-150"
           style={
             mode === o.key
-              ? {
-                  background: "#2e2e2e",
-                  color: "#f0f0f0",
-                  fontWeight: 500,
-                  border: "1px solid #3a3a3a",
-                }
-              : {
-                  color: "#52525b",
-                  background: "transparent",
-                  border: "1px solid transparent",
-                }
+              ? { background: activeBg, color: activeColor, fontWeight: 500, border: `1px solid ${activeBorder}` }
+              : { color: inactiveColor, background: "transparent", border: "1px solid transparent" }
           }
           onMouseEnter={(e) => {
-            if (mode !== o.key) e.currentTarget.style.color = "#a1a1aa";
+            if (mode !== o.key) e.currentTarget.style.color = inactiveHover;
           }}
           onMouseLeave={(e) => {
-            if (mode !== o.key) e.currentTarget.style.color = "#52525b";
+            if (mode !== o.key) e.currentTarget.style.color = inactiveColor;
           }}
         >
           {o.icon} {o.label}
@@ -201,6 +213,8 @@ export default function NoteEditorPage() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   useDocumentTitle(location.pathname);
   const toast = useToast();
@@ -222,6 +236,19 @@ export default function NoteEditorPage() {
     content: string;
     tags: string[];
   } | null>(null);
+
+  // Theme colors
+  const pageBg     = isDark ? "#111111" : "#ffffff";
+  const headerBg   = isDark ? "#0f0f0f" : "#f4f4f5";
+  const headerBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
+  const sidebarBg  = isDark ? "#0a0a0a" : "#f4f4f5";
+  const sidebarBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
+  const backColor  = isDark ? "#52525b" : "#9ca3af";
+  const backHover  = isDark ? "#a1a1aa" : "#374151";
+  const separatorColor = isDark ? "#2e2e2e" : "#e5e7eb";
+  const titleColor = isDark ? "#f0f0f0" : "#111827";
+  const metaColor  = isDark ? "#3f3f46" : "#9ca3af";
+  const metaBorder = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
 
   // ── Seed local state from server ────────────────────────────────────────
   useEffect(() => {
@@ -257,11 +284,7 @@ export default function NoteEditorPage() {
   const scheduleAutoSave = useCallback(
     (newTitle: string, newContent: string, newTags: string[]) => {
       setSaveStatus("unsaved");
-      pendingRef.current = {
-        title: newTitle,
-        content: newContent,
-        tags: newTags,
-      };
+      pendingRef.current = { title: newTitle, content: newContent, tags: newTags };
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
         if (pendingRef.current) doSave(pendingRef.current);
@@ -271,10 +294,7 @@ export default function NoteEditorPage() {
   );
 
   const handleTitleChange = useCallback(
-    (val: string) => {
-      setTitle(val);
-      scheduleAutoSave(val, content, tags);
-    },
+    (val: string) => { setTitle(val); scheduleAutoSave(val, content, tags); },
     [content, tags, scheduleAutoSave]
   );
 
@@ -288,16 +308,11 @@ export default function NoteEditorPage() {
   );
 
   const handleTagsChange = useCallback(
-    (newTags: string[]) => {
-      setTags(newTags);
-      scheduleAutoSave(title, content, newTags);
-    },
+    (newTags: string[]) => { setTags(newTags); scheduleAutoSave(title, content, newTags); },
     [title, content, scheduleAutoSave]
   );
 
-  useEffect(() => {
-    return () => clearTimeout(saveTimerRef.current);
-  }, []);
+  useEffect(() => { return () => clearTimeout(saveTimerRef.current); }, []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -311,49 +326,30 @@ export default function NoteEditorPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [title, content, tags, doSave]);
 
+  const skeletonBg = isDark ? "#222" : "#e5e7eb";
+  const skeletonPulse = isDark ? "#1a1a1a" : "#f3f4f6";
+
   if (isLoading || !hydrated) {
     return (
-      <div
-        className="fixed inset-0 flex flex-col"
-        style={{ background: "#111111" }}
-      >
+      <div className="fixed inset-0 flex flex-col" style={{ background: pageBg }}>
         <div
           className="h-12 flex items-center px-5 gap-4"
-          style={{
-            background: "#0f0f0f",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
-          }}
+          style={{ background: headerBg, borderBottom: `1px solid ${headerBorder}` }}
         >
-          <div
-            className="w-16 h-4 rounded animate-pulse"
-            style={{ background: "#222" }}
-          />
-          <div
-            className="w-48 h-4 rounded animate-pulse"
-            style={{ background: "#222" }}
-          />
+          <div className="w-16 h-4 rounded animate-pulse" style={{ background: skeletonBg }} />
+          <div className="w-48 h-4 rounded animate-pulse" style={{ background: skeletonBg }} />
         </div>
         <div className="flex flex-1 overflow-hidden">
           <div
             className="w-60 p-5 space-y-4"
-            style={{
-              background: "#0a0a0a",
-              borderRight: "1px solid rgba(255,255,255,0.06)",
-            }}
+            style={{ background: sidebarBg, borderRight: `1px solid ${sidebarBorder}` }}
           >
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-8 rounded animate-pulse"
-                style={{ background: "#1a1a1a" }}
-              />
+              <div key={i} className="h-8 rounded animate-pulse" style={{ background: skeletonPulse }} />
             ))}
           </div>
           <div className="flex-1 p-8">
-            <div
-              className="h-full rounded animate-pulse"
-              style={{ background: "#1a1a1a" }}
-            />
+            <div className="h-full rounded animate-pulse" style={{ background: skeletonPulse }} />
           </div>
         </div>
       </div>
@@ -363,86 +359,71 @@ export default function NoteEditorPage() {
   return (
     <div
       className="fixed inset-0 flex flex-col z-50 note-editor-page"
-      style={{ background: "#111111" }}
-      data-color-mode="dark"
+      style={{ background: pageBg }}
+      data-color-mode={isDark ? "dark" : "light"}
     >
       <header
         className="h-12 flex-shrink-0 flex items-center justify-between gap-4 px-5"
-        style={{
-          background: "#0f0f0f",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-        }}
+        style={{ background: headerBg, borderBottom: `1px solid ${headerBorder}` }}
       >
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <button
             onClick={() => navigate("/notes")}
             className="flex items-center gap-1.5 text-xs transition-colors flex-shrink-0"
-            style={{ color: "#52525b" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#a1a1aa")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#52525b")}
+            style={{ color: backColor }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = backHover)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = backColor)}
           >
             <ArrowLeft size={13} /> Notes
           </button>
-          <span className="select-none" style={{ color: "#2e2e2e" }}>
-            /
-          </span>
+          <span className="select-none" style={{ color: separatorColor }}>/</span>
           <input
             value={title}
             onChange={(e) => handleTitleChange(e.target.value)}
             placeholder="Untitled"
             className="flex-1 min-w-0 bg-transparent text-sm font-semibold outline-none truncate"
-            style={{ color: "#f0f0f0" }}
+            style={{ color: titleColor }}
           />
         </div>
 
         <div className="flex items-center gap-4 flex-shrink-0">
           <SaveIndicator status={saveStatus} />
-          <ModeToggle mode={mode} onChange={setMode} />
+          <ModeToggle mode={mode} onChange={setMode} isDark={isDark} />
         </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden min-h-0">
         <aside
           className="w-60 flex-shrink-0 flex flex-col gap-6 px-5 py-6 overflow-y-auto"
-          style={{
-            background: "#0a0a0a",
-            borderRight: "1px solid rgba(255,255,255,0.06)",
-          }}
+          style={{ background: sidebarBg, borderRight: `1px solid ${sidebarBorder}` }}
         >
-          <TagInput tags={tags} onChange={handleTagsChange} />
+          <TagInput tags={tags} onChange={handleTagsChange} isDark={isDark} />
 
           {note && (
             <div
               className="mt-auto pt-4 space-y-2"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ borderTop: `1px solid ${metaBorder}` }}
             >
-              <p className="text-[10px]" style={{ color: "#3f3f46" }}>
+              <p className="text-[10px]" style={{ color: metaColor }}>
                 Created{" "}
                 {new Date(note.createdAt).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
+                  month: "short", day: "numeric", year: "numeric",
                 })}
               </p>
-              <p className="text-[10px]" style={{ color: "#3f3f46" }}>
+              <p className="text-[10px]" style={{ color: metaColor }}>
                 Modified{" "}
                 {new Date(note.updatedAt).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
+                  month: "short", day: "numeric", year: "numeric",
                 })}
               </p>
-              <p className="text-[10px]" style={{ color: "#3f3f46" }}>
+              <p className="text-[10px]" style={{ color: metaColor }}>
                 {content.split(/\s+/).filter(Boolean).length} words
               </p>
             </div>
           )}
         </aside>
 
-        <div
-          className="flex-1 flex flex-col min-h-0 overflow-hidden"
-          style={{ background: "#111111" }}
-        >
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ background: pageBg }}>
           <div className="flex-1 min-h-0 overflow-hidden px-6 py-5 note-editor-main">
             <MDEditor
               value={content}

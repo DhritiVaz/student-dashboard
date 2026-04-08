@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { BarChart2, Calculator } from "lucide-react";
 import { useVtopAttendance } from "../hooks/api/vtop";
 import { AttendanceCalculator } from "../components/attendance/AttendanceCalculator";
@@ -22,7 +23,7 @@ export default function AttendancePage() {
     : null;
 
   function attendanceColor(pct: number) {
-    return pct >= safe ? "#4ade80" : pct >= warn ? "#facc15" : "#f87171";
+    return pct >= safe ? (isDark ? "#4ade80" : "#16a34a") : pct >= warn ? "#facc15" : "#f87171";
   }
 
   const bgCard = isDark ? "#141414" : "#ffffff";
@@ -40,26 +41,23 @@ export default function AttendancePage() {
   const emptyTitleColor = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.55)";
   const tabBarBg = isDark ? "#141414" : "#f3f4f6";
   const tabBarBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.12)";
-  const activeTabBg = isDark ? "#ffffff" : "#111827";
-  const activeTabText = isDark ? "#111" : "#ffffff";
+  const activeTabBg = isDark ? "#ffffff" : "#ffffff";
+  const activeTabText = isDark ? "#111" : "#111";
   const inactiveTabText = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
   const inactiveTabHoverText = isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)";
 
   return (
-    <div className="p-6 sm:p-8 w-full min-w-0">
-      <div className="flex items-center justify-between mb-8">
+    <div className="pt-4 px-6 pb-6 sm:pt-5 sm:px-8 sm:pb-8 w-full min-w-0">
+      <div className="flex items-end justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight mb-1" style={{ color: isDark ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.9)" }}>Attendance</h1>
-          <p className="text-sm" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>
-            Use VTOP sync on the dashboard to load attendance—details stay on this page.
-          </p>
         </div>
         {overall !== null && (
           <div className="text-right">
-            <div className="text-3xl font-bold" style={{ color: attendanceColor(overall) }}>
+            <div className="text-6xl font-normal tracking-tight leading-none" style={{ color: attendanceColor(overall) }}>
               {overall.toFixed(1)}%
             </div>
-            <div className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>overall average</div>
+            <div className="text-xs mt-1" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>overall average</div>
           </div>
         )}
       </div>
@@ -71,7 +69,7 @@ export default function AttendancePage() {
         <div className="text-center py-16 rounded-xl" style={{ background: bgCard, border: `1px solid ${cardBorder}` }}>
           <BarChart2 size={32} className="mx-auto mb-3" style={{ color: emptyIconColor }} />
           <p className="text-sm font-medium mb-1" style={{ color: emptyTitleColor }}>No attendance data yet</p>
-          <p className="text-xs" style={{ color: emptySubtitleColor }}>Sync VTOP from the dashboard</p>
+          <p className="text-xs" style={{ color: emptySubtitleColor }}>Use VTOP Sync in the top bar to load data</p>
         </div>
         </div>
       ) : (
@@ -137,8 +135,10 @@ export default function AttendancePage() {
                     {attendance.map((row) => (
                       <tr key={row.id}>
                         <td className="px-4 py-3">
-                          <div className="font-medium" style={{ color: cellPrimaryColor }}>{row.courseCode}</div>
-                          <div className="text-xs" style={{ color: cellSecondaryColor }}>{row.courseName}</div>
+                          <Link to="/cgpa" className="hover:underline underline-offset-2">
+                            <div className="font-medium" style={{ color: cellPrimaryColor }}>{row.courseCode}</div>
+                            <div className="text-xs" style={{ color: cellSecondaryColor }}>{row.courseName}</div>
+                          </Link>
                         </td>
                         <td className="px-4 py-3 text-xs" style={{ color: cellSecondaryColor }}>{row.courseType ?? "—"}</td>
                         <td className="px-4 py-3 text-right" style={{ color: cellNormalColor }}>{row.attended}</td>

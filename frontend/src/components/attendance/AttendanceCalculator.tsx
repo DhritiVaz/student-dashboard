@@ -32,18 +32,16 @@ export function AttendanceCalculator({
 }) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  const [targetPercent, setTargetPercent] = useState(() => readNum(PREF_ATTENDANCE_TARGET, DEFAULT_TARGET));
-  const TARGET = useMemo(() => clampTarget(targetPercent), [targetPercent]);
+  const [targetStr, setTargetStr] = useState(() => String(readNum(PREF_ATTENDANCE_TARGET, DEFAULT_TARGET)));
+  const targetPercent = parseInt(targetStr, 10);
+  const TARGET = useMemo(() => clampTarget(isNaN(targetPercent) ? DEFAULT_TARGET : targetPercent), [targetPercent]);
 
-  const inputClass =
-    variant === "vtop"
-      ? "w-16 rounded-md border border-neutral-700 bg-[#0c0c0c] px-2 py-1 text-sm text-white text-center tabular-nums focus:outline-none focus:border-neutral-500"
-      : `w-16 rounded-md px-2 py-1 text-sm text-center tabular-nums focus:outline-none`;
-  const inputStyle = variant === "page" ? {
+  const inputClass = `w-16 rounded-md px-2 py-1 text-sm text-center tabular-nums focus:outline-none`;
+  const inputStyle = {
     background: isDark ? "#0c0c0c" : "#ffffff",
     border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)"}`,
     color: isDark ? "#ffffff" : "#111827",
-  } : undefined;
+  };
   const labelStyle = variant === "vtop" ? undefined : { color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.5)" };
   const titleStyle = variant === "page" ? { color: isDark ? "rgba(255,255,255,0.9)" : "#111827" } : undefined;
   const subtitleStyle = variant === "page" ? { color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.45)" } : undefined;
@@ -81,13 +79,19 @@ export function AttendanceCalculator({
         <div className="flex items-center gap-2">
           <input
             id="attendance-target-pct"
-            type="number"
+            type="text"
+            inputMode="numeric"
             min={MIN_TARGET}
             max={MAX_TARGET}
-            step={1}
-            value={targetPercent}
-            onChange={(e) => setTargetPercent(Number(e.target.value))}
-            onBlur={() => setTargetPercent((t) => clampTarget(t))}
+            value={targetStr}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, "");
+              setTargetStr(digits === "" ? "" : String(parseInt(digits, 10)));
+            }}
+            onBlur={() => {
+              const n = parseInt(targetStr, 10);
+              setTargetStr(String(clampTarget(isNaN(n) ? DEFAULT_TARGET : n)));
+            }}
             className={inputClass}
             style={variant === "page" ? inputStyle : undefined}
             aria-describedby="attendance-target-hint"
@@ -102,7 +106,7 @@ export function AttendanceCalculator({
         </span>
       </div>
 
-      <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {attendance.map((row) => {
           const { attended, conducted, attendancePercent, courseCode, courseName, courseType } = row;
           const t = TARGET / 100;
@@ -132,7 +136,7 @@ export function AttendanceCalculator({
                 <span
                   className="text-lg font-bold"
                   style={{
-                    color: isGood ? "#4ade80" : isWarning ? "#facc15" : "#f87171",
+                    color: isGood ? (isDark ? "#4ade80" : "#16a34a") : isWarning ? (isDark ? "#facc15" : "#d97706") : "#f87171",
                   }}
                 >
                   {attendancePercent.toFixed(1)}%
@@ -147,7 +151,7 @@ export function AttendanceCalculator({
                   className="h-1.5 rounded-full transition-all"
                   style={{
                     width: `${Math.min(attendancePercent, 100)}%`,
-                    background: isGood ? "#4ade80" : isWarning ? "#facc15" : "#f87171",
+                    background: isGood ? (isDark ? "#4ade80" : "#16a34a") : isWarning ? (isDark ? "#facc15" : "#d97706") : "#f87171",
                   }}
                 />
               </div>
@@ -168,12 +172,14 @@ export function AttendanceCalculator({
                 {isGood ? (
                   <div
                     className="rounded-lg px-3 py-2 text-center"
-                    style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)" }}
+                    style={isDark
+                      ? { background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)" }
+                      : { background: "rgba(22,163,74,0.08)", border: "1px solid rgba(22,163,74,0.2)" }}
                   >
-                    <div className="mb-0.5" style={{ color: "rgba(74,222,128,0.7)" }}>
+                    <div className="mb-0.5" style={{ color: isDark ? "rgba(74,222,128,0.7)" : "#15803d" }}>
                       Can bunk
                     </div>
-                    <div className="font-semibold" style={{ color: "#4ade80" }}>
+                    <div className="font-semibold" style={{ color: isDark ? "#4ade80" : "#16a34a" }}>
                       {safeBunk} more
                     </div>
                   </div>

@@ -28,7 +28,7 @@ export function Button({
     primary:
       isDark
         ? "bg-white text-black hover:shadow-[0_6px_18px_-4px_rgba(255,255,255,0.15)] active:scale-[0.97] rounded-input transition-all duration-150"
-        : "bg-[#111] text-white hover:shadow-[0_6px_18px_-4px_rgba(0,0,0,0.15)] active:scale-[0.97] rounded-input transition-all duration-150",
+        : "bg-white text-[#111] border border-[#e5e7eb] hover:bg-[#f5f5f5] hover:border-[#d1d5db] active:scale-[0.97] rounded-input transition-all duration-150",
     secondary:
       isDark
         ? "bg-transparent text-[#d4d4d8] border border-[#333] hover:border-[#555] hover:text-white active:scale-[0.97] rounded-input"

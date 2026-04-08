@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTheme } from "../../ThemeContext";
 
 /**
  * Landing page for the Google OAuth2 implicit-flow popup.
@@ -6,6 +7,9 @@ import { useEffect } from "react";
  * We relay it to the opener via postMessage and close the popup.
  */
 export default function GoogleOAuthCallbackPage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   useEffect(() => {
     const hash = window.location.hash.slice(1); // strip leading '#'
     const params = new URLSearchParams(hash);
@@ -28,8 +32,8 @@ export default function GoogleOAuthCallbackPage() {
         alignItems: "center",
         justifyContent: "center",
         height: "100vh",
-        background: "#0a0a0a",
-        color: "rgba(255,255,255,0.5)",
+        background: isDark ? "#0a0a0a" : "#ffffff",
+        color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)",
         fontFamily: "sans-serif",
         fontSize: 14,
       }}

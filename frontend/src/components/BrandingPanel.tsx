@@ -12,7 +12,7 @@ function useBrandingTheme() {
   const isDark = theme === "dark";
   return {
     isDark,
-    bg: isDark ? "#0a0a0a" : "#f5f4f2",
+    bg: isDark ? "#0a0a0a" : "#ffffff",
     titleColor: isDark ? "#ffffff" : "#111827",
     subtitleColor: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)",
     bulletColor: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)",
@@ -34,7 +34,7 @@ function useBrandingTheme() {
     cardDoneBarBg: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
     cardDoneBarFill: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.3)",
     glowColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(232,112,64,0.06)",
-    titleMarginTop: -60,
+    titleMarginTop: -20,
   };
 }
 

@@ -8,7 +8,8 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "../stores/authStore";
 import { logoutApi } from "../lib/authApi";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { useTheme } from "../ThemeContext";
 
@@ -35,6 +36,8 @@ interface SidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   layoutKey?: string;
+  width?: number;
+  isResizing?: boolean;
 }
 
 function getInitials(name?: string | null) {
@@ -48,16 +51,25 @@ function getInitials(name?: string | null) {
 
 export function Sidebar({
   onClose, collapsed = false, onToggleCollapse, layoutKey = "default",
+  width: widthProp, isResizing = false,
 }: SidebarProps) {
   const { user, refreshToken, logout } = useAuthStore();
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showUserPopover, setShowUserPopover] = useState(false);
+  const [popoverAnchor, setPopoverAnchor] = useState<{ x: number; y: number } | null>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const avatarBtnRef = useRef<HTMLButtonElement>(null);
   const reduced = useReducedMotion();
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
+  // Derive effective collapsed from width prop or collapsed prop
+  const effectiveCollapsed = widthProp !== undefined ? widthProp <= 80 : collapsed;
+  const renderWidth = widthProp ?? (effectiveCollapsed ? 56 : 264);
+
   // Theme colors
-  const bgColor = isDark ? "#1a1a1a" : "#ffffff";
+  const bgColor = isDark ? "#1a1a1a" : "#f4f4f5";
   const borderColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
   const textSecondary = isDark ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.5)";
   const iconInactive = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)";
@@ -73,6 +85,20 @@ export function Sidebar({
   const userNameText = isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.7)";
   const logoutColor = isDark ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.4)";
   const logoutHover = isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.7)";
+  const popoverBg = isDark ? "#242424" : "#ffffff";
+  const popoverBorder = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)";
+
+  // Close popover on outside click
+  useEffect(() => {
+    if (!showUserPopover) return;
+    function handleOutsideClick(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setShowUserPopover(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [showUserPopover]);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -80,11 +106,9 @@ export function Sidebar({
     finally { logout(); navigate("/login", { replace: true }); }
   }
 
-  const width = collapsed ? 56 : 264;
   const ease = "cubic-bezier(0.32, 0.72, 0, 1)";
   const dur = 280;
 
-  // Nested components for easy theme access
   function SectionLabel({ children, collapsed }: { children: string; collapsed: boolean }) {
     if (collapsed) return <div className="h-2" aria-hidden />;
     return (
@@ -98,7 +122,7 @@ export function Sidebar({
   }
 
   function NavItem({
-    label, href, icon: Icon, exact, isSettings, collapsed, onClose, reduced, layoutKey,
+    label, href, icon: Icon, exact, isSettings, collapsed, onClose, reduced, layoutKey, isResizing,
   }: {
     label: string;
     href: string;
@@ -109,6 +133,7 @@ export function Sidebar({
     onClose?: () => void;
     reduced: boolean;
     layoutKey: string;
+    isResizing: boolean;
   }) {
     return (
       <NavLink
@@ -122,7 +147,7 @@ export function Sidebar({
         {({ isActive }) => (
           <>
             {isActive && (
-              reduced ? (
+              (reduced || isResizing) ? (
                 <span
                   className="absolute inset-0 rounded-md"
                   style={{ background: activeBg }}
@@ -130,11 +155,19 @@ export function Sidebar({
               ) : (
                 <motion.span
                   layoutId={isSettings ? `nav-pill-settings-${layoutKey}` : `nav-pill-${layoutKey}-${href}`}
+                  initial={false}
                   className="absolute inset-0 rounded-md"
                   style={{ background: activeBg }}
                   transition={{ type: "spring", stiffness: 400, damping: 35 }}
                 />
               )
+            )}
+            {/* Active left accent bar */}
+            {isActive && (
+              <span
+                className="absolute left-0 rounded-full z-10"
+                style={{ width: 3, top: 6, bottom: 6, background: "#E87040" }}
+              />
             )}
             <span
               className="relative flex items-center w-full h-full rounded-md"
@@ -178,11 +211,11 @@ export function Sidebar({
     <aside
       className="flex flex-col h-full select-none overflow-hidden"
       style={{
-        width,
-        minWidth: width,
+        width: renderWidth,
+        minWidth: renderWidth,
         background: bgColor,
         borderRight: `1px solid ${borderColor}`,
-        transition: reduced ? "none" : `width ${dur}ms ${ease}`,
+        transition: (reduced || isResizing) ? "none" : `width ${dur}ms ${ease}`,
       }}
     >
       <div
@@ -193,13 +226,13 @@ export function Sidebar({
           <button
             type="button"
             onClick={onToggleCollapse}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             className="flex items-center justify-center flex-shrink-0 transition-colors duration-150 rounded-md"
             style={{ color: iconSecondary, width: 28, height: 28 }}
             onMouseEnter={e => (e.currentTarget.style.color = iconSecondaryHover)}
             onMouseLeave={e => (e.currentTarget.style.color = iconSecondary)}
           >
-            {collapsed ? <PanelLeft size={17} strokeWidth={1.6} /> : <PanelLeftClose size={17} strokeWidth={1.6} />}
+            {effectiveCollapsed ? <PanelLeft size={17} strokeWidth={1.6} /> : <PanelLeftClose size={17} strokeWidth={1.6} />}
           </button>
         ) : (
           <div
@@ -210,13 +243,13 @@ export function Sidebar({
           </div>
         )}
 
-        {!collapsed && (
+        {!effectiveCollapsed && (
           <span style={{ fontSize: 14, fontWeight: 500, color: brandingColor, letterSpacing: "-0.02em", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             Student Dashboard
           </span>
         )}
 
-        {onClose && !collapsed && (
+        {onClose && !effectiveCollapsed && (
           <button
             type="button"
             onClick={onClose}
@@ -231,7 +264,7 @@ export function Sidebar({
       </div>
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden" style={{ padding: "8px 8px 6px" }}>
-        <SectionLabel collapsed={collapsed}>Workspace</SectionLabel>
+        <SectionLabel collapsed={effectiveCollapsed}>Workspace</SectionLabel>
         {workspaceNav.map(({ label, href, icon, exact }) => (
           <NavItem
             key={href}
@@ -239,23 +272,25 @@ export function Sidebar({
             href={href}
             icon={icon}
             exact={exact}
-            collapsed={collapsed}
+            collapsed={effectiveCollapsed}
             onClose={onClose}
             reduced={reduced}
             layoutKey={layoutKey}
+            isResizing={isResizing}
           />
         ))}
-        <SectionLabel collapsed={collapsed}>Planning</SectionLabel>
+        <SectionLabel collapsed={effectiveCollapsed}>Planning</SectionLabel>
         {planningNav.map(({ label, href, icon }) => (
           <NavItem
             key={href}
             label={label}
             href={href}
             icon={icon}
-            collapsed={collapsed}
+            collapsed={effectiveCollapsed}
             onClose={onClose}
             reduced={reduced}
             layoutKey={layoutKey}
+            isResizing={isResizing}
           />
         ))}
       </nav>
@@ -266,44 +301,111 @@ export function Sidebar({
           href="/settings"
           icon={Settings}
           isSettings
-          collapsed={collapsed}
+          collapsed={effectiveCollapsed}
           onClose={onClose}
           reduced={reduced}
           layoutKey={layoutKey}
+          isResizing={isResizing}
         />
-        <div
-          className="flex items-center rounded-md mt-1"
-          style={{ minHeight: 40, paddingLeft: 10, paddingRight: 10, justifyContent: "flex-start", gap: 10 }}
-        >
-          <div
-            className="flex items-center justify-center rounded-full flex-shrink-0"
-            style={{ width: 24, height: 24, background: userAvatarBg, color: userAvatarText, fontSize: 10, fontWeight: 600 }}
-          >
-            {getInitials(user?.name)}
-          </div>
 
-          {!collapsed && (
-            <>
-              <div className="flex-1 min-w-0">
-                <p style={{ fontSize: 13, fontWeight: 450, color: userNameText, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.2 }}>
-                  {user?.name ?? "User"}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                disabled={loggingOut}
-                aria-label="Sign out"
-                className="flex-shrink-0 flex items-center justify-center transition-colors duration-150 disabled:opacity-40 rounded-md p-1.5"
-                style={{ color: logoutColor }}
-                onMouseEnter={e => (e.currentTarget.style.color = logoutHover)}
-                onMouseLeave={e => (e.currentTarget.style.color = logoutColor)}
+        {/* User area */}
+        {effectiveCollapsed ? (
+          /* Collapsed: avatar with sign-out popover (portal to avoid overflow-hidden clip) */
+          <div className="mt-1" style={{ paddingLeft: 7, paddingRight: 8 }}>
+            <button
+              ref={avatarBtnRef}
+              type="button"
+              onClick={() => {
+                if (avatarBtnRef.current) {
+                  const rect = avatarBtnRef.current.getBoundingClientRect();
+                  setPopoverAnchor({ x: rect.right + 8, y: rect.top });
+                }
+                setShowUserPopover(p => !p);
+              }}
+              title={user?.name ?? "User"}
+              className="flex items-center justify-center rounded-full transition-colors duration-150"
+              style={{
+                width: 28, height: 28,
+                background: showUserPopover ? "#E87040" : userAvatarBg,
+                color: showUserPopover ? "#fff" : userAvatarText,
+                fontSize: 10, fontWeight: 600,
+              }}
+            >
+              {getInitials(user?.name)}
+            </button>
+
+            {showUserPopover && popoverAnchor && createPortal(
+              <div
+                ref={popoverRef}
+                className="rounded-lg overflow-hidden"
+                style={{
+                  position: "fixed",
+                  left: popoverAnchor.x,
+                  top: popoverAnchor.y,
+                  background: popoverBg,
+                  border: `1px solid ${popoverBorder}`,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+                  minWidth: 140,
+                  zIndex: 9999,
+                  transform: "translateY(-100%)",
+                  marginTop: 28,
+                }}
               >
-                <LogOut size={15} strokeWidth={1.6} />
-              </button>
-            </>
-          )}
-        </div>
+                {user?.name && (
+                  <div
+                    className="px-3 py-2 text-xs truncate"
+                    style={{ color: textInactive, borderBottom: `1px solid ${popoverBorder}` }}
+                  >
+                    {user.name}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { setShowUserPopover(false); handleLogout(); }}
+                  disabled={loggingOut}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors disabled:opacity-40"
+                  style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                >
+                  <LogOut size={13} strokeWidth={1.6} />
+                  Sign out
+                </button>
+              </div>,
+              document.body
+            )}
+          </div>
+        ) : (
+          /* Expanded: avatar + name + logout button */
+          <div
+            className="flex items-center rounded-md mt-1"
+            style={{ minHeight: 40, paddingLeft: 10, paddingRight: 10, justifyContent: "flex-start", gap: 10 }}
+          >
+            <div
+              className="flex items-center justify-center rounded-full flex-shrink-0"
+              style={{ width: 24, height: 24, background: userAvatarBg, color: userAvatarText, fontSize: 10, fontWeight: 600 }}
+            >
+              {getInitials(user?.name)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p style={{ fontSize: 13, fontWeight: 450, color: userNameText, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.2 }}>
+                {user?.name ?? "User"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              aria-label="Sign out"
+              className="flex-shrink-0 flex items-center justify-center transition-colors duration-150 disabled:opacity-40 rounded-md p-1.5"
+              style={{ color: logoutColor }}
+              onMouseEnter={e => (e.currentTarget.style.color = logoutHover)}
+              onMouseLeave={e => (e.currentTarget.style.color = logoutColor)}
+            >
+              <LogOut size={15} strokeWidth={1.6} />
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

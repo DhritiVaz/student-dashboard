@@ -300,7 +300,7 @@ export function GlobalSearch() {
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           placeholder="Search…"
-          className="flex-1 bg-transparent outline-none text-[13px]"
+          className="flex-1 bg-transparent outline-none border-none text-[13px] appearance-none"
           style={{ color: inputText, caretColor: inputCaret }}
           spellCheck={false}
           autoComplete="off"

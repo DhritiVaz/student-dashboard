@@ -602,7 +602,7 @@ export default function LmsPage() {
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
               tab === t.key
-                ? (isDark ? "bg-white text-black" : "bg-zinc-900 text-zinc-100")
+                ? (isDark ? "bg-white text-black" : "bg-white text-[#111]")
                 : (isDark ? "text-neutral-400 hover:text-neutral-200" : "text-zinc-500 hover:text-zinc-900")
             }`}
           >

@@ -148,7 +148,10 @@ export default function LmsSync() {
           {syncSuccess && (
             <motion.div
               initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="flex items-start gap-2 text-green-400 text-sm bg-green-400/10 border border-green-400/20 rounded-lg px-3 py-2"
+              className="flex items-start gap-2 text-sm rounded-lg px-3 py-2"
+              style={isDark
+                ? { color: "#4ade80", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)" }
+                : { color: "#16a34a", background: "rgba(22,163,74,0.08)", border: "1px solid rgba(22,163,74,0.2)" }}
             >
               <CheckCircle size={14} className="mt-0.5 flex-shrink-0" />
               <span>{syncMessage ?? "Sync successful. Switch tabs to see your data."}</span>
@@ -159,7 +162,7 @@ export default function LmsSync() {
         <button
           onClick={handleSync}
           disabled={syncing || !username.trim() || !password.trim()}
-          className="w-full flex items-center justify-center gap-2 bg-[#E87040] text-white text-sm font-medium rounded-lg py-2 px-4 hover:bg-[#d4603a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className={`w-full flex items-center justify-center gap-2 text-sm font-medium rounded-lg py-2 px-4 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${isDark ? "bg-white text-black hover:bg-neutral-200" : "bg-[#111] text-white hover:bg-[#222]"}`}
         >
           <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
           {syncing ? "Syncing LMS..." : "Sync LMS"}

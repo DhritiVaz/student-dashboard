@@ -440,6 +440,8 @@ function DashboardTab() {
 // ─── Academics tab ─────────────────────────────────────────────────────────
 function AcademicsTab() {
   const toast = useToast();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const [safe,   setSafe]   = useState(() => readNum(PREF_ATTENDANCE_SAFE,   75));
   const [warn,   setWarn]   = useState(() => readNum(PREF_ATTENDANCE_WARN,   65));
@@ -498,7 +500,9 @@ function AcademicsTab() {
         {/* Visual preview */}
         <div className="flex gap-2 pt-1 flex-wrap">
           <span className="text-xs px-2 py-1 rounded-md font-medium"
-            style={{ background: "rgba(74,222,128,0.1)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }}>
+            style={isDark
+              ? { background: "rgba(74,222,128,0.1)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.2)" }
+              : { background: "rgba(22,163,74,0.08)", color: "#16a34a", border: "1px solid rgba(22,163,74,0.2)" }}>
             ≥ {safe}% safe
           </span>
           <span className="text-xs px-2 py-1 rounded-md font-medium"

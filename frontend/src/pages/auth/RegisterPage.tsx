@@ -182,7 +182,7 @@ export default function RegisterPage() {
               <div className="w-full border-t" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }} />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-3" style={{ background: isDark ? "#0a0a0a" : "#fafafa", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)" }}>
+              <span className="px-3" style={{ background: isDark ? "#0a0a0a" : "#ffffff", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)" }}>
                 or continue with
               </span>
             </div>

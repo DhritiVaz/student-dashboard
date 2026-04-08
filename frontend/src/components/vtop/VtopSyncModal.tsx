@@ -160,12 +160,17 @@ export function VtopSyncModal({ open, onClose }: { open: boolean; onClose: () =>
         <div className="px-5 py-5 space-y-4">
           {/* Success */}
           {syncSuccess && (
-            <div className="flex items-center gap-2 text-green-400 text-sm bg-green-400/10 border border-green-400/20 rounded-lg px-3 py-2">
+            <div
+              className="flex items-center gap-2 text-sm rounded-lg px-3 py-2"
+              style={isDark
+                ? { color: "#4ade80", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)" }
+                : { color: "#16a34a", background: "rgba(22,163,74,0.08)", border: "1px solid rgba(22,163,74,0.2)" }}
+            >
               <CheckCircle size={14} />
               <span>
                 Sync successful.
                 {syncMessage && (
-                  <span className="block mt-1 text-neutral-300 font-normal">{syncMessage}</span>
+                  <span className="block mt-1 font-normal" style={{ color: isDark ? "#d4d4d8" : "#374151" }}>{syncMessage}</span>
                 )}
               </span>
             </div>

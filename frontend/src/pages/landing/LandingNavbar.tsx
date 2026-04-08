@@ -16,7 +16,7 @@ export function LandingNavbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const bg = scrolled ? (isDark ? "rgba(10,10,10,0.9)" : "rgba(245,244,242,0.9)") : "transparent";
+  const bg = scrolled ? (isDark ? "rgba(10,10,10,0.9)" : "rgba(255,255,255,0.9)") : "transparent";
   const border = scrolled ? (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)") : "transparent";
   const logoColor = isDark ? "#ffffff" : "#111827";
   const linkColor = isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.5)";
@@ -35,9 +35,7 @@ export function LandingNavbar() {
       }}
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link to="/" className="font-semibold text-lg" style={{ color: logoColor }}>
-          Student Dashboard
-        </Link>
+        <Link to="/" className="block" />
 
         <div className="hidden md:flex items-center gap-4">
           <Link
@@ -77,7 +75,7 @@ export function LandingNavbar() {
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
             className="md:hidden overflow-hidden border-t"
-            style={{ background: isDark ? "#0a0a0a" : "#f5f4f2", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }}
+            style={{ background: isDark ? "#0a0a0a" : "#ffffff", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }}
           >
             <div className="px-4 py-4 flex flex-col gap-3">
               <Link

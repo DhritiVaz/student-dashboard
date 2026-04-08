@@ -99,10 +99,7 @@ export default function LoginPage() {
     >
 
       <div className="field-1 mb-8">
-        <h1 className="font-extrabold tracking-tight" style={{ fontSize: 36, color: isDark ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.95)" }}>
-          Student Dashboard
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>Sign in to continue</p>
+        <p className="text-sm" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>Sign in to continue</p>
       </div>
 
       <form onSubmit={handleSubmit} noValidate>
@@ -186,7 +183,7 @@ export default function LoginPage() {
               <div className="w-full border-t" style={{ borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }} />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="px-3" style={{ background: isDark ? "#0a0a0a" : "#fafafa", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)" }}>
+              <span className="px-3" style={{ background: isDark ? "#0a0a0a" : "#ffffff", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)" }}>
                 or continue with
               </span>
             </div>

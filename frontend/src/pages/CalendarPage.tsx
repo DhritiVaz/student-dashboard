@@ -696,7 +696,7 @@ export default function CalendarPage() {
   const isDark = theme === "dark";
 
   const tabBorder     = isDark ? "rgba(255,255,255,0.08)" : "#e5e7eb";
-  const tabBg         = isDark ? "rgba(255,255,255,0.06)" : "#fafafa";
+  const tabBg         = isDark ? "rgba(255,255,255,0.06)" : "#f4f4f5";
   const tabActiveBg   = isDark ? "#222222" : "#ffffff";
   const tabActiveText = isDark ? "rgba(255,255,255,0.9)" : "#111";
   const tabInactiveText = isDark ? "rgba(255,255,255,0.4)" : "#6b7280";

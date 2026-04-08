@@ -75,9 +75,7 @@ export default function LandingPage() {
             <LandingHero />
             <Suspense fallback={null}>
               <LandingFeatures />
-              <div id="how-it-works">
-                <LandingHowItWorks />
-              </div>
+              <LandingHowItWorks />
               <LandingCTABanner />
             </Suspense>
             <LandingFooter />

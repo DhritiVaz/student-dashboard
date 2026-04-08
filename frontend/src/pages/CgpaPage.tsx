@@ -122,7 +122,7 @@ export default function CgpaPage() {
           onClick={() => setTab("record")}
           className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
             tab === "record"
-              ? (isDark ? "bg-white text-black" : "bg-zinc-900 text-zinc-100")
+              ? (isDark ? "bg-white text-black" : "bg-white text-[#111]")
               : (isDark ? "text-white/45 hover:text-white" : "text-zinc-500 hover:text-zinc-900")
           }`}
         >
@@ -134,7 +134,7 @@ export default function CgpaPage() {
           onClick={() => setTab("calc")}
           className={`px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 ${
             tab === "calc"
-              ? (isDark ? "bg-white text-black" : "bg-zinc-900 text-zinc-100")
+              ? (isDark ? "bg-white text-black" : "bg-white text-[#111]")
               : (isDark ? "text-white/45 hover:text-white" : "text-zinc-500 hover:text-zinc-900")
           }`}
         >
@@ -158,7 +158,7 @@ export default function CgpaPage() {
             <>
               <div
                 className="rounded-xl p-5 mb-6 flex flex-wrap items-center justify-between gap-4"
-                style={{ background: isDark ? "#141414" : "#ffffff", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}
+                style={{ background: isDark ? "#141414" : "#ffffff", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`, maxWidth: 420 }}
               >
                 <div>
                   <p className="text-xs uppercase tracking-wider mb-1" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>
@@ -189,7 +189,7 @@ export default function CgpaPage() {
                 </div>
                 {summary.semesters.map((sem) => {
                   const key = sem.semesterLabel ?? "default";
-                  const open = openSem[key] ?? true;
+                  const open = openSem[key] ?? false;
                   return (
                     <div key={key} style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}` }}>
                       <button
@@ -214,7 +214,6 @@ export default function CgpaPage() {
                                 <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>#</th>
                                 <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Grade</th>
                                 <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Pt</th>
-                                <th className="text-left px-4 py-2 text-xs font-medium hidden lg:table-cell" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Faculty / slot</th>
                                 <th className="text-right px-4 py-2 text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.5)" }}>Total</th>
                               </tr>
                             </thead>
@@ -226,7 +225,7 @@ export default function CgpaPage() {
                                 return (
                                   <tr key={c.id} style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"}` }}>
                                     <td className="px-4 py-2">
-                                      <Link to="/courses" style={{ color: isDark ? "#f0f0f0" : "#111827" }} className="hover:underline">
+                                      <Link to="/attendance" style={{ color: isDark ? "#f0f0f0" : "#111827" }} className="hover:underline">
                                         <span className="font-medium">{c.courseCode}</span>
                                         <span className="block text-xs truncate max-w-[220px]" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)" }}>{c.courseName}</span>
                                       </Link>
@@ -234,10 +233,7 @@ export default function CgpaPage() {
                                     <td className="px-4 py-2 text-right" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)" }}>{cr || "\u2014"}</td>
                                     <td className="px-4 py-2 text-right" style={{ color: isDark ? "#f0f0f0" : "#111827" }}>{c.grade ?? "\u2014"}</td>
                                     <td className="px-4 py-2 text-right" style={{ color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)" }}>{c.gradePoint ?? "\u2014"}</td>
-                                    <td className="px-4 py-2 text-left" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.5)" }}>
-                                      <span className="text-xs max-w-[200px] truncate inline-block">{[c.faculty, c.slot].filter(Boolean).join(" \u00b7 ") || (c.category ? c.category : "\u2014")}</span>
-                                    </td>
-                                    <td className="px-4 py-2 text-right" style={{ color: isDark ? "#22c55e" : "#22c55e" }}>{cr && c.gradePoint != null ? w.toFixed(1) : "\u2014"}</td>
+                                    <td className="px-4 py-2 text-right" style={{ color: isDark ? "#22c55e" : "#16a34a" }}>{cr && c.gradePoint != null ? w.toFixed(1) : "\u2014"}</td>
                                   </tr>
                                 );
                               })}
@@ -246,7 +242,7 @@ export default function CgpaPage() {
                               <tr style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}>
                                 <td className="px-4 py-2 text-xs font-medium" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.5)" }}>SUM</td>
                                 <td className="px-4 py-2 text-right text-xs font-semibold" style={{ color: isDark ? "#f0f0f0" : "#111827" }}>{sem.totalCredits.toFixed(1)}</td>
-                                <td colSpan={3} />
+                                <td colSpan={2} />
                                 <td className="px-4 py-2 text-right text-xs font-semibold" style={{ color: isDark ? "#4ade80" : "#16a34a" }}>{sem.weightedScore.toFixed(1)}</td>
                               </tr>
                             </tfoot>
