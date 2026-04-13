@@ -47,7 +47,6 @@ The system focuses on clarity, real-time sync, and a clean dark UI experience.
 ---
 
 ## Screenshots
-N
 ### Landing Page
 <img width="1582" height="1035" alt="image" src="https://github.com/user-attachments/assets/1d8551f1-472d-48d8-b843-167f8319f75e" />
 
